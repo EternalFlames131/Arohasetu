@@ -434,3 +434,6 @@
 
 - **2026-10-01 23:18 | Video Feed Medical Conditions Analysis:**
   - Catalogued and documented all 7 health and medical safety conditions detected specifically through the camera video feed (falls/syncope, prolonged immobility/coma, dementia wandering/bed-exit, ataxia/balance loss, tremors/rigors, hypoactive sepsis stupor, and contactless rPPG vitals).
+
+- **2026-10-01 23:28 | Practical FOSS Software & Hardware Architecture Recommendations:**
+  - Formulated 6 tailored, 100% free and open-source (MIT/Apache 2.0) software additions matching current hardware (GTX 1650, webcam, Android) and software (Node/Python/React): HeartPy contactless rPPG, Vosk offline voice distress listener, better-sqlite3 local database, native WebRTC bedside intercom, ABDM FHIR R4 medical export, and ONNX Runtime CPU inference.
