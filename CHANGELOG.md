@@ -440,3 +440,6 @@
 
 - **2026-10-01 23:31 | Strategic Competition Pitch Angles & Differentiation:**
   - Formulated 6 high-impact narrative pillars for Hack for Social Cause 2027 (MoYAS + IIT Bombay): Andaman island geography imperative, predictive vs reactive care, hospital Virtual Ward nursing relief, DPDP privacy sovereignty, monsoon offline resilience, and healthcare economics.
+
+- **2026-10-01 23:38 | Technical & Mathematical Pitch Elevation for IIT Bombay Judges:**
+  - Formulated rigorous engineering differentiators: kinematic tensor calculus & Bayesian likelihood competition (9 hypotheses), 3 disentangled confidence metrics, sub-20ms GTX 1650 CUDA pipeline, deterministic NEWS2 scoring (AUROC 0.898) vs black-box LLMs, and DPDP on-demand hardware gating.
