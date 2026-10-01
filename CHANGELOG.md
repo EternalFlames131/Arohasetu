@@ -427,3 +427,7 @@
 - **2026-10-01 22:50 | Auto-Push to GitHub Disabled:**
   - Added `.git/no-push` and `REJIVAN_NO_PUSH` support to `.githooks/post-commit`.
   - Created `.git/no-push` flag file. Auto-push to GitHub is now stopped; commits stay local on this PC only.
+
+- **2026-10-01 22:57 | Comprehensive System Functioning Document Generated:**
+  - Created canonical HTML source (`docs/source/ReJivan_System_Functioning_v1.0.html`) and dedicated build script (`tools/build_functioning_pdf.ps1`).
+  - Rendered high-resolution 7-page PDF (`docs/ReJivan_System_Functioning_v1.0.pdf`, 525 KB) specifying all 12 operational subsystems, clinical NEWS2 engine, hospital bed console, DPDP vision sentinel, and prototype honesty audit matrix. Verified 100% pass via `tools/verify_pdf.py`.
