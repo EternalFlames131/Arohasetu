@@ -443,3 +443,6 @@
 
 - **2026-10-01 23:38 | Technical & Mathematical Pitch Elevation for IIT Bombay Judges:**
   - Formulated rigorous engineering differentiators: kinematic tensor calculus & Bayesian likelihood competition (9 hypotheses), 3 disentangled confidence metrics, sub-20ms GTX 1650 CUDA pipeline, deterministic NEWS2 scoring (AUROC 0.898) vs black-box LLMs, and DPDP on-demand hardware gating.
+
+- **2026-10-01 23:45 | Comprehensive System Flaw & Vulnerability Audit:**
+  - Conducted deep technical vulnerability audit across vision, cloud state, sensor physics, and security: identified 8 critical edge flaws (monocular Z-depth, blanket occlusion, multi-person Re-ID switching, nighttime zero-lux, ephemeral serverless memory, HTTPS-PNA sandbox, sensor motion artifacts, and simulated telecom placement) along with bulletproof engineering defenses.
