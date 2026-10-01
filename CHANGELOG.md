@@ -423,3 +423,7 @@
 - **2026-10-01 22:46 | Project Capabilities & Architectural Overview Review:**
   - Synthesized comprehensive end-to-end overview of ReJivan for Hack for Social Cause 2027:
   - Documented dual use-cases (Home Care remote monitoring & Hospital Virtual Ward telemetry), two monitoring layers (vital signs medical devices + privacy-first vision sentinel), Prajñā clinical engine (NEWS2 scoring), 3-tier autonomous emergency call ladder, 7 clinical reliability safeguards, Andaman & Nicobar regional anchoring, and transparent Real vs Simulated audit breakdown.
+
+- **2026-10-01 22:50 | Auto-Push to GitHub Disabled:**
+  - Added `.git/no-push` and `REJIVAN_NO_PUSH` support to `.githooks/post-commit`.
+  - Created `.git/no-push` flag file. Auto-push to GitHub is now stopped; commits stay local on this PC only.
