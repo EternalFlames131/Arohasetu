@@ -4,7 +4,7 @@
 // --- START: prototype\movement-engine.js ---
 // prototype/movement-engine.js
 // ReJivan Unified Motion Kinematics, Hypothesis Scoring, Counterfactual Reasoning & Sensor Fusion Engine
-// Compatible with both browser (MediaPipe / Optical Flow) and edge hardware (YOLO11-Pose via GTX 1650)
+// Compatible with both browser (MediaPipe / Optical Flow) and edge hardware (YOLO11-Pose via local CUDA GPU)
 // Architectural flow: OBSERVE -> RECONSTRUCT -> CORROBORATE -> REASON -> VERIFY -> RESPOND
 
 (function (root, factory) {
@@ -3319,7 +3319,7 @@ const IncidentReconstructionPanel = ({ onTriggerVerification, currentVitals }) =
               <span className={`w-2 h-2 rounded-full ${visionEngine === "yolo" ? "bg-emerald-200 animate-pulse" : "bg-slate-400"}`}></span>
               <span>YOLO11 Edge</span>
               <span className="text-[9px] opacity-80 uppercase px-1 py-0.2 bg-black/20 rounded">
-                GTX 1650
+                Local GPU
               </span>
             </button>
             <button
@@ -3350,7 +3350,7 @@ const IncidentReconstructionPanel = ({ onTriggerVerification, currentVitals }) =
           <CheckCircle2 className={`w-4 h-4 ${visionEngine === "yolo" ? "text-emerald-600" : "text-blue-600"}`} />
           {visionEngine === "yolo" ? (
             <span>
-              <strong>Primary Vision Engine Active:</strong> YOLO11-Pose · Local NVIDIA GeForce GTX 1650 4GB GPU Acceleration (58 FPS · 184MB VRAM)
+              <strong>Primary Vision Engine Active:</strong> YOLO11-Pose · Local CUDA GPU Acceleration (Auto-Detected Edge Hardware · 17 COCO Keypoints)
             </span>
           ) : (
             <span>
@@ -3966,7 +3966,13 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
   const [snapshotToast, setSnapshotToast] = React.useState(null);
 
   // Playback & Monitoring Lifecycle State ('STOPPED' | 'CALIBRATING' | 'PLAYING' | 'PAUSED' | 'VIDEO_ENDED')
-  const [playbackState, setPlaybackState] = React.useState("STOPPED");
+  const [playbackState, setPlaybackStateInternal] = React.useState("STOPPED");
+  const playbackStateRef = React.useRef("STOPPED");
+  const setPlaybackState = React.useCallback((val) => {
+    const nextVal = typeof val === "function" ? val(playbackStateRef.current) : val;
+    playbackStateRef.current = nextVal;
+    setPlaybackStateInternal(nextVal);
+  }, []);
   const [playbackSpeed, setPlaybackSpeed] = React.useState(1.0); // 0.5, 1.0, 2.0
   const [videoCurrentTime, setVideoCurrentTime] = React.useState(0.0);
   const [videoDuration, setVideoDuration] = React.useState(14.76);
@@ -3974,6 +3980,10 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
   // Edge Hardware YOLO Sentinel Auto-Discovery (Port 5050 on 127.0.0.1)
   const [localYoloActive, setLocalYoloActive] = React.useState(false);
   const [localYoloInfo, setLocalYoloInfo] = React.useState(null);
+
+  // GPU identity is reported live by the edge daemon (torch.cuda device name).
+  // Never hardcode a GPU model here — this UI runs on whatever machine is deployed.
+  const gpuLabel = localYoloInfo?.device || "Local CUDA GPU";
 
   // Infrastructure & Sensor Health State
   const [systemHealth, setSystemHealth] = React.useState({
@@ -4145,7 +4155,7 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
     evidence: ["Patient resting supine within mattress perimeter", "Zero downward velocity"],
     counterEvidence: ["Supine bed rest intentional", "Stable vitals baseline"],
     visionSource: "Ultralytics YOLO11-Pose",
-    hardwareBadge: "GTX 1650 CUDA Ingestion",
+    hardwareBadge: "Edge CUDA Ingestion",
     consensusSummary: "Patient resting safely in care bed. Baseline optical monitoring active."
   });
 
@@ -4154,6 +4164,7 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
   const canvasElementRef = React.useRef(null);
   const webcamStreamRef = React.useRef(null);
   const animFrameRef = React.useRef(null);
+  const lastTelemetryAtRef = React.useRef(Date.now());
   const prevFrameDataRef = React.useRef(null);
   const prevCentroidYRef = React.useRef(null);
   const lastTimeRef = React.useRef(Date.now());
@@ -4162,8 +4173,9 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
 
   const YOLO_API_BASE = "http://127.0.0.1:5050";
 
-  // Live Camera Source Modes: "BROWSER_WEBCAM" (direct WebRTC in browser) vs "HARDWARE_YOLO" (NVIDIA GPU MJPEG stream)
-  const [liveCameraMode, setLiveCameraMode] = React.useState("BROWSER_WEBCAM");
+  // Live Camera Source Modes: "HARDWARE_YOLO" (NVIDIA GPU MJPEG stream) vs "BROWSER_WEBCAM" (direct WebRTC in browser)
+  const [liveCameraMode, setLiveCameraMode] = React.useState("HARDWARE_YOLO");
+  const userSwitchedModeRef = React.useRef(false);
   const [availableWebcams, setAvailableWebcams] = React.useState([]);
   const [selectedCameraDeviceId, setSelectedCameraDeviceId] = React.useState("");
   const [hardwareCameraIndex, setHardwareCameraIndex] = React.useState(0);
@@ -4221,7 +4233,41 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
     }
   };
 
-  // Poll Local Hardware YOLO Sentinel Daemon with Debounced 3-Strike Resilience
+  const [isStartingDaemon, setIsStartingDaemon] = React.useState(false);
+  const autoStartTriggeredRef = React.useRef(false);
+
+  const handleStartDaemon = async () => {
+    setIsStartingDaemon(true);
+    try {
+      await fetch("/api/yolo/daemon/start", { method: "POST" });
+    } catch (e) {
+      console.warn("Daemon start call error:", e);
+    }
+    // Poll quickly for status resolution
+    let attempts = 0;
+    const pollTimer = setInterval(async () => {
+      attempts++;
+      try {
+        const res = await fetch(`${YOLO_API_BASE}/api/yolo/status`, {
+          signal: AbortSignal.timeout ? AbortSignal.timeout(1500) : undefined
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setLocalYoloActive(true);
+          setLocalYoloInfo(data);
+          setIsStartingDaemon(false);
+          clearInterval(pollTimer);
+          return;
+        }
+      } catch (e) {}
+      if (attempts >= 12) {
+        setIsStartingDaemon(false);
+        clearInterval(pollTimer);
+      }
+    }, 1000);
+  };
+
+  // Poll Local Hardware YOLO Sentinel Daemon with Debounced 3-Strike Resilience & Auto-Recovery
   React.useEffect(() => {
     let isCancelled = false;
     let failures = 0;
@@ -4249,6 +4295,11 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
             setLocalYoloActive(false);
             setLocalYoloInfo(null);
             setSystemHealth((prev) => ({ ...prev, edgeStatus: "EDGE_OFFLINE" }));
+            // On localhost, attempt automatic startup trigger once
+            if (!autoStartTriggeredRef.current && typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")) {
+              autoStartTriggeredRef.current = true;
+              fetch("/api/yolo/daemon/start", { method: "POST" }).catch(() => {});
+            }
           }
         }
       } catch (e) {
@@ -4258,6 +4309,11 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
             setLocalYoloActive(false);
             setLocalYoloInfo(null);
             setSystemHealth((prev) => ({ ...prev, edgeStatus: "EDGE_OFFLINE" }));
+            // On localhost, attempt automatic startup trigger once
+            if (!autoStartTriggeredRef.current && typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")) {
+              autoStartTriggeredRef.current = true;
+              fetch("/api/yolo/daemon/start", { method: "POST" }).catch(() => {});
+            }
           }
         }
       }
@@ -4312,6 +4368,7 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
         });
         if (res.ok && !isCancelled) {
           const data = await res.json();
+          lastTelemetryAtRef.current = Date.now();
           const isHighRisk = data.risk_level === "HIGH_RISK";
           const isCaution = data.risk_level === "CAUTION";
           setTelemetry((prev) => ({
@@ -4332,8 +4389,8 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
             probableMechanism: data.canonical_event?.probableMechanism || data.probable_mechanism || "NORMAL_ACTIVITY",
             evidence: data.evidence && data.evidence.length > 0 ? data.evidence : prev.evidence,
             counterEvidence: data.counter_evidence && data.counter_evidence.length > 0 ? data.counter_evidence : prev.counterEvidence,
-            visionSource: `${data.device || "NVIDIA GTX 1650"} (Ultralytics YOLO11-Pose)`,
-            hardwareBadge: data.cuda_enabled ? "GTX 1650 CUDA Ingestion" : "Local Edge CPU",
+            visionSource: `${data.device || "Auto-detected CUDA GPU"} (Ultralytics YOLO11-Pose)`,
+            hardwareBadge: data.cuda_enabled ? `${data.device || "CUDA"} Ingestion` : "Local Edge CPU",
             consensusSummary: data.hypothesis?.mechanism || "Continuous YOLO-Pose kinematics monitoring active."
           }));
 
@@ -4366,9 +4423,28 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
     };
   }, [localYoloActive, hardwareStreamPaused, onTriggerVerification, onTriggerAlert, localYoloInfo]);
 
+  // --- Stalled-stream watchdog ----------------------------------------------
+  // The hardware MJPEG <img> stream can stall WITHOUT firing onError: the TCP
+  // socket stays open but no further frames arrive, so the video sits frozen on
+  // its last frame forever and monitoring appears to stop after the first frame.
+  // If telemetry goes quiet while hardware streaming, force a stream reconnect
+  // so monitoring recovers on its own instead of needing a manual refresh.
+  React.useEffect(() => {
+    if (!localYoloActive || hardwareStreamPaused) return;
+    if (!(cameraSource === "LIVE_WEBCAM" && liveCameraMode === "HARDWARE_YOLO")) return;
+    const id = setInterval(() => {
+      const silentFor = Date.now() - lastTelemetryAtRef.current;
+      if (silentFor > 5000) {
+        lastTelemetryAtRef.current = Date.now(); // debounce before retrying
+        setStreamRetryKey(Date.now());
+      }
+    }, 2000);
+    return () => clearInterval(id);
+  }, [localYoloActive, hardwareStreamPaused, cameraSource, liveCameraMode]);
+
   // Switch Camera Source
   const handleSelectSource = async (newSource) => {
-    handleStopMonitoring();
+    await handleStopMonitoring();
     setCameraSource(newSource);
     alarmLatchedRef.current = false;
 
@@ -4381,7 +4457,7 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
         await fetch(`${YOLO_API_BASE}/api/yolo/source`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ source: yoloSourceParam })
+          body: JSON.stringify({ source: yoloSourceParam, autoStart: false })
         });
         setStreamRetryKey(Date.now());
       } catch (e) {}
@@ -4638,12 +4714,13 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
     let lastProcessedWallTime = Date.now() / 1000.0;
 
     const render = () => {
-      // If stopped, terminate loop
-      if (video.paused && playbackState !== "PLAYING") {
+      // If user stopped monitoring, terminate loop cleanly
+      if (playbackStateRef.current !== "PLAYING") {
         return;
       }
 
-      // Check for video ended
+      try {
+        // Check for video ended
       if (video.ended || (cameraSource !== "LIVE_WEBCAM" && video.currentTime >= (video.duration - 0.05))) {
         setPlaybackState("VIDEO_ENDED");
         setTelemetry((prev) => ({
@@ -4743,7 +4820,7 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
           yoloInflight = false;
         }
 
-        if (!yoloInflight && (now - lastYoloFetchTime >= 100)) {
+        if (!yoloInflight && (now - lastYoloFetchTime >= 120)) {
           yoloInflight = true;
           lastYoloFetchTime = now;
           snapCtx.drawImage(video, 0, 0, 320, 240);
@@ -4784,7 +4861,7 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
               .catch(() => {
                 yoloInflight = false;
               });
-          }, "image/jpeg", 0.65);
+          }, "image/jpeg", 0.52);
         }
 
         // --- PIPELINE STEP B: Render 17-Keypoint Pose Skeleton Overlay ---
@@ -4900,7 +4977,7 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
             evidence: k.evidence && k.evidence.length > 0 ? k.evidence : prev.evidence,
             counterEvidence: k.counter_evidence && k.counter_evidence.length > 0 ? k.counter_evidence : prev.counterEvidence,
             visionSource: "Ultralytics YOLO11-Pose (17 Joints)",
-            hardwareBadge: "GTX 1650 CUDA Ingestion",
+            hardwareBadge: "Edge CUDA Ingestion",
             consensusSummary: k.consensus_summary || "Real-time pose tracking operational."
           }));
         } else {
@@ -5070,8 +5147,13 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
           }));
         }
       }
-
-      animFrameRef.current = requestAnimationFrame(render);
+    } catch (renderErr) {
+      console.warn("Render loop frame error:", renderErr);
+    } finally {
+      if (playbackStateRef.current === "PLAYING") {
+        animFrameRef.current = requestAnimationFrame(render);
+      }
+    }
     };
 
     animFrameRef.current = requestAnimationFrame(render);
@@ -5135,12 +5217,23 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
               {localYoloActive ? (
                 <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200/80 flex items-center gap-1 animate-pulse">
                   <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                  GTX 1650 CUDA Connected
+                  {gpuLabel} CUDA Connected
                 </span>
               ) : (
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
-                  Client-Side Optical Fallback
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                    Client-Side Optical Fallback
+                  </span>
+                  <button
+                    onClick={handleStartDaemon}
+                    disabled={isStartingDaemon}
+                    className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1 transition-all cursor-pointer shadow-xs disabled:opacity-50"
+                    title="Click to automatically launch YOLO Ultralytics Sentinel on localhost (Port 5050)"
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full bg-emerald-500 ${isStartingDaemon ? "animate-ping" : ""}`} />
+                    {isStartingDaemon ? "Starting YOLO..." : "⚡ Start YOLO Sentinel"}
+                  </button>
+                </div>
               )}
             </div>
             <p className="text-xs text-slate-500 mt-1 leading-relaxed">
@@ -5255,8 +5348,8 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
             </div>
             <div className="bg-slate-50 p-2 rounded-xl border border-slate-100">
               <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 block">Hardware</span>
-              <span className="text-[11px] font-bold text-slate-800 truncate block mt-0.5" title={localYoloActive ? "NVIDIA GeForce GTX 1650 CUDA" : "DirectShow / CPU"}>
-                {localYoloActive ? "GTX 1650" : "CPU Engine"}
+              <span className="text-[11px] font-bold text-slate-800 truncate block mt-0.5" title={localYoloActive ? gpuLabel : "DirectShow / CPU"}>
+                {localYoloActive ? gpuLabel : "CPU Engine"}
               </span>
             </div>
             <div className="bg-slate-50 p-2 rounded-xl border border-slate-100">
@@ -5430,7 +5523,7 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
               <div className="flex items-center gap-2">
                 <h4 className="text-xs font-bold text-slate-900 truncate">
                   {cameraSource === "LIVE_WEBCAM"
-                    ? (localYoloActive ? "Hardware YOLO-Pose Sentinel (NVIDIA GTX 1650 CUDA)" : "Live Device Webcam Sentinel (Real-Time Optical Flow)")
+                    ? (localYoloActive ? `Hardware YOLO-Pose Sentinel (${gpuLabel})` : "Live Device Webcam Sentinel (Real-Time Optical Flow)")
                     : cameraSource === "PRERECORDED_VIDEO"
                     ? (customVideoFileName ? `Demonstration Video Sentinel · ${customVideoFileName}` : "Clinical Demonstration Sentinel · Pre-Recorded Bed-Fall Footage")
                     : (currentUser?.role === "nurse" ? "RTSP Hospital Ward CCTV · Bed 01" : "RTSP Home CCTV · Main Zone")}
@@ -5457,7 +5550,9 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
                     type="button"
                     onClick={() => {
                       setLiveCameraMode("BROWSER_WEBCAM");
-                      if (playbackState !== "PLAYING" || !webcamStreamRef.current) {
+                      setHardwareStreamPaused(true);
+                      fetch(`${YOLO_API_BASE}/api/yolo/stop`, { method: "POST" }).catch(() => {});
+                      if (playbackStateRef.current !== "PLAYING" || !webcamStreamRef.current) {
                         setPlaybackState("STOPPED");
                       }
                     }}
@@ -5476,6 +5571,9 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
                       type="button"
                       onClick={() => {
                         setLiveCameraMode("HARDWARE_YOLO");
+                        setHardwareStreamPaused(false);
+                        setStreamRetryKey(Date.now());
+                        fetch(`${YOLO_API_BASE}/api/yolo/start`, { method: "POST" }).catch(() => {});
                         if (webcamStreamRef.current) {
                           webcamStreamRef.current.getTracks().forEach((t) => t.stop());
                           webcamStreamRef.current = null;

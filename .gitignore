@@ -1,7 +1,14 @@
 # AutoSave watcher log (written on every auto-commit — must never be committed
 # or it would trigger an endless loop of autosave commits)
 tools/autosaver.log
+tools/*.log
+*.log
 *.pt
 *.onnx
 __pycache__/
 *.py[cod]
+
+# Local Python environment for the YOLO vision daemon (multi-GB CUDA wheels —
+# must never be committed/pushed)
+.venv/
+venv/
