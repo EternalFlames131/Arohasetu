@@ -471,3 +471,5 @@
   - **Githooks Safety Policy:** Updated `.githooks/post-commit` origin whitelist to recognize `splinemotions/ReJivan-FS` alongside `EternalFlames131/ReJivan-FS`.
   - **Full Code Upload:** Successfully pushed all branches, latest YOLO auto-spawn daemons, latency optimizations, and commit histories to `origin/main`.
 
+- 2026-10-09 22:33 | SYNCED newer project snapshot from ReJivan-FS-main.zip into the local `rejivan FS` folder: replaced all 34 changed files + added 4 new files (38 total) so the local project now matches the newest code (Oct 6: deterministic alert/call engine, vision stack, docs). Verified 199/199 files byte-identical to the zip. Local-only file `tools\build_functioning_pdf.ps1` kept untouched.
+
