@@ -341,7 +341,129 @@ const ClinicalExportModal = ({ isOpen, onClose, vitalsData, currentUser, activeP
   );
 };
 
+// Developer-only emergency signal modal: fired when a vital-signs wearable loses its heartbeat.
+// Informs the emergency escalation chain (caregiver -> backup -> 108/112 or ward Code Blue/MET).
+const EmergencySignalModal = ({ isOpen, onClose, signal, activePatient, currentUser, onDispatch }) => {
+  if (!isOpen || !signal) return null;
+
+  const patientName = activePatient?.name || "Patient";
+  const location = (activePatient?.location || "").split("→")[1]?.trim() || activePatient?.location || "—";
+  const family = activePatient?.primaryContact || "Primary caregiver";
+  const backup = activePatient?.backupPhone || "Backup contact";
+  const hub = activePatient?.emergencyHub || "Emergency services (108 / 112)";
+  const isNurse = currentUser?.role === "nurse" || currentUser?.email === "wardnurse@demo.in";
+
+  const ladder = isNurse
+    ? [
+        { label: "Ward A Nurse Station", detail: "Bedside + station console alarm · Ext. 402", state: "notified" },
+        { label: activePatient?.attendingDoc || "Attending Physician", detail: "On-call escalation · Ext. 104", state: "dialing" },
+        { label: "Code Blue / MET Team", detail: "Hospital crash team standby · Ext. 222", state: "queued" },
+      ]
+    : [
+        { label: family, detail: "Primary caregiver · SMS + voice call", state: "notified" },
+        { label: backup, detail: "Backup contact · voice call", state: "dialing" },
+        { label: hub, detail: "108 / 112 dispatch with GPS + last vitals packet", state: "queued" },
+      ];
+
+  const badge = (state) =>
+    state === "notified"
+      ? "bg-emerald-100 text-emerald-800 border-emerald-200"
+      : state === "dialing"
+      ? "bg-amber-100 text-amber-800 border-amber-200"
+      : "bg-slate-100 text-slate-600 border-slate-200";
+
+  return (
+    <div className="fixed inset-0 z-[60] bg-rose-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+      <div className="bg-white border-2 border-rose-300 rounded-2xl p-6 max-w-lg w-full shadow-2xl animate-in zoom-in-95">
+        <div className="flex items-start justify-between pb-3 border-b border-rose-100">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center shadow-md">
+              <AlertTriangle className="w-5 h-5 animate-pulse" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-bold text-rose-900 tracking-tight">
+                  EMERGENCY SIGNAL — Vital Monitor Lost
+                </h3>
+                <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+              </div>
+              <p className="text-[11px] text-slate-500">
+                {patientName} • {location}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+            title="Dismiss (escalation continues in background)"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="my-4 p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-900 leading-snug">
+          <div className="font-bold mb-1">
+            Wearable disconnected: {signal.device}
+          </div>
+          <p className="opacity-90">
+            Heartbeat lost for {signal.feeds.map((f) => f.toUpperCase()).join(" + ")} telemetry. The patient is now
+            not being actively monitored on these vitals, so the system treats this as an emergency condition and
+            initiates the emergency escalation chain below. The overhead YOLO / edge-vision camera keeps watching for
+            falls, out-of-bed and low activity meanwhile.
+          </p>
+        </div>
+
+        <div className="my-4">
+          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+            Emergency Escalation Chain (auto-initiated)
+          </div>
+          <div className="space-y-2">
+            {ladder.map((step, i) => (
+              <div
+                key={i}
+                className="flex items-center justify-between gap-3 p-2.5 rounded-xl border border-slate-200/80 bg-slate-50/60"
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${
+                    step.state === "notified" ? "bg-emerald-500 text-white" : step.state === "dialing" ? "bg-amber-500 text-white" : "bg-slate-300 text-white"
+                  }`}>
+                    {i + 1}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold text-slate-900 truncate">{step.label}</div>
+                    <div className="text-[10px] text-slate-500 truncate">{step.detail}</div>
+                  </div>
+                </div>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border shrink-0 ${badge(step.state)}`}>
+                  {step.state === "notified" ? "NOTIFIED" : step.state === "dialing" ? "DIALING…" : "QUEUED"}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="px-4 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            Acknowledge (keep alarm armed)
+          </button>
+          <button
+            onClick={onDispatch}
+            className="px-4 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs"
+          >
+            <PhoneCall className="w-3.5 h-3.5" />
+            <span>Open Live Dispatch Console</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const AddMedicationModal = ({ isOpen, onClose, activePatient }) => {
+  const [drugName, setDrugName] = React.useState("");
   const [dosage, setDosage] = React.useState("");
   const [times, setTimes] = React.useState("08:00 AM");
   const [success, setSuccess] = React.useState(false);
