@@ -15,9 +15,13 @@ const VitalSignsTable = ({ vitalsData }) => {
   };
 
   // Calculate dynamic clinical status and colors based on current telemetry values
+  // A null value means the feeding wearable is disconnected (reliability safeguard #4)
   let hrStatusType = "normal";
   let hrStatusLabel = "Stable";
-  if (data.hr < 60) {
+  if (data.hr == null) {
+    hrStatusType = "offline";
+    hrStatusLabel = "No Signal (Sensor Offline)";
+  } else if (data.hr < 60) {
     hrStatusType = "danger";
     hrStatusLabel = `Bradycardia (${data.hr} bpm)`;
   } else if (data.hr > 100) {
@@ -27,7 +31,10 @@ const VitalSignsTable = ({ vitalsData }) => {
 
   let spo2StatusType = "normal";
   let spo2StatusLabel = "Normal";
-  if (data.spo2 < 92) {
+  if (data.spo2 == null) {
+    spo2StatusType = "offline";
+    spo2StatusLabel = "No Signal (Sensor Offline)";
+  } else if (data.spo2 < 92) {
     spo2StatusType = "danger";
     spo2StatusLabel = `Hypoxemia (${data.spo2}%)`;
   } else if (data.spo2 < 95) {
@@ -37,7 +44,10 @@ const VitalSignsTable = ({ vitalsData }) => {
 
   let bpStatusType = "normal";
   let bpStatusLabel = "Normal (<120/80)";
-  if (data.bpSys >= 160 || data.bpDia >= 100) {
+  if (data.bpSys == null || data.bpDia == null) {
+    bpStatusType = "offline";
+    bpStatusLabel = "No Signal (Sensor Offline)";
+  } else if (data.bpSys >= 160 || data.bpDia >= 100) {
     bpStatusType = "danger";
     bpStatusLabel = `Stage 2 Crisis (${data.bpSys}/${data.bpDia})`;
   } else if (data.bpSys >= 140 || data.bpDia >= 90) {
