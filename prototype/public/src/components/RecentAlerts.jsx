@@ -1,7 +1,7 @@
 // prototype/public/src/components/RecentAlerts.jsx
 // Recent Alerts Card (Enterprise Clinical Grade - Account Aware)
 
-const RecentAlerts = ({ alerts = [], onAcknowledge, currentUser, activePatient }) => {
+const RecentAlerts = ({ alerts = [], prependAlerts = [], onAcknowledge, currentUser, activePatient }) => {
   const getDefaultAlertsForUser = (user, patient) => {
     if (patient?.alerts && patient.alerts.length > 0) {
       return patient.alerts;
@@ -109,7 +109,7 @@ const RecentAlerts = ({ alerts = [], onAcknowledge, currentUser, activePatient }
     () => getDefaultAlertsForUser(currentUser, activePatient),
     [currentUser?.email, activePatient?.patientId, activePatient?.id, activePatient?.bedNumber]
   );
-  const displayAlerts = alerts.length > 0 ? alerts : defaultAlerts;
+  const displayAlerts = [...prependAlerts, ...(alerts.length > 0 ? alerts : defaultAlerts)];
 
   return (
     <div className="bg-white border border-slate-200/80 rounded-xl p-4 sm:p-5 shadow-xs mb-6">

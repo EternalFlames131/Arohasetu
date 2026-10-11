@@ -153,7 +153,7 @@ const VitalSignsTable = ({ vitalsData }) => {
       code: "GLU",
       icon: Droplets,
       iconColor: gluStatusType === "danger" ? "text-rose-600" : "text-indigo-500",
-      value: `${data.glucose}`,
+      value: data.glucose == null ? "—" : `${data.glucose}`,
       unit: "mg/dL",
       target: "70-140 mg/dL",
       statusType: gluStatusType,
@@ -245,7 +245,13 @@ const VitalSignsTable = ({ vitalsData }) => {
 
                   {/* Status Badge */}
                   <td className="py-3 px-5">
-                    {row.statusType === "caution" ? (
+                    {row.statusType === "offline" ? (
+                      /* Sensor offline / wearable disconnected: muted dashed badge */
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-500 border border-dashed border-slate-300">
+                        <Wifi className="w-3 h-3 text-slate-400 shrink-0" />
+                        <span>{row.statusLabel}</span>
+                      </span>
+                    ) : row.statusType === "caution" ? (
                       /* Soft amber background with crisp amber text */
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
                         <AlertTriangle className="w-3 h-3 text-amber-600 shrink-0" />
