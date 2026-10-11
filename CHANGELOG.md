@@ -473,3 +473,5 @@
 
 - 2026-10-09 22:33 | SYNCED newer project snapshot from ReJivan-FS-main.zip into the local `rejivan FS` folder: replaced all 34 changed files + added 4 new files (38 total) so the local project now matches the newest code (Oct 6: deterministic alert/call engine, vision stack, docs). Verified 199/199 files byte-identical to the zip. Local-only file `tools\build_functioning_pdf.ps1` kept untouched.
 
+- 2026-10-11 (Day 35) | JUDGE-DEMO FEATURES — wearable disconnect layering + manual smartwatch feed: added `SensorDemoPanel.jsx` (5-device Connect/Disconnect toggles + "YOLO still watching" banner + manual vital sliders/presets that push into the live stream and re-run triage), offline "No Signal (Sensor Offline)" handling in `VitalSignsTable.jsx`, `prependAlerts` support in `RecentAlerts.jsx`, disconnect + manual-feed state/handlers/drift/triage in `App.jsx`; registered in `tools/build_web.js`; bundle rebuilt (483 KB) and verified via Edge headless DOM (1.7 MB render, 0 Babel errors). Confirmed YOLO edge daemon on 127.0.0.1:5050 and web server on 8080.
+
