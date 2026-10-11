@@ -29,6 +29,7 @@ const files = [
   path.join(compDir, "MedicinesView.jsx"),
   path.join(compDir, "AlertsView.jsx"),
   path.join(compDir, "MedicalDevicesView.jsx"),
+  path.join(compDir, "SensorDemoPanel.jsx"),
   path.join(compDir, "Modals.jsx"),
   path.join(compDir, "LoginModal.jsx"),
   path.join(srcDir, "App.jsx"),

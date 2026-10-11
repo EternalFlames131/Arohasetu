@@ -1427,6 +1427,15 @@ const App = () => {
                 </div>
               </div>
 
+              {/* Judge-Demo: Wearable Disconnect Layering + Manual Smartwatch Vital Feed */}
+              <SensorDemoPanel
+                disconnectedDevices={disconnectedDevices}
+                onToggleDevice={handleToggleDevice}
+                feedOverride={feedOverride}
+                onPushReading={handlePushReading}
+                onClearFeed={handleClearFeed}
+              />
+
               {/* 4. Main Content Area (2-Column Grid: 70% Left, 30% Right) */}
               <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
                 {/* Left Column (Primary Telemetry & Patient Detail - 70%) */}
@@ -1583,7 +1592,7 @@ const App = () => {
                 {/* Right Column (Alerts & Care Coordination Panel - 30%) */}
                 <div className="xl:col-span-4 space-y-6">
                   {/* Recent Alerts Card */}
-                  <RecentAlerts currentUser={user} activePatient={activePatient} />
+                  <RecentAlerts currentUser={user} activePatient={activePatient} prependAlerts={demoAlerts} />
 
                   {/* Medication Schedule Card */}
                   <MedicationScheduleCard
