@@ -705,6 +705,32 @@ const pushFifo = (arr, val, max = 12) => {
   return next.length > max ? next.slice(next.length - max) : next;
 };
 
+// Subtle emergency alarm (demo-only). Guarded by try/catch to avoid blocking the UI.
+const playEmergencyAlarm = () => {
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    const ctx = new AC();
+    const schedule = (f, t, gain) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g);
+      g.connect(ctx.destination);
+      o.frequency.setValueAtTime(f, t);
+      o.type = "sawtooth";
+      g.gain.setValueAtTime(gain, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+      o.start(t);
+      o.stop(t + 0.25);
+    };
+    schedule(880, ctx.currentTime, 0.4);
+    schedule(660, ctx.currentTime + 0.3, 0.35);
+    setTimeout(() => ctx.close(), 800);
+  } catch (e) {
+    return;
+  }
+};
+
 // Clinical triage classifier for manually-fed smartwatch readings (mirrors VitalSignsTable thresholds)
 const classifyReading = (r) => {
   if (
@@ -789,6 +815,26 @@ const App = () => {
   const [emergencySignal, setEmergencySignal] = React.useState(null); // { device, feeds, at }
   const [emergencyModalOpen, setEmergencyModalOpen] = React.useState(false);
 
+  // Dev mode shortcut (Ctrl+Shift+D) + URL/hash/session support
+  React.useEffect(() => {
+    const onKey = (e) => {
+      if (e.ctrlKey && e.shiftKey && (e.key === "D" || e.key === "d")) {
+        e.preventDefault();
+        setDevMode((v) => {
+          const n = !v;
+          try {
+            if (typeof sessionStorage !== "undefined") {
+              sessionStorage.setItem("rejivan_devmode", n ? "1" : "0");
+            }
+          } catch (_) {}
+          return n;
+        });
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   // Vitals & Telemetry State
   const [vitals, setVitals] = React.useState({
     hr: 85,
@@ -841,6 +887,8 @@ const App = () => {
     setDisconnectedDevices({});
     setFeedOverride(null);
     setDemoAlerts([]);
+    setEmergencySignal(null);
+    setEmergencyModalOpen(false);
   };
 
   // --- Judge-demo handlers (Sensors & Wearables panel) ---
