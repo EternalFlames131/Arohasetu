@@ -832,6 +832,12 @@ const App = () => {
     return () => clearInterval(timer);
   }, []);
 
+  // Judge-demo: is a given vital completely offline because ALL of its feeding wearables disconnected?
+  const isVitalOffline = (key) => {
+    const feeders = REJIVAN_DEMO_DEVICES.filter((d) => d.feeds.includes(key));
+    return feeders.length > 0 && feeders.every((d) => disconnectedDevices[d.id]);
+  };
+
   // Continuous physiological drift & sparkline streaming interval (every 1.5 seconds)
   React.useEffect(() => {
     if (!isStreaming) return;
@@ -839,12 +845,13 @@ const App = () => {
     const streamInterval = setInterval(() => {
       setVitals((prev) => {
         const baseVitals = activePatient?.defaultVitals || ACCOUNT_PROFILES["asharma@demo.in"].defaultVitals;
-        let targetHr = baseVitals.hr;
-        let targetSpo2 = baseVitals.spo2;
-        let targetBpSys = baseVitals.bpSys;
-        let targetBpDia = baseVitals.bpDia;
-        let targetTemp = baseVitals.temp;
-        let targetGlucose = baseVitals.glucose;
+        // Manual smartwatch feed (Feature B) overrides sim/base targets while active
+        let targetHr = feedOverride ? feedOverride.hr : baseVitals.hr;
+        let targetSpo2 = feedOverride ? feedOverride.spo2 : baseVitals.spo2;
+        let targetBpSys = feedOverride ? feedOverride.bpSys : baseVitals.bpSys;
+        let targetBpDia = feedOverride ? feedOverride.bpDia : baseVitals.bpDia;
+        let targetTemp = feedOverride ? feedOverride.temp : baseVitals.temp;
+        let targetGlucose = feedOverride ? feedOverride.glucose : baseVitals.glucose;
 
         if (simMode === "bp_crisis") {
           targetHr = 95;
@@ -876,17 +883,19 @@ const App = () => {
           return curr + delta + jitter;
         };
 
-        const nextHr = Math.round(drift(prev.hr, targetHr, 0.35, 1.2));
-        const nextSpo2 = Math.round(drift(prev.spo2, targetSpo2, 0.3, 0.15) * 10) / 10;
-        const nextBpSys = Math.round(drift(prev.bpSys, targetBpSys, 0.35, 1.5));
-        const nextBpDia = Math.round(drift(prev.bpDia, targetBpDia, 0.35, 1.2));
-        const nextTemp = Math.round(drift(prev.temp, targetTemp, 0.2, 0.05) * 10) / 10;
-        const nextGlucose = Math.round(drift(prev.glucose, targetGlucose, 0.25, 1.0));
+        // Feature A: vitals whose wearable(s) lost their heartbeat stay null (stale, no drift)
+        const hrOff = isVitalOffline("hr");
+        const spo2Off = isVitalOffline("spo2");
+        const bpOff = isVitalOffline("bpSys") || isVitalOffline("bpDia");
+        const tempOff = isVitalOffline("temp");
+        const gluOff = isVitalOffline("glucose");
 
-        const pushFifo = (arr, val, max = 12) => {
-          const next = [...(arr || []), val];
-          return next.length > max ? next.slice(next.length - max) : next;
-        };
+        const nextHr = hrOff ? null : Math.round(drift(prev.hr ?? baseVitals.hr, targetHr, 0.35, 1.2));
+        const nextSpo2 = spo2Off ? null : Math.round(drift(prev.spo2 ?? baseVitals.spo2, targetSpo2, 0.3, 0.15) * 10) / 10;
+        const nextBpSys = bpOff ? null : Math.round(drift(prev.bpSys ?? baseVitals.bpSys, targetBpSys, 0.35, 1.5));
+        const nextBpDia = bpOff ? null : Math.round(drift(prev.bpDia ?? baseVitals.bpDia, targetBpDia, 0.35, 1.2));
+        const nextTemp = tempOff ? null : Math.round(drift(prev.temp ?? baseVitals.temp, targetTemp, 0.2, 0.05) * 10) / 10;
+        const nextGlucose = gluOff ? null : Math.round(drift(prev.glucose ?? baseVitals.glucose, targetGlucose, 0.25, 1.0));
 
         return {
           ...prev,
@@ -897,11 +906,12 @@ const App = () => {
           temp: nextTemp,
           glucose: nextGlucose,
           lastSync: "Just now",
-          sparkHr: pushFifo(prev.sparkHr, nextHr),
-          sparkSpo2: pushFifo(prev.sparkSpo2, nextSpo2),
-          sparkBp: pushFifo(prev.sparkBp, nextBpSys),
-          sparkTemp: pushFifo(prev.sparkTemp, nextTemp),
-          sparkGlucose: pushFifo(prev.sparkGlucose, nextGlucose),
+          hardwareSource: feedOverride ? "ReJivan Smartwatch · Manual Demo Feed" : prev.hardwareSource,
+          sparkHr: hrOff ? prev.sparkHr : pushFifo(prev.sparkHr, nextHr),
+          sparkSpo2: spo2Off ? prev.sparkSpo2 : pushFifo(prev.sparkSpo2, nextSpo2),
+          sparkBp: bpOff ? prev.sparkBp : pushFifo(prev.sparkBp, nextBpSys),
+          sparkTemp: tempOff ? prev.sparkTemp : pushFifo(prev.sparkTemp, nextTemp),
+          sparkGlucose: gluOff ? prev.sparkGlucose : pushFifo(prev.sparkGlucose, nextGlucose),
         };
       });
 
@@ -912,7 +922,7 @@ const App = () => {
     }, 1500);
 
     return () => clearInterval(streamInterval);
-  }, [isStreaming, simMode, activePatient]);
+  }, [isStreaming, simMode, activePatient, feedOverride, disconnectedDevices]);
 
   // Dynamic Triage Metrics Calculator
   const getTriageMetrics = () => {
