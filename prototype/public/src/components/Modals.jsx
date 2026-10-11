@@ -342,7 +342,6 @@ const ClinicalExportModal = ({ isOpen, onClose, vitalsData, currentUser, activeP
 };
 
 const AddMedicationModal = ({ isOpen, onClose, activePatient }) => {
-  const [drugName, setDrugName] = React.useState("");
   const [dosage, setDosage] = React.useState("");
   const [times, setTimes] = React.useState("08:00 AM");
   const [success, setSuccess] = React.useState(false);
