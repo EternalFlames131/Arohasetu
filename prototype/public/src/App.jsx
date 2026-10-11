@@ -1775,6 +1775,17 @@ const App = () => {
         </main>
 
         {/* Global Clinical Modals */}
+        <EmergencySignalModal
+          isOpen={emergencyModalOpen}
+          onClose={() => setEmergencyModalOpen(false)}
+          signal={emergencySignal}
+          activePatient={activePatient}
+          currentUser={user}
+          onDispatch={() => {
+            setEmergencyModalOpen(false);
+            setCallModalOpen(true);
+          }}
+        />
         <CallCaregiverModal
           isOpen={callModalOpen}
           onClose={() => setCallModalOpen(false)}

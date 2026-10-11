@@ -9347,6 +9347,127 @@ const ClinicalExportModal = ({ isOpen, onClose, vitalsData, currentUser, activeP
   );
 };
 
+// Developer-only emergency signal modal: fired when a vital-signs wearable loses its heartbeat.
+// Informs the emergency escalation chain (caregiver -> backup -> 108/112 or ward Code Blue/MET).
+const EmergencySignalModal = ({ isOpen, onClose, signal, activePatient, currentUser, onDispatch }) => {
+  if (!isOpen || !signal) return null;
+
+  const patientName = activePatient?.name || "Patient";
+  const location = (activePatient?.location || "").split("→")[1]?.trim() || activePatient?.location || "—";
+  const family = activePatient?.primaryContact || "Primary caregiver";
+  const backup = activePatient?.backupPhone || "Backup contact";
+  const hub = activePatient?.emergencyHub || "Emergency services (108 / 112)";
+  const isNurse = currentUser?.role === "nurse" || currentUser?.email === "wardnurse@demo.in";
+
+  const ladder = isNurse
+    ? [
+        { label: "Ward A Nurse Station", detail: "Bedside + station console alarm · Ext. 402", state: "notified" },
+        { label: activePatient?.attendingDoc || "Attending Physician", detail: "On-call escalation · Ext. 104", state: "dialing" },
+        { label: "Code Blue / MET Team", detail: "Hospital crash team standby · Ext. 222", state: "queued" },
+      ]
+    : [
+        { label: family, detail: "Primary caregiver · SMS + voice call", state: "notified" },
+        { label: backup, detail: "Backup contact · voice call", state: "dialing" },
+        { label: hub, detail: "108 / 112 dispatch with GPS + last vitals packet", state: "queued" },
+      ];
+
+  const badge = (state) =>
+    state === "notified"
+      ? "bg-emerald-100 text-emerald-800 border-emerald-200"
+      : state === "dialing"
+      ? "bg-amber-100 text-amber-800 border-amber-200"
+      : "bg-slate-100 text-slate-600 border-slate-200";
+
+  return (
+    <div className="fixed inset-0 z-[60] bg-rose-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+      <div className="bg-white border-2 border-rose-300 rounded-2xl p-6 max-w-lg w-full shadow-2xl animate-in zoom-in-95">
+        <div className="flex items-start justify-between pb-3 border-b border-rose-100">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center shadow-md">
+              <AlertTriangle className="w-5 h-5 animate-pulse" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-bold text-rose-900 tracking-tight">
+                  EMERGENCY SIGNAL — Vital Monitor Lost
+                </h3>
+                <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+              </div>
+              <p className="text-[11px] text-slate-500">
+                {patientName} • {location}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+            title="Dismiss (escalation continues in background)"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="my-4 p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-900 leading-snug">
+          <div className="font-bold mb-1">
+            Wearable disconnected: {signal.device}
+          </div>
+          <p className="opacity-90">
+            Heartbeat lost for {signal.feeds.map((f) => f.toUpperCase()).join(" + ")} telemetry. The patient is now
+            not being actively monitored on these vitals, so the system treats this as an emergency condition and
+            initiates the emergency escalation chain below. The overhead YOLO / edge-vision camera keeps watching for
+            falls, out-of-bed and low activity meanwhile.
+          </p>
+        </div>
+
+        <div className="my-4">
+          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+            Emergency Escalation Chain (auto-initiated)
+          </div>
+          <div className="space-y-2">
+            {ladder.map((step, i) => (
+              <div
+                key={i}
+                className="flex items-center justify-between gap-3 p-2.5 rounded-xl border border-slate-200/80 bg-slate-50/60"
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${
+                    step.state === "notified" ? "bg-emerald-500 text-white" : step.state === "dialing" ? "bg-amber-500 text-white" : "bg-slate-300 text-white"
+                  }`}>
+                    {i + 1}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold text-slate-900 truncate">{step.label}</div>
+                    <div className="text-[10px] text-slate-500 truncate">{step.detail}</div>
+                  </div>
+                </div>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border shrink-0 ${badge(step.state)}`}>
+                  {step.state === "notified" ? "NOTIFIED" : step.state === "dialing" ? "DIALING…" : "QUEUED"}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="px-4 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            Acknowledge (keep alarm armed)
+          </button>
+          <button
+            onClick={onDispatch}
+            className="px-4 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs"
+          >
+            <PhoneCall className="w-3.5 h-3.5" />
+            <span>Open Live Dispatch Console</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const AddMedicationModal = ({ isOpen, onClose, activePatient }) => {
   const [drugName, setDrugName] = React.useState("");
   const [dosage, setDosage] = React.useState("");
@@ -10324,6 +10445,32 @@ const pushFifo = (arr, val, max = 12) => {
   return next.length > max ? next.slice(next.length - max) : next;
 };
 
+// Subtle emergency alarm (demo-only). Guarded by try/catch to avoid blocking the UI.
+const playEmergencyAlarm = () => {
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    const ctx = new AC();
+    const schedule = (f, t, gain) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g);
+      g.connect(ctx.destination);
+      o.frequency.setValueAtTime(f, t);
+      o.type = "sawtooth";
+      g.gain.setValueAtTime(gain, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+      o.start(t);
+      o.stop(t + 0.25);
+    };
+    schedule(880, ctx.currentTime, 0.4);
+    schedule(660, ctx.currentTime + 0.3, 0.35);
+    setTimeout(() => ctx.close(), 800);
+  } catch (e) {
+    return;
+  }
+};
+
 // Clinical triage classifier for manually-fed smartwatch readings (mirrors VitalSignsTable thresholds)
 const classifyReading = (r) => {
   if (
@@ -10389,6 +10536,45 @@ const App = () => {
   const [feedOverride, setFeedOverride] = React.useState(null); // { hr, spo2, bpSys, bpDia, temp, glucose, label }
   const [demoAlerts, setDemoAlerts] = React.useState([]); // judge-demo alert entries prepended to Recent Alerts
 
+  // Developer-only demo mode: the Sensors & Wearables panel is HIDDEN from judges by default.
+  // Reveal it with ?dev=1 in the URL or the Ctrl+Shift+D shortcut. Persisted for the session.
+  const [devMode, setDevMode] = React.useState(() => {
+    try {
+      const qs = new URLSearchParams(window.location.search);
+      return (
+        qs.get("dev") === "1" ||
+        /(^|[#&?])dev(=1)?\b/.test(window.location.hash || "") ||
+        (typeof sessionStorage !== "undefined" && sessionStorage.getItem("rejivan_devmode") === "1")
+      );
+    } catch (e) {
+      return false;
+    }
+  });
+
+  // Emergency signal state (fired when a vital monitor loses its heartbeat)
+  const [emergencySignal, setEmergencySignal] = React.useState(null); // { device, feeds, at }
+  const [emergencyModalOpen, setEmergencyModalOpen] = React.useState(false);
+
+  // Dev mode shortcut (Ctrl+Shift+D) + URL/hash/session support
+  React.useEffect(() => {
+    const onKey = (e) => {
+      if (e.ctrlKey && e.shiftKey && (e.key === "D" || e.key === "d")) {
+        e.preventDefault();
+        setDevMode((v) => {
+          const n = !v;
+          try {
+            if (typeof sessionStorage !== "undefined") {
+              sessionStorage.setItem("rejivan_devmode", n ? "1" : "0");
+            }
+          } catch (_) {}
+          return n;
+        });
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   // Vitals & Telemetry State
   const [vitals, setVitals] = React.useState({
     hr: 85,
@@ -10441,6 +10627,8 @@ const App = () => {
     setDisconnectedDevices({});
     setFeedOverride(null);
     setDemoAlerts([]);
+    setEmergencySignal(null);
+    setEmergencyModalOpen(false);
   };
 
   // --- Judge-demo handlers (Sensors & Wearables panel) ---
@@ -10462,6 +10650,9 @@ const App = () => {
     });
 
     if (nowOff) {
+      setEmergencySignal({ device: dev.name, feeds: dev.feeds, at: Date.now() });
+      setEmergencyModalOpen(true);
+      playEmergencyAlarm();
       setDemoAlerts((a) =>
         [
           {
@@ -10470,13 +10661,15 @@ const App = () => {
             reading: "Telemetry interrupted",
             time: "Just now",
             severity: "danger",
-            message: `${dev.name} heartbeat lost. ${dev.feeds.map((f) => f.toUpperCase()).join(" + ")} now stale. Reliability safeguards #4 (sensor watchdog) + #7 (graceful degradation) engaged — overhead YOLO camera keeps monitoring falls / out-of-bed / low activity.`,
+            message: `${dev.name} heartbeat lost. ${dev.feeds.map((f) => f.toUpperCase()).join(" + ")} now stale. Reliability safeguards #4 (sensor watchdog) + #7 (graceful degradation) engaged — overhead YOLO camera keeps monitoring falls / out-of-bed / low activity. Emergency signal initiated (caregiver → backup → 108/112 or Code Blue/MET).`,
             source: dev.name,
           },
           ...a,
         ].slice(0, 6)
       );
     } else {
+      setEmergencySignal((sig) => (sig && sig.device === dev.name ? null : sig));
+      setEmergencyModalOpen(false);
       setDemoAlerts((a) =>
         [
           {
@@ -11047,18 +11240,55 @@ const App = () => {
               </div>
 
               {/* Judge-Demo: Wearable Disconnect Layering + Manual Smartwatch Vital Feed */}
-              <SensorDemoPanel
-                disconnectedDevices={disconnectedDevices}
-                onToggleDevice={handleToggleDevice}
-                feedOverride={feedOverride}
-                onPushReading={handlePushReading}
-                onClearFeed={handleClearFeed}
-              />
+              {devMode && (
+                <SensorDemoPanel
+                  disconnectedDevices={disconnectedDevices}
+                  onToggleDevice={handleToggleDevice}
+                  feedOverride={feedOverride}
+                  onPushReading={handlePushReading}
+                  onClearFeed={handleClearFeed}
+                />
+              )}
 
               {/* 4. Main Content Area (2-Column Grid: 70% Left, 30% Right) */}
               <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
                 {/* Left Column (Primary Telemetry & Patient Detail - 70%) */}
                 <div className="xl:col-span-8 space-y-6">
+                  {/* Emergency Signal Banner (fired when wearable loses heartbeat) */}
+                  {emergencySignal && (
+                    <div className="rounded-2xl border-2 border-rose-400 bg-rose-600 text-white p-4 shadow-lg animate-pulse flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <span className="w-3 h-3 rounded-full bg-white animate-ping" />
+                        <div>
+                          <h4 className="text-sm font-bold tracking-tight">
+                            EMERGENCY: Vital monitor disconnected — patient now unmonitored
+                          </h4>
+                          <p className="text-[11px] mt-0.5 opacity-95">
+                            {emergencySignal.device} heartbeat lost for{" "}
+                            {emergencySignal.feeds.map((f) => f.toUpperCase()).join(" + ")} telemetry. Emergency
+                            escalation chain initiated (caregiver → backup → 108/112 / Code Blue/MET).
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 self-stretch sm:self-center">
+                        <button
+                          onClick={() => setEmergencyModalOpen(true)}
+                          className="px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-xs font-bold border border-white/30 backdrop-blur-xs"
+                        >
+                          View Escalation
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEmergencySignal(null);
+                            setEmergencyModalOpen(false);
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-white text-rose-700 text-xs font-bold hover:bg-white/90"
+                        >
+                          Acknowledge &amp; Clear
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   {/* Either All Beds Grid OR Focused Patient Overview Card */}
                   {selectedWardBed === "all" && isNurse ? (
                     <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs mb-6">
@@ -11285,6 +11515,17 @@ const App = () => {
         </main>
 
         {/* Global Clinical Modals */}
+        <EmergencySignalModal
+          isOpen={emergencyModalOpen}
+          onClose={() => setEmergencyModalOpen(false)}
+          signal={emergencySignal}
+          activePatient={activePatient}
+          currentUser={user}
+          onDispatch={() => {
+            setEmergencyModalOpen(false);
+            setCallModalOpen(true);
+          }}
+        />
         <CallCaregiverModal
           isOpen={callModalOpen}
           onClose={() => setCallModalOpen(false)}
