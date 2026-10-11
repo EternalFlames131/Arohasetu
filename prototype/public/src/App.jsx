@@ -698,6 +698,45 @@ const HOSPITAL_INPATIENT_BEDS = {
   },
 };
 
+// --- Judge-demo helpers (Sensors & Wearables panel) ---
+// FIFO historical sparkline buffer (shared by drift engine + manual feed pushes)
+const pushFifo = (arr, val, max = 12) => {
+  const next = [...(arr || []), val];
+  return next.length > max ? next.slice(next.length - max) : next;
+};
+
+// Clinical triage classifier for manually-fed smartwatch readings (mirrors VitalSignsTable thresholds)
+const classifyReading = (r) => {
+  if (
+    r.spo2 < 92 || r.hr < 60 || r.hr > 100 ||
+    r.bpSys >= 160 || r.bpDia >= 100 ||
+    r.temp >= 38.0 || r.temp < 35.5 ||
+    r.glucose > 180 || r.glucose < 70
+  ) {
+    let reason = `Manual demo feed — ${r.hr} bpm · ${r.spo2}% · ${r.bpSys}/${r.bpDia} · ${r.temp}°C · ${r.glucose} mg/dL`;
+    if (r.spo2 < 92) reason = `Acute Hypoxemia — SpO2 ${r.spo2}%`;
+    else if (r.hr < 60) reason = `Bradycardia — HR ${r.hr} bpm`;
+    else if (r.hr > 100) reason = `Tachycardia — HR ${r.hr} bpm`;
+    else if (r.bpSys >= 160 || r.bpDia >= 100) reason = `Stage 2 BP Crisis — ${r.bpSys}/${r.bpDia} mmHg`;
+    else if (r.temp >= 38.0) reason = `Pyrexia — Temp ${r.temp}°C`;
+    else if (r.temp < 35.5) reason = `Hypothermia — Temp ${r.temp}°C`;
+    else reason = `Extreme Glucose — ${r.glucose} mg/dL`;
+    return { severity: "danger", label: reason };
+  }
+  if (
+    r.bpSys >= 140 || r.bpDia >= 90 || r.spo2 < 95 ||
+    r.glucose > 140 || r.temp >= 37.5
+  ) {
+    let reason = `Borderline reading — ${r.hr} bpm · ${r.spo2}% · ${r.bpSys}/${r.bpDia}`;
+    if (r.bpSys >= 140 || r.bpDia >= 90) reason = `Elevated BP — ${r.bpSys}/${r.bpDia} mmHg`;
+    else if (r.spo2 < 95) reason = `Borderline SpO2 — ${r.spo2}%`;
+    else if (r.glucose > 140) reason = `Elevated Glucose — ${r.glucose} mg/dL`;
+    else reason = `Low-Grade Fever — ${r.temp}°C`;
+    return { severity: "caution", label: reason };
+  }
+  return { severity: "info", label: "All vitals within normal range" };
+};
+
 const App = () => {
   const [activeTab, setActiveTab] = React.useState("dashboard");
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
@@ -725,6 +764,11 @@ const App = () => {
   const [secondsAgo, setSecondsAgo] = React.useState(0);
   const [packetCount, setPacketCount] = React.useState(4821);
   const [lastPacketFlash, setLastPacketFlash] = React.useState(false);
+
+  // Judge-demo state: wearable disconnect layering + manual smartwatch vital feed
+  const [disconnectedDevices, setDisconnectedDevices] = React.useState({}); // { deviceId: true } when heartbeat lost
+  const [feedOverride, setFeedOverride] = React.useState(null); // { hr, spo2, bpSys, bpDia, temp, glucose, label }
+  const [demoAlerts, setDemoAlerts] = React.useState([]); // judge-demo alert entries prepended to Recent Alerts
 
   // Vitals & Telemetry State
   const [vitals, setVitals] = React.useState({
@@ -774,6 +818,10 @@ const App = () => {
       });
       setSimMode("baseline");
     }
+    // Reset judge-demo controls when switching patients
+    setDisconnectedDevices({});
+    setFeedOverride(null);
+    setDemoAlerts([]);
   };
 
   // Live seconds ticker
