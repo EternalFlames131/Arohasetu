@@ -770,6 +770,25 @@ const App = () => {
   const [feedOverride, setFeedOverride] = React.useState(null); // { hr, spo2, bpSys, bpDia, temp, glucose, label }
   const [demoAlerts, setDemoAlerts] = React.useState([]); // judge-demo alert entries prepended to Recent Alerts
 
+  // Developer-only demo mode: the Sensors & Wearables panel is HIDDEN from judges by default.
+  // Reveal it with ?dev=1 in the URL or the Ctrl+Shift+D shortcut. Persisted for the session.
+  const [devMode, setDevMode] = React.useState(() => {
+    try {
+      const qs = new URLSearchParams(window.location.search);
+      return (
+        qs.get("dev") === "1" ||
+        /(^|[#&?])dev(=1)?\b/.test(window.location.hash || "") ||
+        (typeof sessionStorage !== "undefined" && sessionStorage.getItem("rejivan_devmode") === "1")
+      );
+    } catch (e) {
+      return false;
+    }
+  });
+
+  // Emergency signal state (fired when a vital monitor loses its heartbeat)
+  const [emergencySignal, setEmergencySignal] = React.useState(null); // { device, feeds, at }
+  const [emergencyModalOpen, setEmergencyModalOpen] = React.useState(false);
+
   // Vitals & Telemetry State
   const [vitals, setVitals] = React.useState({
     hr: 85,
