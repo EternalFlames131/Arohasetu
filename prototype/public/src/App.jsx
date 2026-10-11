@@ -910,6 +910,9 @@ const App = () => {
     });
 
     if (nowOff) {
+      setEmergencySignal({ device: dev.name, feeds: dev.feeds, at: Date.now() });
+      setEmergencyModalOpen(true);
+      playEmergencyAlarm();
       setDemoAlerts((a) =>
         [
           {
@@ -918,13 +921,15 @@ const App = () => {
             reading: "Telemetry interrupted",
             time: "Just now",
             severity: "danger",
-            message: `${dev.name} heartbeat lost. ${dev.feeds.map((f) => f.toUpperCase()).join(" + ")} now stale. Reliability safeguards #4 (sensor watchdog) + #7 (graceful degradation) engaged — overhead YOLO camera keeps monitoring falls / out-of-bed / low activity.`,
+            message: `${dev.name} heartbeat lost. ${dev.feeds.map((f) => f.toUpperCase()).join(" + ")} now stale. Reliability safeguards #4 (sensor watchdog) + #7 (graceful degradation) engaged — overhead YOLO camera keeps monitoring falls / out-of-bed / low activity. Emergency signal initiated (caregiver → backup → 108/112 or Code Blue/MET).`,
             source: dev.name,
           },
           ...a,
         ].slice(0, 6)
       );
     } else {
+      setEmergencySignal((sig) => (sig && sig.device === dev.name ? null : sig));
+      setEmergencyModalOpen(false);
       setDemoAlerts((a) =>
         [
           {
@@ -1495,18 +1500,55 @@ const App = () => {
               </div>
 
               {/* Judge-Demo: Wearable Disconnect Layering + Manual Smartwatch Vital Feed */}
-              <SensorDemoPanel
-                disconnectedDevices={disconnectedDevices}
-                onToggleDevice={handleToggleDevice}
-                feedOverride={feedOverride}
-                onPushReading={handlePushReading}
-                onClearFeed={handleClearFeed}
-              />
+              {devMode && (
+                <SensorDemoPanel
+                  disconnectedDevices={disconnectedDevices}
+                  onToggleDevice={handleToggleDevice}
+                  feedOverride={feedOverride}
+                  onPushReading={handlePushReading}
+                  onClearFeed={handleClearFeed}
+                />
+              )}
 
               {/* 4. Main Content Area (2-Column Grid: 70% Left, 30% Right) */}
               <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
                 {/* Left Column (Primary Telemetry & Patient Detail - 70%) */}
                 <div className="xl:col-span-8 space-y-6">
+                  {/* Emergency Signal Banner (fired when wearable loses heartbeat) */}
+                  {emergencySignal && (
+                    <div className="rounded-2xl border-2 border-rose-400 bg-rose-600 text-white p-4 shadow-lg animate-pulse flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <span className="w-3 h-3 rounded-full bg-white animate-ping" />
+                        <div>
+                          <h4 className="text-sm font-bold tracking-tight">
+                            EMERGENCY: Vital monitor disconnected — patient now unmonitored
+                          </h4>
+                          <p className="text-[11px] mt-0.5 opacity-95">
+                            {emergencySignal.device} heartbeat lost for{" "}
+                            {emergencySignal.feeds.map((f) => f.toUpperCase()).join(" + ")} telemetry. Emergency
+                            escalation chain initiated (caregiver → backup → 108/112 / Code Blue/MET).
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 self-stretch sm:self-center">
+                        <button
+                          onClick={() => setEmergencyModalOpen(true)}
+                          className="px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-xs font-bold border border-white/30 backdrop-blur-xs"
+                        >
+                          View Escalation
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEmergencySignal(null);
+                            setEmergencyModalOpen(false);
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-white text-rose-700 text-xs font-bold hover:bg-white/90"
+                        >
+                          Acknowledge &amp; Clear
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   {/* Either All Beds Grid OR Focused Patient Overview Card */}
                   {selectedWardBed === "all" && isNurse ? (
                     <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs mb-6">
