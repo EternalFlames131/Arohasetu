@@ -60,7 +60,10 @@ const VitalSignsTable = ({ vitalsData }) => {
 
   let tempStatusType = "normal";
   let tempStatusLabel = "Normal";
-  if (data.temp >= 38.0) {
+  if (data.temp == null) {
+    tempStatusType = "offline";
+    tempStatusLabel = "No Signal (Sensor Offline)";
+  } else if (data.temp >= 38.0) {
     tempStatusType = "danger";
     tempStatusLabel = `Pyrexia (${data.temp} °C)`;
   } else if (data.temp >= 37.5) {
@@ -73,7 +76,10 @@ const VitalSignsTable = ({ vitalsData }) => {
 
   let gluStatusType = "normal";
   let gluStatusLabel = "Normal";
-  if (data.glucose > 180) {
+  if (data.glucose == null) {
+    gluStatusType = "offline";
+    gluStatusLabel = "No Signal (Sensor Offline)";
+  } else if (data.glucose > 180) {
     gluStatusType = "danger";
     gluStatusLabel = `Hyperglycemia (${data.glucose})`;
   } else if (data.glucose > 140) {
@@ -91,7 +97,7 @@ const VitalSignsTable = ({ vitalsData }) => {
       code: "HR",
       icon: Heart,
       iconColor: hrStatusType === "danger" ? "text-rose-600" : "text-rose-500",
-      value: `${data.hr}`,
+      value: data.hr == null ? "—" : `${data.hr}`,
       unit: "bpm",
       target: "60-100 bpm",
       statusType: hrStatusType,
@@ -105,7 +111,7 @@ const VitalSignsTable = ({ vitalsData }) => {
       code: "SpO2",
       icon: Wind,
       iconColor: spo2StatusType === "danger" ? "text-rose-600" : "text-sky-500",
-      value: typeof data.spo2 === "number" ? data.spo2.toFixed(1) : `${data.spo2}`,
+      value: data.spo2 == null ? "—" : typeof data.spo2 === "number" ? data.spo2.toFixed(1) : `${data.spo2}`,
       unit: "%",
       target: "95-100%",
       statusType: spo2StatusType,
