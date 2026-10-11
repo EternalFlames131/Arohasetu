@@ -824,6 +824,121 @@ const App = () => {
     setDemoAlerts([]);
   };
 
+  // --- Judge-demo handlers (Sensors & Wearables panel) ---
+
+  // Feature A: toggle a wearable's connection. Disconnect -> vitals go stale + danger alert; camera layer stays on.
+  const handleToggleDevice = (deviceId) => {
+    const dev = REJIVAN_DEMO_DEVICES.find((d) => d.id === deviceId);
+    if (!dev) return;
+    const nowOff = !disconnectedDevices[deviceId];
+    setDisconnectedDevices((prev) => ({ ...prev, [deviceId]: nowOff }));
+
+    const base = activePatient?.defaultVitals || ACCOUNT_PROFILES["asharma@demo.in"].defaultVitals;
+    setVitals((prev) => {
+      const next = { ...prev };
+      dev.feeds.forEach((f) => {
+        next[f] = nowOff ? null : base[f];
+      });
+      return next;
+    });
+
+    if (nowOff) {
+      setDemoAlerts((a) =>
+        [
+          {
+            id: `demo-disc-${deviceId}-${Date.now()}`,
+            title: `DEVICE DISCONNECTED — ${dev.name}`,
+            reading: "Telemetry interrupted",
+            time: "Just now",
+            severity: "danger",
+            message: `${dev.name} heartbeat lost. ${dev.feeds.map((f) => f.toUpperCase()).join(" + ")} now stale. Reliability safeguards #4 (sensor watchdog) + #7 (graceful degradation) engaged — overhead YOLO camera keeps monitoring falls / out-of-bed / low activity.`,
+            source: dev.name,
+          },
+          ...a,
+        ].slice(0, 6)
+      );
+    } else {
+      setDemoAlerts((a) =>
+        [
+          {
+            id: `demo-rec-${deviceId}-${Date.now()}`,
+            title: `${dev.name} — Telemetry Restored`,
+            reading: "Reconnected",
+            time: "Just now",
+            severity: "info",
+            message: `Heartbeat restored. ${dev.feeds.map((f) => f.toUpperCase()).join(" + ")} streaming resumed.`,
+            source: dev.name,
+          },
+          ...a,
+        ].slice(0, 6)
+      );
+    }
+  };
+
+  // Feature B: push a manual smartwatch reading into the live stream and re-run clinical triage.
+  const handlePushReading = (reading) => {
+    setFeedOverride({ ...reading });
+    setVitals((prev) => ({
+      ...prev,
+      hr: reading.hr,
+      spo2: reading.spo2,
+      bpSys: reading.bpSys,
+      bpDia: reading.bpDia,
+      temp: reading.temp,
+      glucose: reading.glucose,
+      lastSync: "Just now",
+      hardwareSource: "ReJivan Smartwatch · Manual Demo Feed",
+      sparkHr: pushFifo(prev.sparkHr, reading.hr),
+      sparkSpo2: pushFifo(prev.sparkSpo2, reading.spo2),
+      sparkBp: pushFifo(prev.sparkBp, reading.bpSys),
+      sparkTemp: pushFifo(prev.sparkTemp, reading.temp),
+      sparkGlucose: pushFifo(prev.sparkGlucose, reading.glucose),
+    }));
+
+    const { severity, label } = classifyReading(reading);
+    setDemoAlerts((a) =>
+      [
+        {
+          id: `demo-feed-${Date.now()}`,
+          title: severity === "danger" ? "SMARTWATCH ALERT — " + label : label,
+          reading: `${reading.hr} bpm · ${reading.spo2}% · ${reading.bpSys}/${reading.bpDia} · ${reading.temp}°C · ${reading.glucose} mg/dL`,
+          time: "Just now",
+          severity,
+          message:
+            severity === "danger"
+              ? `${label}. Esccalation chain primed — caregiver + emergency hub will be notified automatically.`
+              : severity === "caution"
+              ? `${label}. Automated re-check scheduled; family informed for observation.`
+              : "Manual demo feed accepted. Clinical triage engine: all vitals within range — no intervention required.",
+          source: "ReJivan Smartwatch (Manual Feed)",
+        },
+        ...a,
+      ].slice(0, 6)
+    );
+
+    setPacketCount((p) => p + 1);
+    setSecondsAgo(0);
+  };
+
+  // Feature B: stop the manual feed, return vitals to the hardware/sim stream.
+  const handleClearFeed = () => {
+    setFeedOverride(null);
+    setVitals((prev) => ({
+      ...prev,
+      hardwareSource: activePatient?.hardwareSource || ACCOUNT_PROFILES["asharma@demo.in"].hardwareSource,
+    }));
+    const base = activePatient?.defaultVitals || ACCOUNT_PROFILES["asharma@demo.in"].defaultVitals;
+    setVitals((prev) => ({
+      ...prev,
+      hr: base.hr,
+      spo2: base.spo2,
+      bpSys: base.bpSys,
+      bpDia: base.bpDia,
+      temp: base.temp,
+      glucose: base.glucose,
+    }));
+  };
+
   // Live seconds ticker
   React.useEffect(() => {
     const timer = setInterval(() => {
@@ -934,6 +1049,18 @@ const App = () => {
         dangerCount: 0,
         cautionText: "Bed 101 (Elevated BP) • Bed 104 (Tachycardia)",
         dangerText: "Zero active emergency alerts",
+      };
+    }
+    // Feature A: any disconnection raises triage to danger (camera layer still covers safety)
+    const offlineCount = Object.values(disconnectedDevices).filter(Boolean).length;
+    if (offlineCount > 0) {
+      return {
+        patientsCount: 1,
+        normalCount: 0,
+        cautionCount: 0,
+        dangerCount: 1,
+        cautionText: "Vitals partially degraded — camera layer still active",
+        dangerText: `Wearable telemetry degraded (${offlineCount} device(s) offline) — YOLO falls/activity watch continues`,
       };
     }
     if (vitals.bpSys >= 160 || vitals.spo2 < 92 || vitals.hr < 60 || vitals.hr > 100) {
