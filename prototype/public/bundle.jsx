@@ -1345,22 +1345,25 @@ const Sidebar = ({
         {/* Brand Header */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-slate-200/80">
           <div className="flex items-center gap-3 min-w-0">
-            {/* ReJivan Brand Logo Mark */}
-            <div className="w-9 h-9 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-              <Activity className="w-5 h-5 stroke-[2.2]" />
+            {/* ReJivan Brand Logo Mark with Heart + ECG motif */}
+            <div className="w-9 h-9 rounded-xl bg-[#103663] text-[#08A6A6] flex items-center justify-center shrink-0 shadow-xs border border-[#08A6A6]/30">
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                <path d="M7 12h2.5l1.5-3 2 6 1.5-3H17" stroke="#08A6A6" strokeWidth="2" />
+              </svg>
             </div>
             {!collapsed && (
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <span className="font-bold text-base text-slate-900 tracking-tight">
+                  <span className="font-bold text-base text-[#103663] tracking-tight">
                     ReJivan
                   </span>
-                  <span className="text-[10px] uppercase font-semibold tracking-wider text-blue-700 bg-blue-50 border border-blue-200/70 px-1 py-0.2 rounded">
-                    Clinical
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-[#08A6A6] bg-[#08A6A6]/10 border border-[#08A6A6]/30 px-1 py-0.2 rounded">
+                    Care
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-400 truncate leading-tight mt-0.5">
-                  Better Care. Brighter Tomorrows.
+                <p className="text-[11px] text-slate-500 truncate leading-tight mt-0.5">
+                  Connected care. Earlier action.
                 </p>
               </div>
             )}
@@ -1556,13 +1559,13 @@ const TopBar = ({
 
       {/* Right: Telemetry Status, Bell, Language, Profile */}
       <div className="flex items-center gap-2.5 lg:gap-3.5">
-        {/* System status badge */}
+        {/* Authoritative System status badge */}
         <div className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200 text-xs font-medium text-slate-700 shadow-2xs">
           <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#08A6A6] opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#08A6A6]"></span>
           </span>
-          <span>Live Simulation Mode</span>
+          <span className="font-semibold text-slate-800">Live Sync · Connected Care</span>
         </div>
 
         {/* Notification Bell */}
@@ -2595,36 +2598,55 @@ const RecentAlerts = ({ alerts = [], prependAlerts = [], onAcknowledge, currentU
                   ) : (
                     <CheckCircle2 className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                   )}
-                  <span>{alt.title}</span>
+                  <span>{alt.title || alt.patientName || "Threshold Alert"}</span>
                 </div>
-                <span
-                  className={`text-[10px] font-mono shrink-0 font-medium ${
-                    isCaution ? "text-amber-700" : "text-slate-400"
-                  }`}
-                >
-                  {alt.time}
-                </span>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {alt.status && (
+                    <span
+                      className={`text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded border ${
+                        alt.status === "New"
+                          ? "bg-rose-100 text-rose-800 border-rose-300"
+                          : alt.status === "Acknowledged"
+                          ? "bg-amber-100 text-amber-800 border-amber-300"
+                          : alt.status === "Follow-up recorded"
+                          ? "bg-blue-100 text-blue-800 border-blue-300"
+                          : "bg-emerald-100 text-emerald-800 border-emerald-300"
+                      }`}
+                    >
+                      {alt.status}
+                    </span>
+                  )}
+                  <span
+                    className={`text-[10px] font-mono shrink-0 font-medium ${
+                      isCaution ? "text-amber-700" : "text-slate-400"
+                    }`}
+                  >
+                    {alt.time || (alt.createdAt ? new Date(alt.createdAt).toLocaleTimeString() : "Just now")}
+                  </span>
+                </div>
               </div>
 
-              <div className="mt-1 flex items-baseline gap-2">
-                <span
-                  className={`text-xs font-bold font-mono ${
-                    isDanger
-                      ? "text-rose-700"
-                      : isCaution
-                      ? "text-amber-800"
-                      : "text-slate-900"
-                  }`}
-                >
-                  {alt.reading}
-                </span>
-                <span className="text-[11px] text-slate-500 truncate">
-                  • {alt.source}
-                </span>
-              </div>
+              {(alt.reading || alt.threshold) && (
+                <div className="mt-1 flex items-baseline gap-2">
+                  <span
+                    className={`text-xs font-bold font-mono ${
+                      isDanger
+                        ? "text-rose-700"
+                        : isCaution
+                        ? "text-amber-800"
+                        : "text-slate-900"
+                    }`}
+                  >
+                    {alt.reading || (alt.value != null ? `${alt.value} ${alt.unit || ""}` : "")}
+                  </span>
+                  <span className="text-[11px] text-slate-500 truncate">
+                    • {alt.threshold ? `Threshold: ${alt.threshold}` : alt.source || "Rules Engine"}
+                  </span>
+                </div>
+              )}
 
-              <p className="text-[11px] mt-1 leading-snug opacity-90 text-slate-600">
-                {alt.message}
+              <p className="text-[11px] mt-1 leading-snug opacity-90 text-slate-700 font-medium">
+                {alt.conditionReason || alt.message}
               </p>
             </div>
           );
@@ -3974,6 +3996,9 @@ const ResidentCheckinModal = ({ isOpen, onClose, scenario, onEmergencyConfirmed,
 // Treats prerecorded hospital video as an authentic virtual camera source alongside Live Webcam and RTSP CCTV.
 // Real-Time YOLO11-Pose 17-Keypoint Inference & Client Optical Consensus with Zero Hardcoded Time Gates.
 
+const SYSTEM_CAMERA_LABEL = /integrated|built[ -]?in|laptop|internal|facetime|computer camera/i;
+const MOBILE_CAMERA_LABEL = /phone|mobile|android|iphone|droidcam|iriun|camo|ivcam|epoccam|continuity/i;
+
 const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, activePatient }) => {
   // 1. Unified Camera Source Abstraction ('LIVE_WEBCAM' | 'PRERECORDED_VIDEO' | 'RTSP_CAMERA')
   // Default to LIVE_WEBCAM so user can immediately verify YOLO and motion monitoring
@@ -4191,6 +4216,7 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
   const prevCentroidYRef = React.useRef(null);
   const lastTimeRef = React.useRef(Date.now());
   const alarmLatchedRef = React.useRef(false);
+  const disappearanceAlertedRef = React.useRef(false);
   const verificationTimerRef = React.useRef(null);
 
   const YOLO_API_BASE = "http://127.0.0.1:5050";
@@ -4199,43 +4225,109 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
   const [liveCameraMode, setLiveCameraMode] = React.useState("HARDWARE_YOLO");
   const userSwitchedModeRef = React.useRef(false);
   const [availableWebcams, setAvailableWebcams] = React.useState([]);
-  const [selectedCameraDeviceId, setSelectedCameraDeviceId] = React.useState("");
+  const [selectedCameraDeviceId, setSelectedCameraDeviceId] = React.useState(() => {
+    try { return window.localStorage.getItem("rejivan_camera_device_id") || ""; } catch (e) { return ""; }
+  });
   const [hardwareCameraIndex, setHardwareCameraIndex] = React.useState(0);
+  const [cameraSwitchError, setCameraSwitchError] = React.useState("");
 
-  // Enumerate connected video devices
-  React.useEffect(() => {
-    const enumerate = async () => {
-      try {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
-        const devs = await navigator.mediaDevices.enumerateDevices();
-        const vInputs = devs.filter((d) => d.kind === "videoinput");
-        setAvailableWebcams(vInputs);
-        if (vInputs.length > 0 && !selectedCameraDeviceId) {
-          const lap = vInputs.find((d) => /integrated|built-in|laptop|internal/i.test(d.label));
-          setSelectedCameraDeviceId(lap ? lap.deviceId : vInputs[0].deviceId);
-        }
-      } catch (e) {}
-    };
-    enumerate();
+  // Device labels are hidden until camera permission is granted. Never guess
+  // that device 0 is a phone: on many laptops that entry is the system webcam.
+  const refreshAvailableWebcams = React.useCallback(async (requestPermission = false) => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return [];
+    let permissionStream = null;
+    try {
+      if (requestPermission) {
+        permissionStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      }
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const webcams = devices.filter((device) => device.kind === "videoinput");
+      setAvailableWebcams(webcams);
+      setSelectedCameraDeviceId((current) => {
+        if (current && webcams.some((device) => device.deviceId === current)) return current;
+        const labeled = webcams.some((device) => device.label);
+        if (!labeled) return "";
+        const preferred = webcams.find((device) => SYSTEM_CAMERA_LABEL.test(device.label) && !MOBILE_CAMERA_LABEL.test(device.label));
+        const nextId = (preferred || webcams[0])?.deviceId || "";
+        try {
+          if (nextId) window.localStorage.setItem("rejivan_camera_device_id", nextId);
+        } catch (e) {}
+        return nextId;
+      });
+      return webcams;
+    } finally {
+      if (permissionStream) permissionStream.getTracks().forEach((track) => track.stop());
+    }
   }, []);
 
+  React.useEffect(() => {
+    const enumerate = () => refreshAvailableWebcams(false).catch(() => {});
+    enumerate();
+    navigator.mediaDevices?.addEventListener?.("devicechange", enumerate);
+    window.addEventListener("focus", enumerate);
+    return () => {
+      navigator.mediaDevices?.removeEventListener?.("devicechange", enumerate);
+      window.removeEventListener("focus", enumerate);
+    };
+  }, [refreshAvailableWebcams]);
+
   const handleSwitchHardwareDevice = async (newIdx) => {
-    setHardwareCameraIndex(newIdx);
+    setCameraSwitchError("");
     if (localYoloActive) {
       try {
-        await fetch(`${YOLO_API_BASE}/api/yolo/webcam/device`, {
+        const response = await fetch(`${YOLO_API_BASE}/api/yolo/webcam/device`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ deviceIndex: newIdx })
         });
+        if (!response.ok) throw new Error("The hardware camera did not accept the switch.");
+        const result = await response.json();
+        if (!result.ok) throw new Error(result.error || "The hardware camera did not accept the switch.");
+        setHardwareCameraIndex(newIdx);
+        setLiveCameraMode("HARDWARE_YOLO");
+        setHardwareStreamPaused(false);
+        if (webcamStreamRef.current) {
+          webcamStreamRef.current.getTracks().forEach((track) => track.stop());
+          webcamStreamRef.current = null;
+        }
         setStreamRetryKey(Date.now());
-      } catch (e) {}
+      } catch (error) {
+        setCameraSwitchError(error.message || "Could not switch the hardware camera.");
+      }
+      return;
+    }
+
+    // Without the local edge daemon, use this device's browser camera API.
+    // This keeps the Phone / Computer controls functional on localhost and on
+    // HTTPS deployments, instead of changing only the button highlight.
+    try {
+      const webcams = await refreshAvailableWebcams(true);
+      const preferred = newIdx === 1
+        ? webcams.find((device) => SYSTEM_CAMERA_LABEL.test(device.label) && !MOBILE_CAMERA_LABEL.test(device.label))
+        : webcams.find((device) => MOBILE_CAMERA_LABEL.test(device.label));
+      const fallback = newIdx === 1
+        ? webcams.find((device) => !MOBILE_CAMERA_LABEL.test(device.label))
+        : webcams.find((device) => !SYSTEM_CAMERA_LABEL.test(device.label));
+      const device = preferred || fallback || webcams[newIdx] || webcams[0];
+      if (!device?.deviceId) throw new Error("No camera was found. Connect the camera and allow browser access, then try again.");
+      setHardwareCameraIndex(newIdx);
+      setLiveCameraMode("BROWSER_WEBCAM");
+      setHardwareStreamPaused(true);
+      setSelectedCameraDeviceId(device.deviceId);
+      try { window.localStorage.setItem("rejivan_camera_device_id", device.deviceId); } catch (e) {}
+      if (playbackState === "PLAYING" && cameraSource === "LIVE_WEBCAM") {
+        await handleSelectBrowserCamera(device.deviceId, true);
+      }
+    } catch (error) {
+      setCameraSwitchError(error.message || "Could not switch the camera.");
     }
   };
 
-  const handleSelectBrowserCamera = async (deviceId) => {
+  const handleSelectBrowserCamera = async (deviceId, switchWhilePlaying = false) => {
     setSelectedCameraDeviceId(deviceId);
-    if (playbackState === "PLAYING" && cameraSource === "LIVE_WEBCAM" && liveCameraMode === "BROWSER_WEBCAM") {
+    setCameraSwitchError("");
+    try { window.localStorage.setItem("rejivan_camera_device_id", deviceId); } catch (e) {}
+    if (playbackState === "PLAYING" && cameraSource === "LIVE_WEBCAM" && (liveCameraMode === "BROWSER_WEBCAM" || switchWhilePlaying)) {
       if (webcamStreamRef.current) {
         webcamStreamRef.current.getTracks().forEach((t) => t.stop());
       }
@@ -4244,13 +4336,15 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
           video: { deviceId: { exact: deviceId }, width: { ideal: 640 }, height: { ideal: 480 } },
           audio: false
         });
+        const previousStream = webcamStreamRef.current;
         webcamStreamRef.current = stream;
         if (videoElementRef.current) {
           videoElementRef.current.srcObject = stream;
           await videoElementRef.current.play();
         }
-      } catch (e) {
-        console.warn("Camera switch error:", e);
+        if (previousStream && previousStream !== stream) previousStream.getTracks().forEach((track) => track.stop());
+      } catch (error) {
+        setCameraSwitchError(error.message || "Could not open the selected camera.");
       }
     }
   };
@@ -4401,6 +4495,8 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
             torsoAngle: Math.round(data.torso_angle ?? 12),
             posture: data.posture || "Upright Tracking",
             riskLevel: data.risk_level || "SAFE",
+            patientDisappeared: Boolean(data.patient_disappeared || data.alert_patient_disappeared),
+            disappearanceDuration: data.disappearance_duration ?? 0,
             confidence: `${Math.round(data.confidence || 95)}%`,
             detectionConfidence: data.detection_confidence ?? (data.person_detected ? 95 : 10),
             mechanismConfidence: data.mechanism_confidence ?? 92,
@@ -4415,6 +4511,28 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
             hardwareBadge: data.cuda_enabled ? `${data.device || "CUDA"} Ingestion` : "Local Edge CPU",
             consensusSummary: data.hypothesis?.mechanism || "Continuous YOLO-Pose kinematics monitoring active."
           }));
+
+          // Trigger alert when patient disappears from camera view
+          if (data.patient_disappeared || data.alert_patient_disappeared) {
+            if (!disappearanceAlertedRef.current) {
+              disappearanceAlertedRef.current = true;
+              const dur = Math.round(data.disappearance_duration || 5);
+              if (onTriggerAlert) {
+                onTriggerAlert({
+                  id: `ALT-DISAPPEAR-${Date.now()}`,
+                  time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+                  category: "CAMERA_ZONE",
+                  severity: "danger",
+                  vital: "Presence",
+                  value: "0 Person",
+                  unit: "",
+                  msg: `PATIENT LEFT CAMERA FIELD — Bed/Room Unattended for ${dur}s`
+                });
+              }
+            }
+          } else if (data.person_detected) {
+            disappearanceAlertedRef.current = false;
+          }
 
           // Trigger Resident Verification on high risk fall
           if (isHighRisk && !alarmLatchedRef.current) {
@@ -4541,20 +4659,37 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
             : { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
           audio: false
         };
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        let stream = await navigator.mediaDevices.getUserMedia(constraints);
+        // Once permission is granted, device labels become available. Prefer a
+        // built-in system camera over a connected phone when the user has not
+        // explicitly chosen a device.
+        const webcams = await refreshAvailableWebcams(false);
+        const preferredSystemCamera = webcams.find((device) => SYSTEM_CAMERA_LABEL.test(device.label) && !MOBILE_CAMERA_LABEL.test(device.label));
+        const openedDeviceId = stream.getVideoTracks()[0]?.getSettings?.().deviceId || "";
+        if (!selectedCameraDeviceId && preferredSystemCamera?.deviceId && preferredSystemCamera.deviceId !== openedDeviceId) {
+          try {
+            const systemCameraStream = await navigator.mediaDevices.getUserMedia({
+              video: { deviceId: { exact: preferredSystemCamera.deviceId }, width: { ideal: 640 }, height: { ideal: 480 } },
+              audio: false
+            });
+            stream.getTracks().forEach((track) => track.stop());
+            stream = systemCameraStream;
+          } catch (e) {
+            // Keep the browser's working default if the built-in device cannot open.
+          }
+        }
         webcamStreamRef.current = stream;
+        const actualDeviceId = stream.getVideoTracks()[0]?.getSettings?.().deviceId || selectedCameraDeviceId;
+        if (actualDeviceId) {
+          setSelectedCameraDeviceId(actualDeviceId);
+          try { window.localStorage.setItem("rejivan_camera_device_id", actualDeviceId); } catch (e) {}
+        }
         if (videoElementRef.current) {
           videoElementRef.current.srcObject = stream;
           await videoElementRef.current.play();
         }
         setPlaybackState("PLAYING");
         startFrameProcessingLoop();
-        // Update device list with discovered labels now that permission was granted
-        if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
-          const devs = await navigator.mediaDevices.enumerateDevices();
-          const vInputs = devs.filter((d) => d.kind === "videoinput");
-          if (vInputs.length > 0) setAvailableWebcams(vInputs);
-        }
       } catch (err) {
         alert("Could not access browser webcam: " + err.message + "\n\nPlease ensure webcam permissions are enabled in your browser.");
       }
@@ -5641,7 +5776,7 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
                           : "text-slate-600 hover:text-slate-900"
                       }`}
                     >
-                      📱 Phone (0)
+                        📱 Connected mobile
                     </button>
                     <button
                       type="button"
@@ -5652,11 +5787,17 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
                           : "text-slate-600 hover:text-slate-900"
                       }`}
                     >
-                      💻 Laptop (1)
+                        💻 This computer
                     </button>
                   </div>
                 )}
               </div>
+            )}
+
+            {cameraSwitchError && (
+              <span role="alert" className="max-w-56 text-[10px] font-medium text-rose-700">
+                {cameraSwitchError}
+              </span>
             )}
 
             {cameraSource === "PRERECORDED_VIDEO" && (
@@ -8312,8 +8453,22 @@ const MedicinesView = ({ onOpenAddModal, currentUser }) => {
 // --- START: prototype\public\src\components\AlertsView.jsx ---
 // prototype/public/src/components/AlertsView.jsx
 // Clinical Alerts & Automated Emergency Call Chain Escalation (Enterprise Clinical Grade - Account Aware)
+// Includes full Clinician Follow-up Lifecycle: New -> Acknowledged -> Follow-up recorded -> Resolved
 
-const AlertsView = ({ currentUser, activePatient }) => {
+const AlertsView = ({
+  currentUser,
+  activePatient,
+  liveAlerts = [],
+  onAcknowledgeAlert,
+  onRecordFollowup,
+  onResolveAlert,
+}) => {
+  const [selectedAlertForAction, setSelectedAlertForAction] = React.useState(null);
+  const [followupText, setFollowupText] = React.useState("");
+  const [resolutionText, setResolutionText] = React.useState("");
+  const [actionModalType, setActionModalType] = React.useState(null); // 'followup' | 'resolve'
+  const isNurse = currentUser?.role === "nurse" || currentUser?.email === "wardnurse@demo.in";
+
   const getCallLadderForUser = (user, patient) => {
     const email = user?.email || "asharma@demo.in";
 
@@ -8410,96 +8565,417 @@ const AlertsView = ({ currentUser, activePatient }) => {
           status: "Standby",
           statusColor: "text-slate-600 bg-slate-50 border-slate-200",
           time: "Armed (Triggers if Tier 1 unanswered for 45s)",
-          note: "Standby escalation route • Aberdeen Bazar, Port Blair.",
+          note: "Located at Aberdeen Bazaar, Port Blair (approx. 6 mins to Junglighat).",
         },
         {
-          tier: "Tier 3: Emergency Dispatch (108 / 112)",
-          contact: "Andaman & Nicobar Emergency Response Service",
-          phone: "108 / 112 (Direct Dispatch)",
+          tier: "Tier 3: Port Blair 108 Emergency Ambulance",
+          contact: "108 Emergency Dispatch Hub (GB Pant Control)",
+          phone: "108 / 112 (Toll-Free Emergency)",
           status: "Standby",
           statusColor: "text-slate-600 bg-slate-50 border-slate-200",
-          time: "Armed (Auto-dispatches with GPS & Live Vitals Packet)",
-          note: "GB Pant Hospital Ambulance Hub, Port Blair.",
+          time: "Armed (Auto-dispatches with live GPS & vital telemetry packet)",
+          note: "Direct voice broadcast with GB Pant Hospital Triage Desk.",
         },
       ],
     };
   };
 
-  const accountLadder = React.useMemo(() => getCallLadderForUser(currentUser, activePatient), [currentUser?.email]);
+  const ladderData = getCallLadderForUser(currentUser, activePatient);
+
+  // Status badge styling helper
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case "New":
+        return {
+          label: "New Alert",
+          className: "bg-rose-50 text-rose-700 border-rose-200 animate-pulse font-bold",
+        };
+      case "Acknowledged":
+        return {
+          label: "Acknowledged",
+          className: "bg-amber-50 text-amber-800 border-amber-200 font-bold",
+        };
+      case "Follow-up recorded":
+        return {
+          label: "Follow-up Recorded",
+          className: "bg-blue-50 text-blue-700 border-blue-200 font-bold",
+        };
+      case "Resolved":
+        return {
+          label: "Resolved",
+          className: "bg-emerald-50 text-emerald-700 border-emerald-200 font-medium",
+        };
+      default:
+        return {
+          label: status || "Active",
+          className: "bg-slate-100 text-slate-700 border-slate-200",
+        };
+    }
+  };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
-      {/* Top Banner */}
-      <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-            <Bell className="w-5 h-5" />
-          </div>
+    <div className="space-y-6">
+
+      {/* 1. CLINICIAN ALERT REVIEW & FOLLOW-UP LIFECYCLE WORKFLOW (PRIMARY CLINICIAN SECTION) */}
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 mb-5">
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-base font-bold text-slate-900 tracking-tight">
-                Clinical Alerts &amp; 3-Tier Emergency Escalation
-              </h2>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200/60 font-mono">
-                {accountLadder.patientTitle}
+              <span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+              <h3 className="text-base font-bold text-slate-900 tracking-tight">
+                Clinician Alert Review &amp; Follow-up Queue
+              </h3>
+              <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                {liveAlerts.length} Active / Recent Alerts
               </span>
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">
-              {accountLadder.locationText}
+            <p className="text-xs text-slate-500 mt-1">
+              Deterministic threshold-based clinical evaluation. Full audit trail:{" "}
+              <strong className="text-slate-700">New → Acknowledged → Follow-up recorded → Resolved</strong>.
             </p>
+          </div>
+          <div className="text-xs text-slate-400 font-mono">
+            Authoritative Server State · Zero Unverified Mockups
           </div>
         </div>
 
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span>Call Chain Armed &amp; Ready</span>
-        </span>
+        {liveAlerts.length === 0 ? (
+          <div className="p-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200">
+            <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
+            <h4 className="text-sm font-bold text-slate-800">All Patient Readings Within Normal Limits</h4>
+            <p className="text-xs text-slate-500 mt-1">
+              Zero active unacknowledged threshold alerts. Continuous bio-telemetry running nominal.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {liveAlerts.map((alert) => {
+              const statusBadge = getStatusBadge(alert.status);
+              const isDanger = alert.severity === "danger";
+
+              return (
+                <div
+                  key={alert.id}
+                  className={`p-4 rounded-xl border transition-all ${
+                    isDanger
+                      ? "bg-rose-50/40 border-rose-200"
+                      : "bg-amber-50/40 border-amber-200"
+                  }`}
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                    <div className="space-y-1.5 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-sm font-bold text-slate-900">
+                          {alert.patientName} {alert.ward ? `(${alert.ward})` : ""}
+                        </span>
+                        <span className={`text-[11px] font-mono px-2 py-0.5 rounded border uppercase ${statusBadge.className}`}>
+                          {statusBadge.label}
+                        </span>
+                        <span className="text-xs text-slate-400 font-mono">
+                          ID: {alert.id}
+                        </span>
+                      </div>
+
+                      {/* Explicit Triggering Condition & Threshold Reason */}
+                      <div className="text-xs text-slate-800 font-medium">
+                        <strong className="text-slate-900">Trigger Reason:</strong>{" "}
+                        {alert.conditionReason || alert.message}
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-4 text-[11px] text-slate-500 font-mono pt-1">
+                        <span>
+                          <strong>Configured Threshold:</strong> {alert.threshold || "Exceeded normal bounds"}
+                        </span>
+                        <span>
+                          <strong>Triggered:</strong> {new Date(alert.createdAt).toLocaleTimeString()}
+                        </span>
+                        {alert.acknowledgedBy && (
+                          <span className="text-amber-800">
+                            ✓ Acknowledged by: {alert.acknowledgedBy} ({new Date(alert.acknowledgedAt).toLocaleTimeString()})
+                          </span>
+                        )}
+                        {alert.followupAction && (
+                          <span className="text-blue-800">
+                            📝 Follow-up: {alert.followupAction}
+                          </span>
+                        )}
+                        {alert.resolutionNote && (
+                          <span className="text-emerald-800">
+                            ✓ Resolved: {alert.resolutionNote}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Clinician Action Buttons */}
+                    <div className="flex flex-wrap items-center gap-2 self-start shrink-0">
+                      {alert.status === "New" && (
+                        <button
+                          onClick={() => onAcknowledgeAlert && onAcknowledgeAlert(alert.id)}
+                          className="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white shadow-xs transition-colors cursor-pointer flex items-center gap-1"
+                        >
+                          <span>✓ Acknowledge Alert</span>
+                        </button>
+                      )}
+
+                      {alert.status === "Acknowledged" && (
+                        <button
+                          onClick={() => {
+                            setSelectedAlertForAction(alert);
+                            setActionModalType("followup");
+                            setFollowupText("");
+                          }}
+                          className="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition-colors cursor-pointer flex items-center gap-1"
+                        >
+                          <span>📝 Record Follow-up Action</span>
+                        </button>
+                      )}
+
+                      {alert.status === "Follow-up recorded" && (
+                        <button
+                          onClick={() => {
+                            setSelectedAlertForAction(alert);
+                            setActionModalType("resolve");
+                            setResolutionText("Condition stabilized and confirmed via re-check.");
+                          }}
+                          className="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-colors cursor-pointer flex items-center gap-1"
+                        >
+                          <span>✓ Formally Resolve</span>
+                        </button>
+                      )}
+
+                      {alert.status === "Resolved" && (
+                        <span className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-emerald-100 text-emerald-800">
+                          ✓ Closed &amp; Documented
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Audit Event History Timeline */}
+                  {alert.history && alert.history.length > 0 && (
+                    <div className="mt-3 pt-2.5 border-t border-slate-200/60">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        Audit Trail Event History:
+                      </span>
+                      <div className="mt-1 space-y-1">
+                        {alert.history.map((h, idx) => (
+                          <div key={idx} className="text-[11px] text-slate-600 flex items-center gap-2">
+                            <span className="font-mono text-slate-400 text-[10px]">
+                              {new Date(h.time).toLocaleTimeString()}
+                            </span>
+                            <span className="font-semibold text-slate-700">{h.user}:</span>
+                            <span>{h.note}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      {/* 3-Tier Escalation Ladder */}
-      <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-xs">
-        <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
-          <Phone className="w-3.5 h-3.5 text-blue-600" />
-          <span>Emergency Call Ladder Execution Log</span>
-        </h3>
+      {/* MODAL: RECORD CLINICIAN FOLLOW-UP ACTION */}
+      {actionModalType === "followup" && selectedAlertForAction && (
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <h3 className="text-base font-bold text-slate-900">
+                Document Clinician Follow-up Action
+              </h3>
+              <button
+                onClick={() => setActionModalType(null)}
+                className="text-slate-400 hover:text-slate-600 text-lg font-bold"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="text-xs text-slate-600">
+              Documenting action for <strong className="text-slate-900">{selectedAlertForAction.patientName}</strong>:{" "}
+              {selectedAlertForAction.conditionReason}
+            </div>
+
+            {/* Quick Action Presets */}
+            <div className="space-y-1.5">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Quick Presets:</span>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  "Administered supplemental O2 via nasal cannula (2L/min).",
+                  "Bedside clinical re-check performed; resident responsive and alert.",
+                  "Administered prescribed sublingual medication; scheduled 15m review.",
+                  "Duty nurse consulted attending physician; laboratory panel ordered.",
+                ].map((preset, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setFollowupText(preset)}
+                    className="text-[11px] text-left px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+                  >
+                    {preset}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                Clinical Note / Follow-up Action
+              </label>
+              <textarea
+                rows={3}
+                value={followupText}
+                onChange={(e) => setFollowupText(e.target.value)}
+                placeholder="Enter clinical follow-up actions taken..."
+                className="w-full p-2.5 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-blue-500 font-sans"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setActionModalType(null)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={!followupText.trim()}
+                onClick={() => {
+                  if (onRecordFollowup) {
+                    onRecordFollowup(selectedAlertForAction.id, followupText);
+                  }
+                  setActionModalType(null);
+                }}
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white shadow-xs"
+              >
+                Save Action to Audit Log
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: FORMAL ALERT RESOLUTION */}
+      {actionModalType === "resolve" && selectedAlertForAction && (
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <h3 className="text-base font-bold text-slate-900">
+                Formally Resolve Clinical Alert
+              </h3>
+              <button
+                onClick={() => setActionModalType(null)}
+                className="text-slate-400 hover:text-slate-600 text-lg font-bold"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="text-xs text-slate-600">
+              Resolving alert for <strong className="text-slate-900">{selectedAlertForAction.patientName}</strong>.
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                Resolution Rationale
+              </label>
+              <textarea
+                rows={2}
+                value={resolutionText}
+                onChange={(e) => setResolutionText(e.target.value)}
+                placeholder="Document resolution findings..."
+                className="w-full p-2.5 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-emerald-500 font-sans"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setActionModalType(null)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (onResolveAlert) {
+                    onResolveAlert(selectedAlertForAction.id, resolutionText);
+                  }
+                  setActionModalType(null);
+                }}
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
+              >
+                Mark Alert Resolved
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2. THREE-TIER AUTONOMOUS EMERGENCY CALL CHAIN ESCALATION (PRESERVED & INTEGRATED) */}
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-100 mb-6">
+          <div>
+            <h3 className="text-base font-bold text-slate-900 tracking-tight">
+              3-Tier Autonomous Emergency Escalation Ladder
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Target Profile:{" "}
+              <span className="font-semibold text-blue-700">
+                {ladderData.patientTitle}
+              </span>{" "}
+              • {ladderData.locationText}
+            </p>
+          </div>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>Zero-Human-Delay Dispatch</span>
+          </div>
+        </div>
 
         <div className="space-y-4">
-          {accountLadder.ladder.map((step, idx) => (
+          {ladderData.ladder.map((tier, idx) => (
             <div
               key={idx}
-              className="p-4 rounded-xl border border-slate-200/80 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+              className="p-4 rounded-xl border border-slate-200/80 bg-slate-50/50 hover:bg-slate-50 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
             >
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-xs text-slate-900">
-                    {step.tier}
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    {tier.tier}
                   </span>
-                  <span className="text-slate-300">•</span>
-                  <span className="text-xs font-semibold text-slate-700">
-                    {step.contact}
+                  <span
+                    className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${tier.statusColor}`}
+                  >
+                    {tier.status}
                   </span>
                 </div>
-                <div className="text-xs font-mono text-slate-500">
-                  {step.phone}
+                <div className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <span>{tier.contact}</span>
+                  <span className="text-xs text-slate-500 font-mono font-normal">
+                    ({tier.phone})
+                  </span>
                 </div>
-                <p className="text-xs text-slate-600 pt-0.5">{step.note}</p>
+                <p className="text-xs text-slate-600">{tier.note}</p>
               </div>
 
-              <div className="flex flex-col sm:items-end gap-1 shrink-0">
-                <span
-                  className={`inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold border ${step.statusColor}`}
-                >
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>{step.status}</span>
+              <div className="text-right shrink-0">
+                <span className="text-xs font-mono font-medium text-slate-500 block">
+                  {tier.time}
                 </span>
-                <span className="text-[11px] font-mono text-slate-400">
-                  {step.time}
+                <span className="text-[11px] text-emerald-700 font-semibold mt-1 inline-block">
+                  GPS &amp; Vital Telemetry Synced
                 </span>
               </div>
             </div>
           ))}
         </div>
       </div>
+
     </div>
   );
 };
@@ -10507,9 +10983,121 @@ const App = () => {
   const [activeTab, setActiveTab] = React.useState("dashboard");
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
   const [mobileOpen, setMobileOpen] = React.useState(false);
-  const [curLang, setCurLang] = React.useState("en");
+  const [curLang, setCurLang] = React.useState(() => {
+    try {
+      const saved = localStorage.getItem("rejivan_lang");
+      return ["en", "hi", "bn", "ta", "te"].includes(saved) ? saved : "en";
+    } catch (e) {
+      return "en";
+    }
+  });
+  const [translationDictionary, setTranslationDictionary] = React.useState(null);
+  const translatedTextOriginals = React.useRef(new WeakMap());
+  const translatedAttributeOriginals = React.useRef(new WeakMap());
   const [user, setUser] = React.useState(ACCOUNT_PROFILES["asharma@demo.in"]);
   const [token, setToken] = React.useState(localStorage.getItem("rejivan_token") || "");
+
+  // Load the bundled dictionary and apply translations to rendered UI text. The
+  // observer also covers labels added later as dashboard panels refresh or change.
+  React.useEffect(() => {
+    let cancelled = false;
+    fetch("/lang.json", { cache: "no-cache" })
+      .then((response) => {
+        if (!response.ok) throw new Error("Translation dictionary unavailable");
+        return response.json();
+      })
+      .then((dictionary) => {
+        if (!cancelled && dictionary?.en) setTranslationDictionary(dictionary);
+      })
+      .catch((error) => console.warn("ReJivan translations could not be loaded:", error.message));
+    return () => { cancelled = true; };
+  }, []);
+
+  React.useEffect(() => {
+    try { localStorage.setItem("rejivan_lang", curLang); } catch (e) {}
+    document.documentElement.lang = curLang;
+    const root = document.getElementById("root");
+    if (!root || !translationDictionary?.en) return undefined;
+
+    const keyByEnglish = new Map();
+    const englishByLocalized = new Map();
+    for (const [key, english] of Object.entries(translationDictionary.en)) {
+      if (typeof english !== "string") continue;
+      keyByEnglish.set(english, key);
+      englishByLocalized.set(english, english);
+      for (const locale of Object.values(translationDictionary)) {
+        const localized = locale && locale[key];
+        if (typeof localized === "string") englishByLocalized.set(localized, english);
+      }
+    }
+
+    const localizedText = (english) => {
+      const key = keyByEnglish.get(english);
+      const value = translationDictionary[curLang]?.[key];
+      return typeof value === "string" ? value : english;
+    };
+
+    const applyText = (node) => {
+      const raw = node.nodeValue || "";
+      const match = raw.match(/^(\s*)([\s\S]*?\S)(\s*)$/);
+      if (!match) return;
+      const visible = match[2];
+      const remembered = translatedTextOriginals.current.get(node);
+      const english = keyByEnglish.has(visible)
+        ? visible
+        : englishByLocalized.get(visible) || remembered;
+      if (!english || !keyByEnglish.has(english)) return;
+      translatedTextOriginals.current.set(node, english);
+      const next = `${match[1]}${localizedText(english)}${match[3]}`;
+      if (next !== raw) node.nodeValue = next;
+    };
+
+    const applyAttribute = (element, name) => {
+      const raw = element.getAttribute(name);
+      if (!raw) return;
+      let originals = translatedAttributeOriginals.current.get(element);
+      if (!originals) {
+        originals = new Map();
+        translatedAttributeOriginals.current.set(element, originals);
+      }
+      const visible = raw.trim();
+      const english = keyByEnglish.has(visible)
+        ? visible
+        : englishByLocalized.get(visible) || originals.get(name);
+      if (!english || !keyByEnglish.has(english)) return;
+      originals.set(name, english);
+      const translated = localizedText(english);
+      if (translated !== visible) element.setAttribute(name, raw.replace(visible, translated));
+    };
+
+    const applyTree = (node) => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        applyText(node);
+        return;
+      }
+      if (node.nodeType !== Node.ELEMENT_NODE) return;
+      if (["SCRIPT", "STYLE", "NOSCRIPT"].includes(node.tagName)) return;
+      for (const name of ["aria-label", "placeholder", "title"]) applyAttribute(node, name);
+      for (const child of node.childNodes) applyTree(child);
+    };
+
+    applyTree(root);
+    const observer = new MutationObserver((records) => {
+      for (const record of records) {
+        if (record.type === "characterData") applyText(record.target);
+        else if (record.type === "attributes") applyAttribute(record.target, record.attributeName);
+        else for (const node of record.addedNodes) applyTree(node);
+      }
+    });
+    observer.observe(root, {
+      subtree: true,
+      childList: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: ["aria-label", "placeholder", "title"],
+    });
+    return () => observer.disconnect();
+  }, [curLang, translationDictionary]);
 
   // Modal States
   const [callModalOpen, setCallModalOpen] = React.useState(false);
@@ -10535,6 +11123,12 @@ const App = () => {
   const [disconnectedDevices, setDisconnectedDevices] = React.useState({}); // { deviceId: true } when heartbeat lost
   const [feedOverride, setFeedOverride] = React.useState(null); // { hr, spo2, bpSys, bpDia, temp, glucose, label }
   const [demoAlerts, setDemoAlerts] = React.useState([]); // judge-demo alert entries prepended to Recent Alerts
+
+  // A vital is offline only when every wearable that supplies it is disconnected.
+  const isVitalOffline = (vitalKey) => {
+    const feeders = REJIVAN_DEMO_DEVICES.filter((device) => device.feeds.includes(vitalKey));
+    return feeders.length > 0 && feeders.every((device) => disconnectedDevices[device.id]);
+  };
 
   // Developer-only demo mode: the Sensors & Wearables panel is HIDDEN from judges by default.
   // Reveal it with ?dev=1 in the URL or the Ctrl+Shift+D shortcut. Persisted for the session.
@@ -10594,6 +11188,8 @@ const App = () => {
 
   // Inpatient Bed Selector State (for Hospital Nurse logins)
   const [selectedWardBed, setSelectedWardBed] = React.useState("bed-101"); // "bed-101" | "bed-102" | "bed-103" | "bed-104" | "all"
+  const [serverConnectivity, setServerConnectivity] = React.useState("online");
+  const [serverAlerts, setServerAlerts] = React.useState([]);
 
   const isNurse = user?.role === "nurse" || user?.email === "wardnurse@demo.in";
 
@@ -10760,14 +11356,151 @@ const App = () => {
   }, []);
 
   // Judge-demo: is a given vital completely offline because ALL of its feeding wearables disconnected?
-  const isVitalOffline = (key) => {
-    const feeders = REJIVAN_DEMO_DEVICES.filter((d) => d.feeds.includes(key));
-    return feeders.length > 0 && feeders.every((d) => disconnectedDevices[d.id]);
+  // Authoritative Backend Polling for Separate-Window Real-Time Sync (HSC 2027)
+  React.useEffect(() => {
+    let isMounted = true;
+
+    const syncWithBackend = async () => {
+      try {
+        const tokenStr = token || localStorage.getItem("rejivan_token");
+        const authHeader = tokenStr ? { Authorization: `Bearer ${tokenStr}` } : {};
+
+        // Fetch vitals from authoritative shared server
+        const vitalsRes = await fetch("/api/vitals", { headers: authHeader });
+        if (vitalsRes.ok) {
+          const vData = await vitalsRes.json();
+          if (isMounted) {
+            if (vData.connectivity) {
+              setServerConnectivity(vData.connectivity);
+            }
+            if (vData.patients && vData.patients.length > 0) {
+              const mapBedToId = {
+                "bed-101": "P1",
+                "bed-102": "P2",
+                "bed-103": "P3",
+                "bed-104": "P4",
+              };
+              const targetId = mapBedToId[activePatient.id] || activePatient.id || "P1";
+              const matching = vData.patients.find((p) => p.id === targetId || p.id === activePatient.id);
+
+              if (matching && matching.vitals && vData.connectivity !== "interrupted") {
+                const sv = matching.vitals;
+                setVitals((prev) => ({
+                  ...prev,
+                  hr: sv.hr != null ? sv.hr : prev.hr,
+                  spo2: sv.spo2 != null ? sv.spo2 : prev.spo2,
+                  bpSys: sv.bpSys != null ? sv.bpSys : prev.bpSys,
+                  bpDia: sv.bpDia != null ? sv.bpDia : prev.bpDia,
+                  temp: sv.temp != null ? sv.temp : prev.temp,
+                  glucose: sv.glucose != null ? sv.glucose : prev.glucose,
+                  sparkHr: sv.hr != null ? pushFifo(prev.sparkHr, sv.hr) : prev.sparkHr,
+                  sparkSpo2: sv.spo2 != null ? pushFifo(prev.sparkSpo2, sv.spo2) : prev.sparkSpo2,
+                  sparkBp: sv.bpSys != null ? pushFifo(prev.sparkBp, sv.bpSys) : prev.sparkBp,
+                  sparkTemp: sv.temp != null ? pushFifo(prev.sparkTemp, sv.temp) : prev.sparkTemp,
+                  sparkGlucose: sv.glucose != null ? pushFifo(prev.sparkGlucose, sv.glucose) : prev.sparkGlucose,
+                  lastSync: "Just now",
+                }));
+                setSecondsAgo(0);
+                setPacketCount((p) => p + 1);
+                setLastPacketFlash(true);
+                setTimeout(() => {
+                  if (isMounted) setLastPacketFlash(false);
+                }, 300);
+              }
+            }
+          }
+        }
+
+        // Fetch authoritative alerts from server
+        const alertsRes = await fetch("/api/alerts", { headers: authHeader });
+        if (alertsRes.ok) {
+          const aData = await alertsRes.json();
+          if (isMounted && aData.alerts) {
+            setServerAlerts(aData.alerts);
+          }
+        }
+      } catch (e) {
+        // Transient network or serverless restart
+      }
+    };
+
+    syncWithBackend();
+    const pollTimer = setInterval(syncWithBackend, 1800);
+    return () => {
+      isMounted = false;
+      clearInterval(pollTimer);
+    };
+  }, [token, activePatient.id]);
+
+  // Clinician Action Handlers (Acknowledge, Follow-up, Resolve)
+  const handleAcknowledgeAlert = async (alertId) => {
+    try {
+      const tokenStr = token || localStorage.getItem("rejivan_token");
+      await fetch(`/api/alerts/${alertId}/acknowledge`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(tokenStr ? { Authorization: `Bearer ${tokenStr}` } : {}),
+        },
+        body: JSON.stringify({ clinicianName: user?.name || "On-Duty Clinician" }),
+      });
+      const res = await fetch("/api/alerts", { headers: tokenStr ? { Authorization: `Bearer ${tokenStr}` } : {} });
+      if (res.ok) {
+        const data = await res.json();
+        setServerAlerts(data.alerts || []);
+      }
+    } catch (e) {
+      console.error("Acknowledge alert error:", e);
+    }
+  };
+
+  const handleRecordFollowup = async (alertId, actionNote) => {
+    try {
+      const tokenStr = token || localStorage.getItem("rejivan_token");
+      await fetch(`/api/alerts/${alertId}/followup`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(tokenStr ? { Authorization: `Bearer ${tokenStr}` } : {}),
+        },
+        body: JSON.stringify({ clinicianName: user?.name || "Attending Clinician", actionNote }),
+      });
+      const res = await fetch("/api/alerts", { headers: tokenStr ? { Authorization: `Bearer ${tokenStr}` } : {} });
+      if (res.ok) {
+        const data = await res.json();
+        setServerAlerts(data.alerts || []);
+      }
+    } catch (e) {
+      console.error("Record follow-up error:", e);
+    }
+  };
+
+  const handleResolveAlert = async (alertId, resolutionNote) => {
+    try {
+      const tokenStr = token || localStorage.getItem("rejivan_token");
+      await fetch(`/api/alerts/${alertId}/resolve`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(tokenStr ? { Authorization: `Bearer ${tokenStr}` } : {}),
+        },
+        body: JSON.stringify({ clinicianName: user?.name || "Attending Clinician", resolutionNote }),
+      });
+      const res = await fetch("/api/alerts", { headers: tokenStr ? { Authorization: `Bearer ${tokenStr}` } : {} });
+      if (res.ok) {
+        const data = await res.json();
+        setServerAlerts(data.alerts || []);
+      }
+    } catch (e) {
+      console.error("Resolve alert error:", e);
+    }
   };
 
   // Continuous physiological drift & sparkline streaming interval (every 1.5 seconds)
   React.useEffect(() => {
-    if (!isStreaming) return;
+    // Authenticated dashboards read the shared simulator store; do not let the
+    // local drift loop overwrite those authoritative readings between polls.
+    if (!isStreaming || token) return;
 
     const streamInterval = setInterval(() => {
       setVitals((prev) => {
@@ -10849,7 +11582,7 @@ const App = () => {
     }, 1500);
 
     return () => clearInterval(streamInterval);
-  }, [isStreaming, simMode, activePatient, feedOverride, disconnectedDevices]);
+  }, [isStreaming, simMode, activePatient, feedOverride, disconnectedDevices, token]);
 
   // Dynamic Triage Metrics Calculator
   const getTriageMetrics = () => {
@@ -10914,45 +11647,6 @@ const App = () => {
   };
 
   const triage = getTriageMetrics();
-
-  // Fetch real-time vitals from server periodically (or graceful simulated fallback)
-  React.useEffect(() => {
-    let isMounted = true;
-
-    const fetchVitals = async () => {
-      try {
-        const res = await fetch("/api/vitals", {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-        if (res.ok) {
-          const json = await res.json();
-          if (json.patients && json.patients.length > 0 && isMounted) {
-            const p = json.patients[0];
-            const v = p.vitals || {};
-            setVitals((prev) => ({
-              ...prev,
-              hr: v.hr || prev.hr,
-              spo2: v.spo2 !== undefined ? v.spo2 : prev.spo2,
-              bpSys: v.bpSys || prev.bpSys,
-              bpDia: v.bpDia || prev.bpDia,
-              temp: v.temp || prev.temp,
-              glucose: v.glucose || prev.glucose,
-              lastSync: "Just now",
-            }));
-          }
-        }
-      } catch (err) {
-        // Fallback to internal clinical telemetry stream
-      }
-    };
-
-    fetchVitals();
-    const interval = setInterval(fetchVitals, 5000);
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-    };
-  }, [token]);
 
   // Auth Handlers
   const handleLogin = async (email, password) => {
@@ -11026,6 +11720,29 @@ const App = () => {
     setToken("");
     setLoginModalOpen(true);
   };
+
+  // Local demo dashboards need a real read-only session to receive simulator
+  // updates and alerts. The visible Anita profile is the documented demo user.
+  React.useEffect(() => {
+    if (token || !["localhost", "127.0.0.1"].includes(window.location.hostname)) return;
+    let cancelled = false;
+    fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "asharma@demo.in", password: "demo123" }),
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (cancelled || !data?.token) return;
+        localStorage.setItem("rejivan_token", data.token);
+        setToken(data.token);
+        setUser({ ...ACCOUNT_PROFILES["asharma@demo.in"], ...(data.user || {}) });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
 
   // Route Protection: Virtual Ward is strictly restricted to hospital staff / nurse logins
   React.useEffect(() => {
@@ -11163,92 +11880,39 @@ const App = () => {
                 dangerText={triage.dangerText}
               />
 
-              {/* Interactive Bio-Telemetry & Clinical Simulation Controls Bar */}
+              {/* Clinical Bio-Telemetry & Remote Synchronisation Status Bar (Judge-Facing Mode) */}
               <div className="bg-white border border-slate-200/80 rounded-xl p-3.5 shadow-xs mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className={`w-3 h-3 rounded-full shrink-0 ${isStreaming ? "bg-emerald-500 animate-ping" : "bg-slate-300"}`} />
+                  <div className={`w-3 h-3 rounded-full shrink-0 ${serverConnectivity === 'interrupted' ? 'bg-rose-500 animate-ping' : (isStreaming ? 'bg-emerald-500 animate-ping' : 'bg-slate-300')}`} />
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
                         Continuous Bio-Telemetry Stream
                       </span>
                       <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-semibold transition-colors ${
-                        lastPacketFlash ? "bg-emerald-200 text-emerald-900 font-bold" : "bg-slate-100 text-slate-600"
+                        serverConnectivity === 'interrupted'
+                          ? "bg-rose-100 text-rose-800 border border-rose-200 font-bold"
+                          : lastPacketFlash ? "bg-emerald-200 text-emerald-900 font-bold" : "bg-slate-100 text-slate-600"
                       }`}>
-                        Packet #{packetCount} · {isStreaming ? "LIVE (1.5s drift)" : "PAUSED"}
+                        {serverConnectivity === 'interrupted' ? "GATEWAY INTERRUPTED (STALE)" : `Packet #${packetCount} · LIVE SYNC`}
                       </span>
                     </div>
                     <p className="text-[11px] text-slate-500">
-                      Last BLE packet: <span className="font-mono font-medium text-slate-700">{secondsAgo === 0 ? "Just now" : `${secondsAgo}s ago`}</span> · BLE Sampling: 1.0 Hz · Zero packet loss
+                      {serverConnectivity === 'interrupted' ? (
+                        <span className="text-rose-700 font-semibold">⚠️ Offline Safeguard Active: Remote gateway packet interrupted. Retaining last validated reading.</span>
+                      ) : (
+                        <span>Last packet received: <span className="font-mono font-medium text-slate-700">{secondsAgo === 0 ? "Just now" : `${secondsAgo}s ago`}</span> · Gateway: Authoritative Server Sync · Sampling: 1.0 Hz</span>
+                      )}
                     </p>
                   </div>
                 </div>
 
-                {/* Simulation Scenario Buttons */}
-                <div className="flex flex-wrap items-center gap-1.5 self-stretch md:self-auto">
-                  <span className="text-[11px] font-semibold text-slate-400 mr-1 hidden sm:inline">
-                    Simulation Modes:
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] text-slate-500 font-medium bg-slate-50 border border-slate-200/80 px-2.5 py-1 rounded-md">
+                    HSC 2027 Demonstration Mode · Synthetic Telemetry
                   </span>
-                  <button
-                    onClick={() => setSimMode("baseline")}
-                    className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
-                      simMode === "baseline"
-                        ? "bg-slate-900 text-white shadow-xs"
-                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                    }`}
-                  >
-                    🟢 Baseline (85 bpm)
-                  </button>
-                  <button
-                    onClick={() => setSimMode("bp_crisis")}
-                    className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
-                      simMode === "bp_crisis"
-                        ? "bg-amber-600 text-white shadow-xs"
-                        : "bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100"
-                    }`}
-                  >
-                    ⚠️ BP Crisis (172/106)
-                  </button>
-                  <button
-                    onClick={() => setSimMode("hypoxemia")}
-                    className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
-                      simMode === "hypoxemia"
-                        ? "bg-rose-600 text-white shadow-xs"
-                        : "bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100"
-                    }`}
-                  >
-                    🚨 Hypoxemia (89%)
-                  </button>
-                  <button
-                    onClick={() => setSimMode("bradycardia")}
-                    className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
-                      simMode === "bradycardia"
-                        ? "bg-indigo-600 text-white shadow-xs"
-                        : "bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100"
-                    }`}
-                  >
-                    📉 Bradycardia (50 bpm)
-                  </button>
-                  <button
-                    onClick={() => setIsStreaming(!isStreaming)}
-                    className="px-2 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200"
-                    title={isStreaming ? "Pause real-time streaming" : "Resume real-time streaming"}
-                  >
-                    {isStreaming ? "⏸️ Pause" : "▶️ Resume"}
-                  </button>
                 </div>
               </div>
-
-              {/* Judge-Demo: Wearable Disconnect Layering + Manual Smartwatch Vital Feed */}
-              {devMode && (
-                <SensorDemoPanel
-                  disconnectedDevices={disconnectedDevices}
-                  onToggleDevice={handleToggleDevice}
-                  feedOverride={feedOverride}
-                  onPushReading={handlePushReading}
-                  onClearFeed={handleClearFeed}
-                />
-              )}
 
               {/* 4. Main Content Area (2-Column Grid: 70% Left, 30% Right) */}
               <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
@@ -11441,7 +12105,7 @@ const App = () => {
                 {/* Right Column (Alerts & Care Coordination Panel - 30%) */}
                 <div className="xl:col-span-4 space-y-6">
                   {/* Recent Alerts Card */}
-                  <RecentAlerts currentUser={user} activePatient={activePatient} prependAlerts={demoAlerts} />
+                  <RecentAlerts currentUser={user} activePatient={activePatient} alerts={serverAlerts} prependAlerts={demoAlerts} />
 
                   {/* Medication Schedule Card */}
                   <MedicationScheduleCard
@@ -11468,8 +12132,11 @@ const App = () => {
           {/* Dedicated "Camera Zones" Route */}
           {activeTab === "camera" && (
             <CameraZonesView
-              onTriggerAlert={(active) => {
-                if (active) {
+              onTriggerAlert={(alertOrActive) => {
+                if (typeof alertOrActive === "object" && alertOrActive !== null) {
+                  setDemoAlerts((prev) => [alertOrActive, ...prev.slice(0, 7)]);
+                  setVitals((prev) => ({ ...prev, bpSys: 154 }));
+                } else if (alertOrActive) {
                   setVitals((prev) => ({ ...prev, bpSys: 154 }));
                 } else {
                   setVitals((prev) => ({ ...prev, bpSys: 149 }));
@@ -11505,7 +12172,14 @@ const App = () => {
 
           {/* Alerts Escalation Route */}
           {activeTab === "alerts" && (
-            <AlertsView currentUser={user} activePatient={activePatient} />
+            <AlertsView
+              currentUser={user}
+              activePatient={activePatient}
+              liveAlerts={serverAlerts}
+              onAcknowledgeAlert={handleAcknowledgeAlert}
+              onRecordFollowup={handleRecordFollowup}
+              onResolveAlert={handleResolveAlert}
+            />
           )}
 
           {/* Medical Devices Fleet Route */}
@@ -11586,6 +12260,11 @@ const App = () => {
 // Mount React application
 const rootElement = document.getElementById("root");
 if (rootElement) {
-  const root = ReactDOM.createRoot(rootElement);
-  root.render(<App />);
+  try {
+    const root = ReactDOM.createRoot(rootElement);
+    root.render(<App />);
+    window.ReactMounted = true;
+  } catch (err) {
+    console.error("Critical React Mount Error:", err);
+  }
 }

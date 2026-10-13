@@ -767,9 +767,121 @@ const App = () => {
   const [activeTab, setActiveTab] = React.useState("dashboard");
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
   const [mobileOpen, setMobileOpen] = React.useState(false);
-  const [curLang, setCurLang] = React.useState("en");
+  const [curLang, setCurLang] = React.useState(() => {
+    try {
+      const saved = localStorage.getItem("rejivan_lang");
+      return ["en", "hi", "bn", "ta", "te"].includes(saved) ? saved : "en";
+    } catch (e) {
+      return "en";
+    }
+  });
+  const [translationDictionary, setTranslationDictionary] = React.useState(null);
+  const translatedTextOriginals = React.useRef(new WeakMap());
+  const translatedAttributeOriginals = React.useRef(new WeakMap());
   const [user, setUser] = React.useState(ACCOUNT_PROFILES["asharma@demo.in"]);
   const [token, setToken] = React.useState(localStorage.getItem("rejivan_token") || "");
+
+  // Load the bundled dictionary and apply translations to rendered UI text. The
+  // observer also covers labels added later as dashboard panels refresh or change.
+  React.useEffect(() => {
+    let cancelled = false;
+    fetch("/lang.json", { cache: "no-cache" })
+      .then((response) => {
+        if (!response.ok) throw new Error("Translation dictionary unavailable");
+        return response.json();
+      })
+      .then((dictionary) => {
+        if (!cancelled && dictionary?.en) setTranslationDictionary(dictionary);
+      })
+      .catch((error) => console.warn("ReJivan translations could not be loaded:", error.message));
+    return () => { cancelled = true; };
+  }, []);
+
+  React.useEffect(() => {
+    try { localStorage.setItem("rejivan_lang", curLang); } catch (e) {}
+    document.documentElement.lang = curLang;
+    const root = document.getElementById("root");
+    if (!root || !translationDictionary?.en) return undefined;
+
+    const keyByEnglish = new Map();
+    const englishByLocalized = new Map();
+    for (const [key, english] of Object.entries(translationDictionary.en)) {
+      if (typeof english !== "string") continue;
+      keyByEnglish.set(english, key);
+      englishByLocalized.set(english, english);
+      for (const locale of Object.values(translationDictionary)) {
+        const localized = locale && locale[key];
+        if (typeof localized === "string") englishByLocalized.set(localized, english);
+      }
+    }
+
+    const localizedText = (english) => {
+      const key = keyByEnglish.get(english);
+      const value = translationDictionary[curLang]?.[key];
+      return typeof value === "string" ? value : english;
+    };
+
+    const applyText = (node) => {
+      const raw = node.nodeValue || "";
+      const match = raw.match(/^(\s*)([\s\S]*?\S)(\s*)$/);
+      if (!match) return;
+      const visible = match[2];
+      const remembered = translatedTextOriginals.current.get(node);
+      const english = keyByEnglish.has(visible)
+        ? visible
+        : englishByLocalized.get(visible) || remembered;
+      if (!english || !keyByEnglish.has(english)) return;
+      translatedTextOriginals.current.set(node, english);
+      const next = `${match[1]}${localizedText(english)}${match[3]}`;
+      if (next !== raw) node.nodeValue = next;
+    };
+
+    const applyAttribute = (element, name) => {
+      const raw = element.getAttribute(name);
+      if (!raw) return;
+      let originals = translatedAttributeOriginals.current.get(element);
+      if (!originals) {
+        originals = new Map();
+        translatedAttributeOriginals.current.set(element, originals);
+      }
+      const visible = raw.trim();
+      const english = keyByEnglish.has(visible)
+        ? visible
+        : englishByLocalized.get(visible) || originals.get(name);
+      if (!english || !keyByEnglish.has(english)) return;
+      originals.set(name, english);
+      const translated = localizedText(english);
+      if (translated !== visible) element.setAttribute(name, raw.replace(visible, translated));
+    };
+
+    const applyTree = (node) => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        applyText(node);
+        return;
+      }
+      if (node.nodeType !== Node.ELEMENT_NODE) return;
+      if (["SCRIPT", "STYLE", "NOSCRIPT"].includes(node.tagName)) return;
+      for (const name of ["aria-label", "placeholder", "title"]) applyAttribute(node, name);
+      for (const child of node.childNodes) applyTree(child);
+    };
+
+    applyTree(root);
+    const observer = new MutationObserver((records) => {
+      for (const record of records) {
+        if (record.type === "characterData") applyText(record.target);
+        else if (record.type === "attributes") applyAttribute(record.target, record.attributeName);
+        else for (const node of record.addedNodes) applyTree(node);
+      }
+    });
+    observer.observe(root, {
+      subtree: true,
+      childList: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: ["aria-label", "placeholder", "title"],
+    });
+    return () => observer.disconnect();
+  }, [curLang, translationDictionary]);
 
   // Modal States
   const [callModalOpen, setCallModalOpen] = React.useState(false);
@@ -795,6 +907,12 @@ const App = () => {
   const [disconnectedDevices, setDisconnectedDevices] = React.useState({}); // { deviceId: true } when heartbeat lost
   const [feedOverride, setFeedOverride] = React.useState(null); // { hr, spo2, bpSys, bpDia, temp, glucose, label }
   const [demoAlerts, setDemoAlerts] = React.useState([]); // judge-demo alert entries prepended to Recent Alerts
+
+  // A vital is offline only when every wearable that supplies it is disconnected.
+  const isVitalOffline = (vitalKey) => {
+    const feeders = REJIVAN_DEMO_DEVICES.filter((device) => device.feeds.includes(vitalKey));
+    return feeders.length > 0 && feeders.every((device) => disconnectedDevices[device.id]);
+  };
 
   // Developer-only demo mode: the Sensors & Wearables panel is HIDDEN from judges by default.
   // Reveal it with ?dev=1 in the URL or the Ctrl+Shift+D shortcut. Persisted for the session.
@@ -854,6 +972,8 @@ const App = () => {
 
   // Inpatient Bed Selector State (for Hospital Nurse logins)
   const [selectedWardBed, setSelectedWardBed] = React.useState("bed-101"); // "bed-101" | "bed-102" | "bed-103" | "bed-104" | "all"
+  const [serverConnectivity, setServerConnectivity] = React.useState("online");
+  const [serverAlerts, setServerAlerts] = React.useState([]);
 
   const isNurse = user?.role === "nurse" || user?.email === "wardnurse@demo.in";
 
@@ -1020,14 +1140,151 @@ const App = () => {
   }, []);
 
   // Judge-demo: is a given vital completely offline because ALL of its feeding wearables disconnected?
-  const isVitalOffline = (key) => {
-    const feeders = REJIVAN_DEMO_DEVICES.filter((d) => d.feeds.includes(key));
-    return feeders.length > 0 && feeders.every((d) => disconnectedDevices[d.id]);
+  // Authoritative Backend Polling for Separate-Window Real-Time Sync (HSC 2027)
+  React.useEffect(() => {
+    let isMounted = true;
+
+    const syncWithBackend = async () => {
+      try {
+        const tokenStr = token || localStorage.getItem("rejivan_token");
+        const authHeader = tokenStr ? { Authorization: `Bearer ${tokenStr}` } : {};
+
+        // Fetch vitals from authoritative shared server
+        const vitalsRes = await fetch("/api/vitals", { headers: authHeader });
+        if (vitalsRes.ok) {
+          const vData = await vitalsRes.json();
+          if (isMounted) {
+            if (vData.connectivity) {
+              setServerConnectivity(vData.connectivity);
+            }
+            if (vData.patients && vData.patients.length > 0) {
+              const mapBedToId = {
+                "bed-101": "P1",
+                "bed-102": "P2",
+                "bed-103": "P3",
+                "bed-104": "P4",
+              };
+              const targetId = mapBedToId[activePatient.id] || activePatient.id || "P1";
+              const matching = vData.patients.find((p) => p.id === targetId || p.id === activePatient.id);
+
+              if (matching && matching.vitals && vData.connectivity !== "interrupted") {
+                const sv = matching.vitals;
+                setVitals((prev) => ({
+                  ...prev,
+                  hr: sv.hr != null ? sv.hr : prev.hr,
+                  spo2: sv.spo2 != null ? sv.spo2 : prev.spo2,
+                  bpSys: sv.bpSys != null ? sv.bpSys : prev.bpSys,
+                  bpDia: sv.bpDia != null ? sv.bpDia : prev.bpDia,
+                  temp: sv.temp != null ? sv.temp : prev.temp,
+                  glucose: sv.glucose != null ? sv.glucose : prev.glucose,
+                  sparkHr: sv.hr != null ? pushFifo(prev.sparkHr, sv.hr) : prev.sparkHr,
+                  sparkSpo2: sv.spo2 != null ? pushFifo(prev.sparkSpo2, sv.spo2) : prev.sparkSpo2,
+                  sparkBp: sv.bpSys != null ? pushFifo(prev.sparkBp, sv.bpSys) : prev.sparkBp,
+                  sparkTemp: sv.temp != null ? pushFifo(prev.sparkTemp, sv.temp) : prev.sparkTemp,
+                  sparkGlucose: sv.glucose != null ? pushFifo(prev.sparkGlucose, sv.glucose) : prev.sparkGlucose,
+                  lastSync: "Just now",
+                }));
+                setSecondsAgo(0);
+                setPacketCount((p) => p + 1);
+                setLastPacketFlash(true);
+                setTimeout(() => {
+                  if (isMounted) setLastPacketFlash(false);
+                }, 300);
+              }
+            }
+          }
+        }
+
+        // Fetch authoritative alerts from server
+        const alertsRes = await fetch("/api/alerts", { headers: authHeader });
+        if (alertsRes.ok) {
+          const aData = await alertsRes.json();
+          if (isMounted && aData.alerts) {
+            setServerAlerts(aData.alerts);
+          }
+        }
+      } catch (e) {
+        // Transient network or serverless restart
+      }
+    };
+
+    syncWithBackend();
+    const pollTimer = setInterval(syncWithBackend, 1800);
+    return () => {
+      isMounted = false;
+      clearInterval(pollTimer);
+    };
+  }, [token, activePatient.id]);
+
+  // Clinician Action Handlers (Acknowledge, Follow-up, Resolve)
+  const handleAcknowledgeAlert = async (alertId) => {
+    try {
+      const tokenStr = token || localStorage.getItem("rejivan_token");
+      await fetch(`/api/alerts/${alertId}/acknowledge`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(tokenStr ? { Authorization: `Bearer ${tokenStr}` } : {}),
+        },
+        body: JSON.stringify({ clinicianName: user?.name || "On-Duty Clinician" }),
+      });
+      const res = await fetch("/api/alerts", { headers: tokenStr ? { Authorization: `Bearer ${tokenStr}` } : {} });
+      if (res.ok) {
+        const data = await res.json();
+        setServerAlerts(data.alerts || []);
+      }
+    } catch (e) {
+      console.error("Acknowledge alert error:", e);
+    }
+  };
+
+  const handleRecordFollowup = async (alertId, actionNote) => {
+    try {
+      const tokenStr = token || localStorage.getItem("rejivan_token");
+      await fetch(`/api/alerts/${alertId}/followup`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(tokenStr ? { Authorization: `Bearer ${tokenStr}` } : {}),
+        },
+        body: JSON.stringify({ clinicianName: user?.name || "Attending Clinician", actionNote }),
+      });
+      const res = await fetch("/api/alerts", { headers: tokenStr ? { Authorization: `Bearer ${tokenStr}` } : {} });
+      if (res.ok) {
+        const data = await res.json();
+        setServerAlerts(data.alerts || []);
+      }
+    } catch (e) {
+      console.error("Record follow-up error:", e);
+    }
+  };
+
+  const handleResolveAlert = async (alertId, resolutionNote) => {
+    try {
+      const tokenStr = token || localStorage.getItem("rejivan_token");
+      await fetch(`/api/alerts/${alertId}/resolve`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(tokenStr ? { Authorization: `Bearer ${tokenStr}` } : {}),
+        },
+        body: JSON.stringify({ clinicianName: user?.name || "Attending Clinician", resolutionNote }),
+      });
+      const res = await fetch("/api/alerts", { headers: tokenStr ? { Authorization: `Bearer ${tokenStr}` } : {} });
+      if (res.ok) {
+        const data = await res.json();
+        setServerAlerts(data.alerts || []);
+      }
+    } catch (e) {
+      console.error("Resolve alert error:", e);
+    }
   };
 
   // Continuous physiological drift & sparkline streaming interval (every 1.5 seconds)
   React.useEffect(() => {
-    if (!isStreaming) return;
+    // Authenticated dashboards read the shared simulator store; do not let the
+    // local drift loop overwrite those authoritative readings between polls.
+    if (!isStreaming || token) return;
 
     const streamInterval = setInterval(() => {
       setVitals((prev) => {
@@ -1109,7 +1366,7 @@ const App = () => {
     }, 1500);
 
     return () => clearInterval(streamInterval);
-  }, [isStreaming, simMode, activePatient, feedOverride, disconnectedDevices]);
+  }, [isStreaming, simMode, activePatient, feedOverride, disconnectedDevices, token]);
 
   // Dynamic Triage Metrics Calculator
   const getTriageMetrics = () => {
@@ -1174,45 +1431,6 @@ const App = () => {
   };
 
   const triage = getTriageMetrics();
-
-  // Fetch real-time vitals from server periodically (or graceful simulated fallback)
-  React.useEffect(() => {
-    let isMounted = true;
-
-    const fetchVitals = async () => {
-      try {
-        const res = await fetch("/api/vitals", {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-        if (res.ok) {
-          const json = await res.json();
-          if (json.patients && json.patients.length > 0 && isMounted) {
-            const p = json.patients[0];
-            const v = p.vitals || {};
-            setVitals((prev) => ({
-              ...prev,
-              hr: v.hr || prev.hr,
-              spo2: v.spo2 !== undefined ? v.spo2 : prev.spo2,
-              bpSys: v.bpSys || prev.bpSys,
-              bpDia: v.bpDia || prev.bpDia,
-              temp: v.temp || prev.temp,
-              glucose: v.glucose || prev.glucose,
-              lastSync: "Just now",
-            }));
-          }
-        }
-      } catch (err) {
-        // Fallback to internal clinical telemetry stream
-      }
-    };
-
-    fetchVitals();
-    const interval = setInterval(fetchVitals, 5000);
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-    };
-  }, [token]);
 
   // Auth Handlers
   const handleLogin = async (email, password) => {
@@ -1286,6 +1504,29 @@ const App = () => {
     setToken("");
     setLoginModalOpen(true);
   };
+
+  // Local demo dashboards need a real read-only session to receive simulator
+  // updates and alerts. The visible Anita profile is the documented demo user.
+  React.useEffect(() => {
+    if (token || !["localhost", "127.0.0.1"].includes(window.location.hostname)) return;
+    let cancelled = false;
+    fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "asharma@demo.in", password: "demo123" }),
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (cancelled || !data?.token) return;
+        localStorage.setItem("rejivan_token", data.token);
+        setToken(data.token);
+        setUser({ ...ACCOUNT_PROFILES["asharma@demo.in"], ...(data.user || {}) });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
 
   // Route Protection: Virtual Ward is strictly restricted to hospital staff / nurse logins
   React.useEffect(() => {
@@ -1423,92 +1664,39 @@ const App = () => {
                 dangerText={triage.dangerText}
               />
 
-              {/* Interactive Bio-Telemetry & Clinical Simulation Controls Bar */}
+              {/* Clinical Bio-Telemetry & Remote Synchronisation Status Bar (Judge-Facing Mode) */}
               <div className="bg-white border border-slate-200/80 rounded-xl p-3.5 shadow-xs mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className={`w-3 h-3 rounded-full shrink-0 ${isStreaming ? "bg-emerald-500 animate-ping" : "bg-slate-300"}`} />
+                  <div className={`w-3 h-3 rounded-full shrink-0 ${serverConnectivity === 'interrupted' ? 'bg-rose-500 animate-ping' : (isStreaming ? 'bg-emerald-500 animate-ping' : 'bg-slate-300')}`} />
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
                         Continuous Bio-Telemetry Stream
                       </span>
                       <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-semibold transition-colors ${
-                        lastPacketFlash ? "bg-emerald-200 text-emerald-900 font-bold" : "bg-slate-100 text-slate-600"
+                        serverConnectivity === 'interrupted'
+                          ? "bg-rose-100 text-rose-800 border border-rose-200 font-bold"
+                          : lastPacketFlash ? "bg-emerald-200 text-emerald-900 font-bold" : "bg-slate-100 text-slate-600"
                       }`}>
-                        Packet #{packetCount} · {isStreaming ? "LIVE (1.5s drift)" : "PAUSED"}
+                        {serverConnectivity === 'interrupted' ? "GATEWAY INTERRUPTED (STALE)" : `Packet #${packetCount} · LIVE SYNC`}
                       </span>
                     </div>
                     <p className="text-[11px] text-slate-500">
-                      Last BLE packet: <span className="font-mono font-medium text-slate-700">{secondsAgo === 0 ? "Just now" : `${secondsAgo}s ago`}</span> · BLE Sampling: 1.0 Hz · Zero packet loss
+                      {serverConnectivity === 'interrupted' ? (
+                        <span className="text-rose-700 font-semibold">⚠️ Offline Safeguard Active: Remote gateway packet interrupted. Retaining last validated reading.</span>
+                      ) : (
+                        <span>Last packet received: <span className="font-mono font-medium text-slate-700">{secondsAgo === 0 ? "Just now" : `${secondsAgo}s ago`}</span> · Gateway: Authoritative Server Sync · Sampling: 1.0 Hz</span>
+                      )}
                     </p>
                   </div>
                 </div>
 
-                {/* Simulation Scenario Buttons */}
-                <div className="flex flex-wrap items-center gap-1.5 self-stretch md:self-auto">
-                  <span className="text-[11px] font-semibold text-slate-400 mr-1 hidden sm:inline">
-                    Simulation Modes:
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] text-slate-500 font-medium bg-slate-50 border border-slate-200/80 px-2.5 py-1 rounded-md">
+                    HSC 2027 Demonstration Mode · Synthetic Telemetry
                   </span>
-                  <button
-                    onClick={() => setSimMode("baseline")}
-                    className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
-                      simMode === "baseline"
-                        ? "bg-slate-900 text-white shadow-xs"
-                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                    }`}
-                  >
-                    🟢 Baseline (85 bpm)
-                  </button>
-                  <button
-                    onClick={() => setSimMode("bp_crisis")}
-                    className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
-                      simMode === "bp_crisis"
-                        ? "bg-amber-600 text-white shadow-xs"
-                        : "bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100"
-                    }`}
-                  >
-                    ⚠️ BP Crisis (172/106)
-                  </button>
-                  <button
-                    onClick={() => setSimMode("hypoxemia")}
-                    className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
-                      simMode === "hypoxemia"
-                        ? "bg-rose-600 text-white shadow-xs"
-                        : "bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100"
-                    }`}
-                  >
-                    🚨 Hypoxemia (89%)
-                  </button>
-                  <button
-                    onClick={() => setSimMode("bradycardia")}
-                    className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
-                      simMode === "bradycardia"
-                        ? "bg-indigo-600 text-white shadow-xs"
-                        : "bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100"
-                    }`}
-                  >
-                    📉 Bradycardia (50 bpm)
-                  </button>
-                  <button
-                    onClick={() => setIsStreaming(!isStreaming)}
-                    className="px-2 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200"
-                    title={isStreaming ? "Pause real-time streaming" : "Resume real-time streaming"}
-                  >
-                    {isStreaming ? "⏸️ Pause" : "▶️ Resume"}
-                  </button>
                 </div>
               </div>
-
-              {/* Judge-Demo: Wearable Disconnect Layering + Manual Smartwatch Vital Feed */}
-              {devMode && (
-                <SensorDemoPanel
-                  disconnectedDevices={disconnectedDevices}
-                  onToggleDevice={handleToggleDevice}
-                  feedOverride={feedOverride}
-                  onPushReading={handlePushReading}
-                  onClearFeed={handleClearFeed}
-                />
-              )}
 
               {/* 4. Main Content Area (2-Column Grid: 70% Left, 30% Right) */}
               <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
@@ -1701,7 +1889,7 @@ const App = () => {
                 {/* Right Column (Alerts & Care Coordination Panel - 30%) */}
                 <div className="xl:col-span-4 space-y-6">
                   {/* Recent Alerts Card */}
-                  <RecentAlerts currentUser={user} activePatient={activePatient} prependAlerts={demoAlerts} />
+                  <RecentAlerts currentUser={user} activePatient={activePatient} alerts={serverAlerts} prependAlerts={demoAlerts} />
 
                   {/* Medication Schedule Card */}
                   <MedicationScheduleCard
@@ -1728,8 +1916,11 @@ const App = () => {
           {/* Dedicated "Camera Zones" Route */}
           {activeTab === "camera" && (
             <CameraZonesView
-              onTriggerAlert={(active) => {
-                if (active) {
+              onTriggerAlert={(alertOrActive) => {
+                if (typeof alertOrActive === "object" && alertOrActive !== null) {
+                  setDemoAlerts((prev) => [alertOrActive, ...prev.slice(0, 7)]);
+                  setVitals((prev) => ({ ...prev, bpSys: 154 }));
+                } else if (alertOrActive) {
                   setVitals((prev) => ({ ...prev, bpSys: 154 }));
                 } else {
                   setVitals((prev) => ({ ...prev, bpSys: 149 }));
@@ -1765,7 +1956,14 @@ const App = () => {
 
           {/* Alerts Escalation Route */}
           {activeTab === "alerts" && (
-            <AlertsView currentUser={user} activePatient={activePatient} />
+            <AlertsView
+              currentUser={user}
+              activePatient={activePatient}
+              liveAlerts={serverAlerts}
+              onAcknowledgeAlert={handleAcknowledgeAlert}
+              onRecordFollowup={handleRecordFollowup}
+              onResolveAlert={handleResolveAlert}
+            />
           )}
 
           {/* Medical Devices Fleet Route */}

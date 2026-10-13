@@ -52,14 +52,30 @@ bundleContent += `
 // Mount React application
 const rootElement = document.getElementById("root");
 if (rootElement) {
-  const root = ReactDOM.createRoot(rootElement);
-  root.render(<App />);
+  try {
+    const root = ReactDOM.createRoot(rootElement);
+    root.render(<App />);
+    window.ReactMounted = true;
+  } catch (err) {
+    console.error("Critical React Mount Error:", err);
+  }
 }
 `;
 
 const bundlePath = path.join(pubDir, "bundle.jsx");
 fs.writeFileSync(bundlePath, bundleContent, "utf8");
 console.log(`Bundle generated successfully at ${bundlePath} (${bundleContent.length} bytes)`);
+
+// Precompile bundle.jsx to bundle.js for instant 0ms execution without browser Babel lag
+const vm = require("vm");
+const babelCode = fs.readFileSync(path.join(pubDir, "vendor", "babel.min.js"), "utf8");
+const vmCtx = { window: {}, console: console };
+vm.createContext(vmCtx);
+vm.runInContext(babelCode, vmCtx);
+const transpiled = vmCtx.Babel.transform(bundleContent, { presets: [["react", { runtime: "classic" }]] }).code;
+const compiledBundlePath = path.join(pubDir, "bundle.js");
+fs.writeFileSync(compiledBundlePath, transpiled, "utf8");
+console.log(`Precompiled bundle.js successfully written to ${compiledBundlePath} (${transpiled.length} bytes)`);
 
 // Generate production index.html
 const indexHtmlContent = `<!DOCTYPE html>
@@ -77,10 +93,9 @@ const indexHtmlContent = `<!DOCTYPE html>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
-  <!-- Production Vendor Libraries (Local offline-first with CDN fallback) -->
+  <!-- Production Vendor Libraries (Local offline-first) -->
   <script src="/vendor/react.min.js"></script>
   <script src="/vendor/react-dom.min.js"></script>
-  <script src="/vendor/babel.min.js"></script>
   <script src="/vendor/tailwindcss.js"></script>
 
   <!-- Tailwind Configuration matching Epic/Teladoc clinical design system -->
@@ -164,7 +179,7 @@ const indexHtmlContent = `<!DOCTYPE html>
     <!-- Initial Clinical Splash State -->
     <div class="min-h-screen flex items-center justify-center bg-slate-50">
       <div class="text-center p-8">
-        <div class="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center mx-auto mb-3 shadow-md animate-pulse">
+        <div class="w-12 h-12 rounded-xl bg-[#103663] text-[#08A6A6] flex items-center justify-center mx-auto mb-3 shadow-md animate-pulse">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
           </svg>
@@ -175,11 +190,25 @@ const indexHtmlContent = `<!DOCTYPE html>
     </div>
   </div>
 
-  <!-- ReJivan Enterprise React Application Bundle -->
-  <script type="text/babel" src="/bundle.jsx"></script>
+  <!-- Clinical error trap to prevent silent white screens -->
+  <script>
+    window.addEventListener('error', function(e) {
+      console.error('Captured Runtime Error:', e.error || e.message);
+      var box = document.getElementById('runtime-error-box') || document.createElement('div');
+      box.id = 'runtime-error-box';
+      box.style = 'position:fixed;bottom:20px;left:20px;right:20px;z-index:99999;background:#fff1f2;border:2px solid #e11d48;padding:16px;border-radius:12px;color:#9f1239;font-family:monospace;font-size:13px;box-shadow:0 10px 25px rgba(0,0,0,0.15);';
+      box.innerHTML = '<strong>ReJivan UI Runtime Diagnostic:</strong><br/>' + (e.error ? (e.error.stack || e.error.message) : e.message);
+      document.body.appendChild(box);
+    });
+  </script>
+
+  <!-- ReJivan Precompiled Production Bundle (Instant startup, 0ms latency) -->
+  <script src="/bundle.js"></script>
+
 </body>
 </html>
 `;
+
 
 const indexPath = path.join(pubDir, "index.html");
 fs.writeFileSync(indexPath, indexHtmlContent, "utf8");

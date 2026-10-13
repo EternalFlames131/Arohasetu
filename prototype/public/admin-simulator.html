@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ReJivan — Administrator Simulation Controller | HSC 2027</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20rx='14'%20fill='%23103663'/%3E%3Cpath%20d='M14%2036h10l5-13%207%2028%206-15h8'%20fill='none'%20stroke='%2308A6A6'%20stroke-width='5'%20stroke-linecap='round'%20stroke-linejoin='round'/%3E%3C/svg%3E" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="/vendor/tailwindcss.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              navy: '#103663',
+              teal: '#08A6A6',
+              coral: '#F36C61',
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+  </style>
+</head>
+<body class="min-h-full bg-slate-950 text-slate-100 flex flex-col antialiased selection:bg-teal-500/30">
+
+  <!-- PASSCODE GATE (Shown if unauthorized) -->
+  <div id="gateModal" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-400">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        </div>
+        <div>
+          <h2 class="text-lg font-bold text-white tracking-tight">Admin Simulation Gate</h2>
+          <p class="text-xs text-slate-400">HSC 2027 Controller Room · Authorized Presenters Only</p>
+        </div>
+      </div>
+      <p class="text-xs text-slate-300 leading-relaxed">
+        Enter the private developer key to control synthetic patient vital signs and demonstration scenarios.
+      </p>
+      <form id="gateForm" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Developer key</label>
+          <input id="gateInput" type="password" placeholder="Enter developer key" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-white focus:outline-none focus:border-teal-500 font-mono" autofocus />
+        </div>
+        <div id="gateError" class="text-xs text-rose-400 font-medium hidden">That developer key was not accepted.</div>
+        <button type="submit" class="w-full py-2.5 px-4 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-sm transition-all shadow-lg shadow-teal-500/20">
+          Unlock Controller Room
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- TOP HEADER -->
+  <header class="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur sticky top-0 z-30 px-4 py-3">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-brand-navy border border-teal-500/30 flex items-center justify-center text-teal-400 font-black text-lg">
+          R
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-white tracking-tight text-sm sm:text-base">ReJivan</span>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/30 font-semibold uppercase">
+              Admin Controller Room
+            </span>
+          </div>
+          <p class="text-[11px] text-slate-400">Connected care. Earlier action. · <span class="text-teal-400">HSC 2027 Private Demonstrator</span></p>
+        </div>
+      </div>
+
+      <!-- Sync / Status Pills -->
+      <div class="flex items-center gap-2">
+        <div id="connectivityPill" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>GATEWAY ONLINE</span>
+        </div>
+        <div id="syncTimePill" class="text-[11px] text-slate-400 font-mono hidden sm:inline">
+          Synced: <span id="syncTimeText">Just now</span>
+        </div>
+        <button id="lockBtn" title="Lock Simulator" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN VIEWPORT -->
+  <main class="max-w-7xl mx-auto w-full p-4 sm:p-6 space-y-6 flex-1">
+
+    <!-- DEMONSTRATION WORKFLOW NOTICE -->
+    <div class="rounded-xl border border-teal-500/20 bg-teal-950/20 p-3.5 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs">
+      <div class="flex items-start gap-2.5">
+        <span class="text-teal-400 text-base">💡</span>
+        <div>
+          <strong class="text-teal-300 font-semibold">Separate-Window Presentation Workflow:</strong>
+          <span class="text-slate-300">Keep the main Judge-Facing Dashboard (<a href="/" target="_blank" class="underline text-teal-400 hover:text-teal-300 font-mono">http://localhost:8080/</a>) open in Window A. Use this controller in private Window B. Changes you submit here immediately update Window A through the authoritative shared backend.</span>
+        </div>
+      </div>
+      <button id="globalResetBtn" class="shrink-0 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold border border-slate-700 text-xs flex items-center gap-1.5">
+        <span>🔄 Reset Demo State</span>
+      </button>
+    </div>
+
+    <!-- 1. PATIENT SELECTION BAR -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+          <span>1. Select Demo Inpatient / Resident</span>
+        </h3>
+        <span class="text-[11px] text-slate-500 font-mono">Authoritative Store: /prototype/data/simulation_store.json</span>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3" id="patientCards">
+        <!-- Generated by JS -->
+      </div>
+    </div>
+
+    <!-- 2-COLUMN CONTROL WORKBENCH -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- LEFT: SCENARIOS & VITALS SLIDERS (8 cols) -->
+      <div class="lg:col-span-8 space-y-6">
+
+        <!-- PREDEFINED DEMO SCENARIOS -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-bold text-white">2. Deterministic Demo Scenarios</h3>
+              <p class="text-xs text-slate-400">One-tap repeatable clinical scenarios for judge demonstration</p>
+            </div>
+            <span id="activeScenarioLabel" class="text-xs font-mono font-semibold px-2.5 py-1 rounded-md bg-slate-800 text-teal-300 border border-teal-500/20">
+              Active: Normal Live Simulation
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <button data-scenario="baseline" class="scenario-btn p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-emerald-500/50 text-left transition-all group">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-emerald-400">Scenario 1: Normal Live Feed</span>
+                <span class="text-[10px] text-slate-500 font-mono">SAFE</span>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-1">Resumes gentle, changing simulated readings within the patient’s normal clinical ranges.</p>
+            </button>
+
+            <button data-scenario="elevated_hr" class="scenario-btn p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-amber-500/50 text-left transition-all group">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-amber-400">Scenario 2: Elevated Heart Rate</span>
+                <span class="text-[10px] text-amber-500 font-mono">138 bpm</span>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-1">Crosses high danger threshold (>120 bpm). Generates immediate Tachycardia Danger Alert.</p>
+            </button>
+
+            <button data-scenario="low_spo2" class="scenario-btn p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-rose-500/50 text-left transition-all group">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-rose-400">Scenario 3: Low Oxygen Saturation</span>
+                <span class="text-[10px] text-rose-500 font-mono">86.0%</span>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-1">Falls below critical danger threshold (≤90%). Generates Hypoxemia Emergency Alert.</p>
+            </button>
+
+            <button data-scenario="bp_crisis" class="scenario-btn p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-amber-500/50 text-left transition-all group">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-amber-300">Scenario 4: Blood Pressure Warning</span>
+                <span class="text-[10px] text-amber-500 font-mono">178/108 mmHg</span>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-1">Exceeds stage-2 hypertensive crisis threshold. Generates Urgent BP Crisis Alert.</p>
+            </button>
+
+            <button data-scenario="multiple_abnormal" class="scenario-btn p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-rose-500/50 text-left transition-all group">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-rose-400">Scenario 5: Multiple Abnormal Readings</span>
+                <span class="text-[10px] text-rose-500 font-mono">MULTI-ALERT</span>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-1">Complex deterioration: HR 142, SpO2 84%, BP 182/110, Temp 38.9°C, RR 28. Tests multi-alert triage.</p>
+            </button>
+
+            <button data-scenario="recovery" class="scenario-btn p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-teal-500/50 text-left transition-all group">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-teal-400">Scenario 6: Recovery Simulation</span>
+                <span class="text-[10px] text-teal-500 font-mono">15s STEPWISE</span>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-1">Smoothly steps current abnormal readings back towards baseline over 15 seconds.</p>
+            </button>
+          </div>
+
+          <!-- CONNECTIVITY INTERRUPTION SIMULATOR (SCENARIO 7) -->
+          <div class="pt-3 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <span class="text-xs font-bold text-slate-200">Scenario 7: Connectivity Interruption</span>
+              <p class="text-[11px] text-slate-400">Simulate loss of remote BLE gateway sync. Window A will display stale data and warning.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="toggleConnBtn" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-amber-500/10 text-amber-300 border border-amber-500/30 hover:bg-amber-500/20">
+                ⚡ Simulate Network Cut
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- EDITABLE VITAL SIGNS CONTROLS -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-bold text-white">3. Precision Vital Controls</h3>
+              <p class="text-xs text-slate-400">Manually fine-tune synthetic vitals and verify threshold responses</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <button id="resetPatientVitalsBtn" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 transition-all">
+                ↻ Reset to Live Normal
+              </button>
+              <button id="applyVitalsBtn" class="px-4 py-2 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 text-xs font-bold shadow-lg shadow-teal-500/20 transition-all flex items-center gap-1.5">
+                <span>🚀 Apply Entered Vitals</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="vitalsGrid">
+            <!-- Heart Rate -->
+            <div class="bg-slate-950 border border-slate-800/80 rounded-xl p-3.5 space-y-2">
+              <div class="flex justify-between text-xs">
+                <span class="font-semibold text-slate-300">Heart Rate (HR)</span>
+                <span class="text-slate-400 font-mono"><span id="val_hr" class="text-white font-bold">--</span> bpm</span>
+              </div>
+              <input id="slider_hr" type="range" min="40" max="180" step="1" value="74" class="w-full accent-teal-400 bg-slate-800 h-1.5 rounded cursor-pointer" />
+              <div class="flex justify-between text-[10px] text-slate-500 font-mono">
+                <span>Bradycardia: &lt;50</span>
+                <span>Normal: 60-100</span>
+                <span>Tachycardia: &gt;120</span>
+              </div>
+            </div>
+
+            <!-- SpO2 -->
+            <div class="bg-slate-950 border border-slate-800/80 rounded-xl p-3.5 space-y-2">
+              <div class="flex justify-between text-xs">
+                <span class="font-semibold text-slate-300">Oxygen Saturation (SpO2)</span>
+                <span class="text-slate-400 font-mono"><span id="val_spo2" class="text-white font-bold">--</span> %</span>
+              </div>
+              <input id="slider_spo2" type="range" min="75" max="100" step="0.1" value="98.4" class="w-full accent-teal-400 bg-slate-800 h-1.5 rounded cursor-pointer" />
+              <div class="flex justify-between text-[10px] text-slate-500 font-mono">
+                <span>Hypoxemia: ≤90%</span>
+                <span>Caution: 91-94%</span>
+                <span>Normal: 95-100%</span>
+              </div>
+            </div>
+
+            <!-- Systolic BP -->
+            <div class="bg-slate-950 border border-slate-800/80 rounded-xl p-3.5 space-y-2">
+              <div class="flex justify-between text-xs">
+                <span class="font-semibold text-slate-300">Systolic Blood Pressure</span>
+                <span class="text-slate-400 font-mono"><span id="val_bpSys" class="text-white font-bold">--</span> mmHg</span>
+              </div>
+              <input id="slider_bpSys" type="range" min="70" max="220" step="1" value="124" class="w-full accent-teal-400 bg-slate-800 h-1.5 rounded cursor-pointer" />
+              <div class="flex justify-between text-[10px] text-slate-500 font-mono">
+                <span>Hypotension: &lt;85</span>
+                <span>Normal: 95-135</span>
+                <span>Crisis: ≥160</span>
+              </div>
+            </div>
+
+            <!-- Diastolic BP -->
+            <div class="bg-slate-950 border border-slate-800/80 rounded-xl p-3.5 space-y-2">
+              <div class="flex justify-between text-xs">
+                <span class="font-semibold text-slate-300">Diastolic Blood Pressure</span>
+                <span class="text-slate-400 font-mono"><span id="val_bpDia" class="text-white font-bold">--</span> mmHg</span>
+              </div>
+              <input id="slider_bpDia" type="range" min="40" max="130" step="1" value="78" class="w-full accent-teal-400 bg-slate-800 h-1.5 rounded cursor-pointer" />
+              <div class="flex justify-between text-[10px] text-slate-500 font-mono">
+                <span>Low: &lt;55</span>
+                <span>Normal: 60-85</span>
+                <span>Crisis: ≥100</span>
+              </div>
+            </div>
+
+            <!-- Body Temperature -->
+            <div class="bg-slate-950 border border-slate-800/80 rounded-xl p-3.5 space-y-2">
+              <div class="flex justify-between text-xs">
+                <span class="font-semibold text-slate-300">Body Temperature</span>
+                <span class="text-slate-400 font-mono"><span id="val_temp" class="text-white font-bold">--</span> °C</span>
+              </div>
+              <input id="slider_temp" type="range" min="34.0" max="41.0" step="0.1" value="36.8" class="w-full accent-teal-400 bg-slate-800 h-1.5 rounded cursor-pointer" />
+              <div class="flex justify-between text-[10px] text-slate-500 font-mono">
+                <span>Hypothermia: &lt;35.0</span>
+                <span>Normal: 36.3-37.4</span>
+                <span>High Fever: ≥38.3</span>
+              </div>
+            </div>
+
+            <!-- Respiratory Rate -->
+            <div class="bg-slate-950 border border-slate-800/80 rounded-xl p-3.5 space-y-2">
+              <div class="flex justify-between text-xs">
+                <span class="font-semibold text-slate-300">Respiratory Rate (RR)</span>
+                <span class="text-slate-400 font-mono"><span id="val_rr" class="text-white font-bold">--</span> breaths/min</span>
+              </div>
+              <input id="slider_rr" type="range" min="8" max="36" step="1" value="16" class="w-full accent-teal-400 bg-slate-800 h-1.5 rounded cursor-pointer" />
+              <div class="flex justify-between text-[10px] text-slate-500 font-mono">
+                <span>Bradypnea: &lt;10</span>
+                <span>Normal: 12-20</span>
+                <span>Tachypnea: ≥25</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT: LIVE AUDIT FEED & CLINICIAN WORKFLOW MONITOR (4 cols) -->
+      <div class="lg:col-span-4 space-y-6">
+
+        <!-- ACTIVE PATIENT PROFILE CARD -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3" id="patientSummaryCard">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Focused Patient</span>
+            <span id="patientStatusBadge" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+              NORMAL
+            </span>
+          </div>
+          <div>
+            <h4 id="patientNameHeader" class="text-base font-bold text-white">--</h4>
+            <p id="patientMetaSub" class="text-xs text-slate-400 mt-0.5">--</p>
+          </div>
+          <div class="text-[11px] text-slate-400 pt-2 border-t border-slate-800/80 space-y-1">
+            <div>📍 Location: <span id="patientLocText" class="text-slate-200">--</span></div>
+            <div>⏱️ Last Update: <span id="patientLastUpdateText" class="text-slate-200 font-mono">--</span></div>
+          </div>
+        </div>
+
+        <!-- GENERATED ALERTS & LIFECYCLE MONITOR -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3 flex-1 flex flex-col">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+            <div>
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">Live Threshold Alerts</h3>
+              <p class="text-[10px] text-slate-500">Shared backend alerts & clinician lifecycle</p>
+            </div>
+            <span id="alertCountBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">
+              0 alerts
+            </span>
+          </div>
+
+          <div id="alertsList" class="space-y-2.5 max-h-[480px] overflow-y-auto pr-1">
+            <p class="text-xs text-slate-500 py-4 text-center">No active alerts. All vitals are within configured limits.</p>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- JAVASCRIPT CONTROLLER LOGIC -->
+  <script>
+    const ADMIN_KEY_STORAGE = "rejivan_admin_simulator_key";
+    let adminKey = sessionStorage.getItem(ADMIN_KEY_STORAGE) || "";
+    let selectedPatientId = "P1";
+    let currentState = null;
+    let pollInterval = null;
+    let hasUnsavedVitalEdits = false;
+    let stateRequestSequence = 0;
+
+    const gateModal = document.getElementById("gateModal");
+    const gateForm = document.getElementById("gateForm");
+    const gateInput = document.getElementById("gateInput");
+    const gateError = document.getElementById("gateError");
+
+    function showAccessGate(invalid = false) {
+      if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+      }
+      sessionStorage.removeItem(ADMIN_KEY_STORAGE);
+      adminKey = "";
+      gateModal.classList.remove("hidden");
+      if (invalid) gateError.classList.remove("hidden");
+      else gateError.classList.add("hidden");
+      gateInput.value = "";
+      gateInput.focus();
+    }
+
+    async function checkAuth() {
+      if (!adminKey) {
+        showAccessGate(false);
+        return;
+      }
+      gateModal.classList.add("hidden");
+      const allowed = await initController();
+      if (!allowed) showAccessGate(true);
+    }
+
+    gateForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const entered = gateInput.value.trim();
+      if (!entered) {
+        showAccessGate(true);
+        return;
+      }
+      adminKey = entered;
+      sessionStorage.setItem(ADMIN_KEY_STORAGE, adminKey);
+      gateError.classList.add("hidden");
+      gateModal.classList.add("hidden");
+      const allowed = await initController();
+      if (!allowed) showAccessGate(true);
+    });
+
+    document.getElementById("lockBtn").addEventListener("click", () => showAccessGate(false));
+
+    // The key is checked by the server and stays in this browser tab only.
+    async function apiCall(endpoint, method = "GET", body = null) {
+      const headers = {
+        "Content-Type": "application/json",
+        "x-admin-key": adminKey,
+      };
+      const res = await fetch(endpoint, {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : null,
+      });
+      if (res.status === 401) {
+        showAccessGate(true);
+        throw new Error("Developer key was not accepted.");
+      }
+      if (!res.ok) throw new Error("Simulator request failed.");
+      return res.json();
+    }
+
+    // Controller Initialization
+    async function initController() {
+      const loaded = await fetchState();
+      if (!loaded) return false;
+      if (!pollInterval) pollInterval = setInterval(fetchState, 1800);
+      return true;
+    }
+
+    async function fetchState() {
+      const requestSequence = ++stateRequestSequence;
+      try {
+        const state = await apiCall("/api/admin/simulator/state");
+        if (!state || state.ok !== true) throw new Error("Simulator state unavailable.");
+        // Ignore an older poll that completed after a newer refresh.
+        if (requestSequence !== stateRequestSequence) return false;
+        currentState = state;
+        renderPatients(state.patients);
+        renderActivePatient(state.patients[selectedPatientId]);
+        renderAlerts(state.alerts);
+        renderConnectivity(state.globalConnectivity);
+        document.getElementById("syncTimeText").textContent = new Date().toLocaleTimeString();
+        return true;
+      } catch (e) {
+        console.error("Admin simulator request failed:", e.message);
+        return false;
+      }
+    }
+
+    function renderConnectivity(status) {
+      const pill = document.getElementById("connectivityPill");
+      const btn = document.getElementById("toggleConnBtn");
+      if (status === "online") {
+        pill.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+        pill.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span>GATEWAY ONLINE</span>';
+        btn.textContent = "⚡ Simulate Network Cut";
+        btn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-amber-500/10 text-amber-300 border border-amber-500/30 hover:bg-amber-500/20";
+      } else {
+        pill.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20";
+        pill.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-400 animate-ping"></span><span>GATEWAY INTERRUPTED</span>';
+        btn.textContent = "🔄 Restore Connectivity";
+        btn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/20";
+      }
+    }
+
+    function renderPatients(patients) {
+      const container = document.getElementById("patientCards");
+      container.innerHTML = "";
+
+      for (const [id, p] of Object.entries(patients)) {
+        const isSelected = id === selectedPatientId;
+        const card = document.createElement("button");
+        card.className = `p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+          isSelected
+            ? "bg-teal-950/40 border-teal-500 shadow-md shadow-teal-500/10"
+            : "bg-slate-950 border-slate-800 hover:border-slate-700"
+        }`;
+        card.onclick = () => {
+          hasUnsavedVitalEdits = false;
+          selectedPatientId = id;
+          renderActivePatient(currentState.patients[selectedPatientId]);
+          renderPatients(currentState.patients);
+        };
+
+        const statusColor = p.status === "danger" ? "text-rose-400 bg-rose-500/10 border-rose-500/30" : (p.status === "caution" ? "text-amber-400 bg-amber-500/10 border-amber-500/30" : "text-emerald-400 bg-emerald-500/10 border-emerald-500/30");
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-xs font-mono font-bold ${isSelected ? 'text-teal-300' : 'text-slate-400'}">${p.ward ? p.ward : p.id}</span>
+            <span class="text-[9px] font-mono px-1.5 py-0.5 rounded border uppercase font-bold ${statusColor}">${p.status || 'NORMAL'}</span>
+          </div>
+          <h4 class="text-sm font-bold text-white">${p.name}</h4>
+          <p class="text-[11px] text-slate-400 truncate mt-0.5">${p.condition}</p>
+          <div class="mt-2 pt-2 border-t border-slate-900 flex justify-between text-[10px] font-mono text-slate-400">
+            <span>HR: ${p.currentVitals.hr || '--'}</span>
+            <span>SpO2: ${p.currentVitals.spo2 || '--'}%</span>
+            <span>BP: ${p.currentVitals.bpSys || '--'}/${p.currentVitals.bpDia || '--'}</span>
+          </div>
+        `;
+        container.appendChild(card);
+      }
+    }
+
+    function renderActivePatient(p) {
+      if (!p) return;
+      document.getElementById("patientNameHeader").textContent = p.name;
+      document.getElementById("patientMetaSub").textContent = `${p.age} ${p.sex} · ${p.condition}`;
+      document.getElementById("patientLocText").textContent = p.location + (p.address ? ` (${p.address})` : "");
+      document.getElementById("patientLastUpdateText").textContent = new Date(p.lastUpdated).toLocaleTimeString();
+      document.getElementById("activeScenarioLabel").textContent = `Active: ${p.scenarioLabel || (p.vitalMode === "normal_live" ? "Normal Live Simulation" : p.scenarioId || 'Baseline')}`;
+
+      const statusBadge = document.getElementById("patientStatusBadge");
+      statusBadge.textContent = (p.status || "NORMAL").toUpperCase();
+      statusBadge.className = `text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${
+        p.status === "danger"
+          ? "bg-rose-500/10 text-rose-400 border-rose-500/30"
+          : (p.status === "caution" ? "bg-amber-500/10 text-amber-400 border-amber-500/30" : "bg-emerald-500/10 text-emerald-400 border-emerald-500/30")
+      }`;
+
+      // Keep the user's in-progress slider edits safe while background polling runs.
+      if (!hasUnsavedVitalEdits) {
+        const v = p.currentVitals;
+        setVitalSlider("hr", v.hr);
+        setVitalSlider("spo2", v.spo2);
+        setVitalSlider("bpSys", v.bpSys);
+        setVitalSlider("bpDia", v.bpDia);
+        setVitalSlider("temp", v.temp);
+        setVitalSlider("rr", v.rr);
+      }
+    }
+
+    function setVitalSlider(key, val) {
+      const slider = document.getElementById(`slider_${key}`);
+      const label = document.getElementById(`val_${key}`);
+      if (slider && val != null) {
+        slider.value = val;
+      }
+      if (label) {
+        label.textContent = val != null ? val : "--";
+      }
+    }
+
+    // Connect slider listeners for immediate local preview
+    ["hr", "spo2", "bpSys", "bpDia", "temp", "rr"].forEach((key) => {
+      const slider = document.getElementById(`slider_${key}`);
+      const label = document.getElementById(`val_${key}`);
+      if (slider && label) {
+        slider.addEventListener("input", () => {
+          hasUnsavedVitalEdits = true;
+          label.textContent = slider.value;
+        });
+      }
+    });
+
+    // Apply manual vital sliders
+    document.getElementById("applyVitalsBtn").addEventListener("click", async () => {
+      const newVitals = {
+        hr: Number(document.getElementById("slider_hr").value),
+        spo2: Number(document.getElementById("slider_spo2").value),
+        bpSys: Number(document.getElementById("slider_bpSys").value),
+        bpDia: Number(document.getElementById("slider_bpDia").value),
+        temp: Number(document.getElementById("slider_temp").value),
+        rr: Number(document.getElementById("slider_rr").value),
+      };
+
+      try {
+        await apiCall("/api/admin/simulator/update", "POST", {
+          patientId: selectedPatientId,
+          vitals: newVitals,
+          source: "Admin Simulator Manual Controls",
+          scenarioId: "manual_override"
+        });
+        hasUnsavedVitalEdits = false;
+        await fetchState();
+      } catch (e) {
+        alert("Failed to apply vitals: " + e.message);
+      }
+    });
+
+    // Scenario buttons
+    document.querySelectorAll(".scenario-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const scenario = btn.getAttribute("data-scenario");
+        try {
+          await apiCall("/api/admin/simulator/scenario", "POST", {
+            patientId: selectedPatientId,
+            scenarioId: scenario,
+          });
+          hasUnsavedVitalEdits = false;
+          await fetchState();
+        } catch (e) {
+          alert("Failed to trigger scenario: " + e.message);
+        }
+      });
+    });
+
+    // Connectivity toggle
+    document.getElementById("toggleConnBtn").addEventListener("click", async () => {
+      const current = currentState ? currentState.globalConnectivity : "online";
+      const target = current === "online" ? "interrupted" : "online";
+      try {
+        await apiCall("/api/admin/simulator/connectivity", "POST", { status: target });
+        await fetchState();
+      } catch (e) {
+        alert("Failed to toggle connectivity: " + e.message);
+      }
+    });
+
+    // Reset All State
+    document.getElementById("resetPatientVitalsBtn").addEventListener("click", async () => {
+      const patient = currentState?.patients?.[selectedPatientId];
+      if (!patient) return;
+      if (confirm(`Resume ${patient.name}'s gently changing normal simulated vitals? This clears active demo alerts for this patient.`)) {
+        try {
+          await apiCall("/api/admin/simulator/reset-patient", "POST", { patientId: selectedPatientId });
+          hasUnsavedVitalEdits = false;
+          await fetchState();
+        } catch (e) {
+          alert("Failed to reset patient vitals: " + e.message);
+        }
+      }
+    });
+
+    document.getElementById("globalResetBtn").addEventListener("click", async () => {
+      if (confirm("Reset demonstration state? All patients will resume gently changing normal simulated vitals and active test alerts will be cleared.")) {
+        try {
+          await apiCall("/api/admin/simulator/reset", "POST");
+          hasUnsavedVitalEdits = false;
+          await fetchState();
+        } catch (e) {
+          alert("Failed to reset demo state: " + e.message);
+        }
+      }
+    });
+
+    // Render Alerts
+    function renderAlerts(alerts) {
+      const list = document.getElementById("alertsList");
+      const badge = document.getElementById("alertCountBadge");
+      badge.textContent = `${alerts.length} alerts`;
+
+      if (alerts.length === 0) {
+        list.innerHTML = `<p class="text-xs text-slate-500 py-6 text-center">No active alerts. All patient readings normal.</p>`;
+        return;
+      }
+
+      list.innerHTML = "";
+      alerts.forEach((a) => {
+        const el = document.createElement("div");
+        const isDanger = a.severity === "danger";
+        el.className = `p-3 rounded-xl border text-xs space-y-2 ${
+          isDanger ? "bg-rose-950/20 border-rose-500/30" : "bg-amber-950/20 border-amber-500/30"
+        }`;
+
+        // Status pill color
+        let statusBadgeClass = "bg-rose-500/20 text-rose-300 border-rose-500/40";
+        if (a.status === "Acknowledged") statusBadgeClass = "bg-amber-500/20 text-amber-300 border-amber-500/40";
+        if (a.status === "Follow-up recorded") statusBadgeClass = "bg-blue-500/20 text-blue-300 border-blue-500/40";
+        if (a.status === "Resolved") statusBadgeClass = "bg-emerald-500/20 text-emerald-300 border-emerald-500/40";
+
+        el.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-white">${a.patientName}</span>
+            <span class="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border uppercase ${statusBadgeClass}">
+              ${a.status}
+            </span>
+          </div>
+          <p class="text-[11px] text-slate-300 leading-snug">${a.conditionReason || a.message}</p>
+          <div class="flex items-center justify-between text-[10px] text-slate-500 font-mono pt-1 border-t border-slate-900">
+            <span>Threshold: ${a.threshold || 'Configured Limit'}</span>
+            <span>${new Date(a.createdAt).toLocaleTimeString()}</span>
+          </div>
+        `;
+        list.appendChild(el);
+      });
+    }
+
+    // Startup check
+    checkAuth();
+  </script>
+</body>
+</html>

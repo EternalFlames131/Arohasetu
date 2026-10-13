@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ReJivan · Clinical Engineering Console (Dev Backend)</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: #111827;
+      --card-border: #1f293d;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.25);
+      --danger: #f43f5e;
+      --warning: #f59e0b;
+      --success: #10b981;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    /* Lock Gate */
+    #gateScreen {
+      position: fixed; inset: 0; background: #060911; z-index: 1000;
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+    }
+    .gate-box {
+      background: #0f172a; border: 1px solid #1e293b; border-radius: 16px;
+      padding: 36px 32px; max-width: 440px; width: 100%; text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    }
+    .gate-icon { font-size: 40px; margin-bottom: 12px; }
+    .gate-title { font-size: 20px; font-weight: 700; color: #f8fafc; margin-bottom: 6px; }
+    .gate-sub { font-size: 13px; color: #64748b; margin-bottom: 24px; line-height: 1.4; }
+    .gate-input {
+      width: 100%; padding: 12px 16px; font-size: 15px; background: #020617;
+      border: 1px solid #334155; border-radius: 8px; color: #f8fafc; margin-bottom: 16px;
+      outline: none; transition: border-color 0.2s;
+    }
+    .gate-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
+    .gate-btn {
+      width: 100%; padding: 12px; background: linear-gradient(135deg, #0284c7, #2563eb);
+      border: none; border-radius: 8px; color: white; font-weight: 600; font-size: 14px;
+      cursor: pointer; transition: opacity 0.2s;
+    }
+    .gate-btn:hover { opacity: 0.9; }
+    .gate-hint { font-size: 11px; color: #475569; margin-top: 14px; }
+
+    /* App Header */
+    header {
+      background: #0c1222; border-bottom: 1px solid var(--card-border);
+      padding: 14px 24px; display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100; flex-wrap: wrap; gap: 12px;
+    }
+    .logo-zone { display: flex; align-items: center; gap: 12px; }
+    .logo-badge {
+      background: linear-gradient(135deg, #0284c7, #4f46e5); color: white;
+      font-size: 11px; font-weight: 800; padding: 4px 8px; border-radius: 6px; letter-spacing: 0.5px;
+    }
+    .app-title { font-size: 17px; font-weight: 700; color: #f8fafc; }
+    .nav-actions { display: flex; align-items: center; gap: 10px; }
+    .pill {
+      font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 9999px;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .pill-green { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .pill-red { background: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.3); }
+    .pill-amber { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .btn-outline {
+      background: #1e293b; border: 1px solid #334155; color: #cbd5e1;
+      padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;
+      cursor: pointer; text-decoration: none; transition: all 0.2s;
+    }
+    .btn-outline:hover { background: #334155; color: white; }
+
+    /* Layout */
+    main {
+      max-width: 1400px; width: 100%; margin: 0 auto; padding: 24px;
+      display: grid; grid-template-columns: 1.25fr 1fr; gap: 24px; flex: 1;
+    }
+    @media (max-width: 1024px) { main { grid-template-columns: 1fr; } }
+    .card {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: 14px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px;
+    }
+    .card-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #1e293b; padding-bottom: 12px; }
+    .card-title { font-size: 15px; font-weight: 700; color: #e2e8f0; display: flex; align-items: center; gap: 8px; }
+
+    /* Video Viewport */
+    .viewport-box {
+      position: relative; width: 100%; aspect-ratio: 16/9; background: #000;
+      border-radius: 10px; overflow: hidden; border: 1px solid #1e293b;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .viewport-box img { width: 100%; height: 100%; object-fit: contain; }
+    .viewport-overlay {
+      position: absolute; top: 10px; left: 10px; right: 10px;
+      display: flex; justify-content: space-between; pointer-events: none;
+    }
+    .hud-tag {
+      background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(4px);
+      padding: 4px 8px; border-radius: 4px; font-size: 10px; font-family: monospace;
+      color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+    .alert-banner-hud {
+      position: absolute; bottom: 10px; left: 10px; right: 10px;
+      background: rgba(225, 29, 72, 0.95); color: white; padding: 8px 12px;
+      border-radius: 6px; font-size: 12px; font-weight: 700; text-align: center;
+      display: none; box-shadow: 0 4px 12px rgba(225, 29, 72, 0.5);
+    }
+
+    /* Controls Grid */
+    .controls-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+    .control-group { display: flex; flex-direction: column; gap: 6px; }
+    .control-label { font-size: 12px; font-weight: 600; color: #94a3b8; display: flex; justify-content: space-between; }
+    .control-val { color: var(--accent); font-family: monospace; }
+    select, input[type="range"] {
+      width: 100%; background: #0f172a; border: 1px solid #334155; color: #f8fafc;
+      padding: 8px 10px; border-radius: 6px; font-size: 13px; outline: none;
+    }
+    input[type="range"] { padding: 4px 0; accent-color: var(--accent); }
+
+    /* Button rows */
+    .btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .action-btn {
+      padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: 600;
+      border: 1px solid transparent; cursor: pointer; transition: all 0.15s;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .btn-primary { background: #0284c7; color: white; }
+    .btn-primary:hover { background: #0369a1; }
+    .btn-danger { background: #be123c; color: white; }
+    .btn-danger:hover { background: #9f1239; }
+    .btn-warning { background: #b45309; color: white; }
+    .btn-warning:hover { background: #92400e; }
+    .btn-dark { background: #1e293b; color: #cbd5e1; border-color: #334155; }
+    .btn-dark:hover { background: #334155; color: white; }
+    .btn-dark.active { background: #0369a1; color: white; border-color: #38bdf8; }
+
+    /* Presets */
+    .preset-chip {
+      background: #1e293b; border: 1px solid #334155; color: #cbd5e1;
+      padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .preset-chip:hover { border-color: var(--accent); color: white; }
+
+    /* Switch */
+    .switch-label {
+      display: flex; align-items: center; justify-content: space-between;
+      background: #0f172a; padding: 10px 12px; border-radius: 8px; border: 1px solid #1e293b;
+      cursor: pointer;
+    }
+    .switch-label span { font-size: 13px; color: #e2e8f0; }
+    .switch-input { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
+
+    /* Terminal */
+    .terminal-box {
+      background: #020617; border: 1px solid #1e293b; border-radius: 8px;
+      padding: 12px; font-family: monospace; font-size: 11px; color: #a5f3fc;
+      max-height: 220px; overflow-y: auto; white-space: pre-wrap; word-break: break-all;
+    }
+
+    /* Toast */
+    #devToast {
+      position: fixed; bottom: 20px; right: 20px; background: #0284c7; color: white;
+      padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 600;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 2000; display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Gate Passcode Modal -->
+  <div id="gateScreen">
+    <div class="gate-box">
+      <div class="gate-icon">🛡️</div>
+      <h1 class="gate-title">ReJivan Engineering Console</h1>
+      <p class="gate-sub">Developer-only backend interface. Configure YOLO sentinels, override telemetry, and test emergency triggers.</p>
+      <input type="password" id="devPasscodeInput" class="gate-input" placeholder="Enter developer key" autofocus>
+      <button class="gate-btn" onclick="submitPasscode()">Unlock Developer Console</button>
+      <p class="gate-hint">Use the private developer key provided by the project owner.</p>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header>
+    <div class="logo-zone">
+      <span class="logo-badge">DEV CONTROL</span>
+      <span class="app-title">ReJivan Clinical Engineering Console</span>
+    </div>
+    <div class="nav-actions">
+      <span id="nodeStatusPill" class="pill pill-green">Node: 8080 OK</span>
+      <span id="yoloStatusPill" class="pill pill-green">YOLO: 5050 Ready</span>
+      <span id="deviceInfoPill" class="pill pill-amber">CUDA / CPU Auto</span>
+      <a href="/?dev=1" class="btn-outline" target="_blank">🌐 Open Portal</a>
+      <a href="/?tab=ward" class="btn-outline" target="_blank">🏥 Nurse Ward</a>
+      <button class="btn-outline" onclick="lockConsole()">🔒 Lock</button>
+    </div>
+  </header>
+
+  <!-- Main Grid -->
+  <main>
+    <!-- Left Column: Video & YOLO Sentinel Performance -->
+    <div>
+      <!-- Live Video Feed & Speed Controls -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">📹 Video Feed & YOLO Pose Sentinel</span>
+          <div style="display:flex; gap:6px;">
+            <button class="action-btn btn-dark" onclick="toggleStreamMode()" id="streamModeBtn">Mode: MJPEG</button>
+            <button class="action-btn btn-dark" onclick="reloadStream()">🔄 Reload</button>
+          </div>
+        </div>
+
+        <div class="viewport-box">
+          <img id="streamViewport" src="/api/yolo/video_feed" alt="Sentinel Stream">
+          <div class="viewport-overlay">
+            <span class="hud-tag" id="hudFps">FPS: --</span>
+            <span class="hud-tag" id="hudLatency">Latency: -- ms</span>
+            <span class="hud-tag" id="hudPerson">Person: --</span>
+          </div>
+          <div class="alert-banner-hud" id="hudDisappearedBanner">
+            ⚠️ ALERT: PATIENT LEFT CAMERA FIELD (BED VACANT)
+          </div>
+        </div>
+
+        <!-- Camera Source Selection -->
+        <div class="control-group">
+          <label class="control-label">Video Ingestion Source</label>
+          <div class="btn-row">
+            <button class="action-btn btn-dark active" id="srcDemoBtn" onclick="switchSource('bed_fall_demo')">🎬 Clinical Bed-Fall Demo</button>
+            <button class="action-btn btn-dark" id="srcWebcamBtn" onclick="switchSource('webcam')">📱 Mobile Camera (Idx 0)</button>
+            <button class="action-btn btn-dark" id="srcLaptopBtn" onclick="switchSource('webcam', 1)">💻 Laptop Webcam (Idx 1)</button>
+            <button class="action-btn btn-dark" id="srcRtspBtn" onclick="switchSource('RTSP_CAMERA')">🏥 Ward CCTV (RTSP)</button>
+          </div>
+        </div>
+
+        <!-- Zero-Lag & Performance Tuning (Addresses user request for faster feed) -->
+        <div style="border-top:1px solid #1e293b; padding-top:14px; display:flex; flex-direction:column; gap:12px;">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <span style="font-size:13px; font-weight:700; color:#38bdf8;">⚡ Stream Speed & Latency Optimization</span>
+            <span style="font-size:11px; color:#64748b;">(Keeps YOLO active while removing lag)</span>
+          </div>
+
+          <div class="controls-grid">
+            <div class="control-group">
+              <label class="control-label">Inference Stride <span class="control-val" id="strideVal">2x (Alternate)</span></label>
+              <div class="btn-row">
+                <button class="action-btn btn-dark" id="stride1Btn" onclick="setInferenceStride(1)">1x (Every frame)</button>
+                <button class="action-btn btn-dark active" id="stride2Btn" onclick="setInferenceStride(2)">2x (Smooth ~25 FPS)</button>
+                <button class="action-btn btn-dark" id="stride3Btn" onclick="setInferenceStride(3)">3x (Ultra Fast)</button>
+              </div>
+            </div>
+
+            <div class="control-group">
+              <label class="control-label">Stream Resolution Scaling <span class="control-val" id="resVal">480p Turbo</span></label>
+              <select id="streamResSelect" onchange="setStreamResolution(this.value)">
+                <option value="480p" selected>480p Turbo (Zero-lag / Recommended)</option>
+                <option value="640p">640p Standard Quality</option>
+                <option value="native">Native Resolution</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <label class="control-label">JPEG Compression Quality <span class="control-val" id="qualityVal">65%</span></label>
+            <input type="range" id="qualityRange" min="40" max="90" value="65" oninput="setStreamQuality(this.value)">
+          </div>
+        </div>
+
+        <!-- Patient Disappearance / Left Camera Field Alert Section (Addresses user request) -->
+        <div style="border-top:1px solid #1e293b; padding-top:14px; display:flex; flex-direction:column; gap:12px;">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <span style="font-size:13px; font-weight:700; color:#f43f5e;">🚨 Patient Disappearance / Left Room Sentinel</span>
+            <span id="disappearStatePill" class="pill pill-green">Status: Patient Present</span>
+          </div>
+
+          <label class="switch-label">
+            <span>Enable Disappearance Alert When Person Leaves Field</span>
+            <input type="checkbox" id="disappearToggle" class="switch-input" checked onchange="toggleDisappearanceSentinel(this.checked)">
+          </label>
+
+          <div class="control-group">
+            <label class="control-label">Disappearance Grace Timeout <span class="control-val" id="disappearTimeoutVal">5.0s</span></label>
+            <input type="range" id="disappearTimeoutRange" min="2" max="20" step="1" value="5" oninput="setDisappearanceTimeout(this.value)">
+          </div>
+
+          <div class="btn-row">
+            <button class="action-btn btn-danger" onclick="triggerSimulatedDisappearance(true)">⚠️ Simulate Patient Disappeared (Trigger Alert Now)</button>
+            <button class="action-btn btn-dark" onclick="triggerSimulatedDisappearance(false)">🔄 Restore Patient Present</button>
+          </div>
+        </div>
+
+        <!-- Daemon Management -->
+        <div style="border-top:1px solid #1e293b; padding-top:14px; display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:12px; color:#94a3b8;">Python Daemon Control</span>
+          <div class="btn-row">
+            <button class="action-btn btn-primary" onclick="manageDaemon('start')">⚡ Start YOLO</button>
+            <button class="action-btn btn-warning" onclick="manageDaemon('stop')">🛑 Stop YOLO</button>
+            <button class="action-btn btn-dark" onclick="resetSentinelTracking()">🔄 Reset Tracking</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Vitals Overrides, Emergency Escalation, Logs -->
+    <div>
+      <!-- Clinical Vitals & Wearables Override -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">🩺 Telemetry & Wearables Overrides</span>
+          <button class="action-btn btn-dark" onclick="resetVitalsToNormal()">Reset Baseline</button>
+        </div>
+
+        <div style="font-size:12px; color:#94a3b8;">
+          Changes made here take effect immediately on the live clinical portal and trigger clinical triage.
+        </div>
+
+        <!-- Sliders -->
+        <div class="controls-grid">
+          <div class="control-group">
+            <label class="control-label">Heart Rate <span class="control-val" id="hrVal">78 bpm</span></label>
+            <input type="range" id="hrRange" min="35" max="200" value="78" oninput="updateVital('hr', this.value)">
+          </div>
+          <div class="control-group">
+            <label class="control-label">SpO2 Oxygen <span class="control-val" id="spo2Val">98 %</span></label>
+            <input type="range" id="spo2Range" min="70" max="100" value="98" oninput="updateVital('spo2', this.value)">
+          </div>
+          <div class="control-group">
+            <label class="control-label">Systolic BP <span class="control-val" id="bpSysVal">122 mmHg</span></label>
+            <input type="range" id="bpSysRange" min="80" max="220" value="122" oninput="updateVital('bpSys', this.value)">
+          </div>
+          <div class="control-group">
+            <label class="control-label">Diastolic BP <span class="control-val" id="bpDiaVal">80 mmHg</span></label>
+            <input type="range" id="bpDiaRange" min="45" max="130" value="80" oninput="updateVital('bpDia', this.value)">
+          </div>
+          <div class="control-group">
+            <label class="control-label">Temperature <span class="control-val" id="tempVal">37.0 °C</span></label>
+            <input type="range" id="tempRange" min="34" max="42" step="0.1" value="37.0" oninput="updateVital('temp', this.value)">
+          </div>
+          <div class="control-group">
+            <label class="control-label">Blood Glucose <span class="control-val" id="glucoseVal">105 mg/dL</span></label>
+            <input type="range" id="glucoseRange" min="45" max="380" value="105" oninput="updateVital('glucose', this.value)">
+          </div>
+        </div>
+
+        <!-- Preset Chips -->
+        <div class="control-group">
+          <label class="control-label">Clinical Scenario Presets</label>
+          <div class="btn-row">
+            <span class="preset-chip" onclick="applyPreset('stable')">🟢 Stable Normal</span>
+            <span class="preset-chip" onclick="applyPreset('crisis')">🔴 BP Crisis (185/110)</span>
+            <span class="preset-chip" onclick="applyPreset('hypoxemia')">🔴 Hypoxemia (SpO2 86%)</span>
+            <span class="preset-chip" onclick="applyPreset('tachycardia')">🟡 Tachycardia (145 bpm)</span>
+            <span class="preset-chip" onclick="applyPreset('bradycardia')">🔴 Bradycardia (44 bpm)</span>
+          </div>
+        </div>
+
+        <!-- Wearable Disconnect Simulator -->
+        <div class="control-group" style="border-top:1px solid #1e293b; padding-top:12px;">
+          <label class="control-label">Wearable Disconnect Simulation (Tests Fallback Layering)</label>
+          <div class="btn-row">
+            <button class="action-btn btn-dark" id="devDev1" onclick="toggleDeviceDisconnect('SanketLife 12-Lead ECG')">ECG: Online</button>
+            <button class="action-btn btn-dark" id="devDev2" onclick="toggleDeviceDisconnect('ReJivan Smartwatch')">Watch: Online</button>
+            <button class="action-btn btn-dark" id="devDev3" onclick="toggleDeviceDisconnect('Omron HEM-7156T')">BP: Online</button>
+            <button class="action-btn btn-dark" id="devDev4" onclick="toggleDeviceDisconnect('TempTraq Patch')">Temp: Online</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Emergency Escalation & Dispatch Testing -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">🚨 Emergency Escalation Ladder</span>
+        </div>
+        <p style="font-size:12px; color:#94a3b8; line-height:1.4;">
+          Trigger the 3-tier autonomous emergency response pipeline: <strong>Family Caregiver</strong> &rarr; <strong>Backup Caregiver</strong> &rarr; <strong>108 Ambulance Dispatch</strong>.
+        </p>
+        <div class="btn-row">
+          <button class="action-btn btn-danger" onclick="triggerEmergencyTest()">📞 Trigger Autonomous Call Chain Test</button>
+          <button class="action-btn btn-dark" onclick="clearAllAlerts()">🧹 Clear Active Alerts</button>
+        </div>
+      </div>
+
+      <!-- Live Terminal Logs -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">🖥️ Sentinel Logs & Console</span>
+          <button class="action-btn btn-dark" onclick="fetchLogs()">🔄 Refresh</button>
+        </div>
+        <div class="terminal-box" id="terminalOutput">Loading edge logs...</div>
+      </div>
+    </div>
+  </main>
+
+  <div id="devToast">Message</div>
+
+  <script>
+    // Server-verified access; the key remains in this tab's session only.
+    const DEV_KEY_STORAGE = "rejivan_admin_simulator_key";
+    let devKey = sessionStorage.getItem(DEV_KEY_STORAGE) || "";
+    let consoleStarted = false;
+    async function validateDevKey(key) {
+      const res = await fetch("/api/dev/overrides", { headers: { "x-admin-key": key } });
+      return res.ok;
+    }
+    async function checkAuth() {
+      if (devKey && await validateDevKey(devKey)) {
+        document.getElementById("gateScreen").style.display = "none";
+        if (!consoleStarted) { consoleStarted = true; initConsole(); }
+      } else {
+        sessionStorage.removeItem(DEV_KEY_STORAGE);
+        devKey = "";
+        document.getElementById("gateScreen").style.display = "flex";
+      }
+    }
+    async function submitPasscode() {
+      const input = document.getElementById("devPasscodeInput").value.trim();
+      if (input && await validateDevKey(input)) {
+        devKey = input;
+        sessionStorage.setItem(DEV_KEY_STORAGE, devKey);
+        document.getElementById("gateScreen").style.display = "none";
+        if (!consoleStarted) { consoleStarted = true; initConsole(); }
+        showToast("Developer Console Unlocked");
+      } else {
+        alert("That developer key was not accepted.");
+      }
+    }
+    function lockConsole() {
+      sessionStorage.removeItem(DEV_KEY_STORAGE);
+      window.location.reload();
+    }
+    document.getElementById("devPasscodeInput")?.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") submitPasscode();
+    });
+
+    // Console State
+    let streamMode = "mjpeg"; // mjpeg or snapshot
+    let snapshotTimer = null;
+    let currentVitals = { hr: 78, spo2: 98, bpSys: 122, bpDia: 80, temp: 37.0, glucose: 105 };
+    let disconnectedDevs = [];
+
+    function showToast(msg) {
+      const toast = document.getElementById("devToast");
+      toast.innerText = msg;
+      toast.style.display = "block";
+      setTimeout(() => { toast.style.display = "none"; }, 3000);
+    }
+
+    // Initialize Developer Console
+    async function initConsole() {
+      pollTelemetry();
+      setInterval(pollTelemetry, 600);
+      fetchLogs();
+      setInterval(fetchLogs, 5000);
+      loadConfig();
+    }
+
+    // Telemetry Poller
+    async function pollTelemetry() {
+      try {
+        const res = await fetch("/api/yolo/telemetry");
+        if (res.ok) {
+          const data = await res.json();
+          document.getElementById("hudFps").innerText = `FPS: ${Math.round(data.fps || 25)}`;
+          document.getElementById("hudLatency").innerText = `Latency: ${data.inference_latency_ms || 12} ms`;
+          document.getElementById("hudPerson").innerText = data.person_detected ? "Person: Detected" : "Person: None";
+          document.getElementById("deviceInfoPill").innerText = `${data.device || "Auto"} (${data.cuda_enabled ? "CUDA" : "CPU"})`;
+          document.getElementById("yoloStatusPill").className = "pill pill-green";
+          document.getElementById("yoloStatusPill").innerText = "YOLO: 5050 Online";
+
+          // Disappearance Banner & Status
+          const isDisappeared = Boolean(data.patient_disappeared || data.alert_patient_disappeared);
+          const banner = document.getElementById("hudDisappearedBanner");
+          const pill = document.getElementById("disappearStatePill");
+          if (isDisappeared) {
+            banner.style.display = "block";
+            banner.innerText = `⚠️ ALERT: PATIENT LEFT CAMERA FIELD (${data.disappearance_duration || 5}s)`;
+            pill.className = "pill pill-red";
+            pill.innerText = `ALERT: Left View (${data.disappearance_duration || 5}s)`;
+          } else {
+            banner.style.display = "none";
+            if (data.person_detected) {
+              pill.className = "pill pill-green";
+              pill.innerText = "Status: Patient Present";
+            } else {
+              pill.className = "pill pill-amber";
+              pill.innerText = `Scanning (Absent ${data.disappearance_duration || 0}s)`;
+            }
+          }
+        }
+      } catch (e) {
+        document.getElementById("yoloStatusPill").className = "pill pill-red";
+        document.getElementById("yoloStatusPill").innerText = "YOLO: Offline";
+      }
+    }
+
+    // Config Sync
+    async function loadConfig() {
+      try {
+        const res = await fetch("/api/yolo/config");
+        if (res.ok) {
+          const cfg = await res.json();
+          setStrideUI(cfg.inferenceStride || 2);
+          document.getElementById("streamResSelect").value = cfg.streamResolution || "480p";
+          document.getElementById("resVal").innerText = cfg.streamResolution || "480p";
+          document.getElementById("qualityRange").value = cfg.streamQuality || 65;
+          document.getElementById("qualityVal").innerText = `${cfg.streamQuality || 65}%`;
+          document.getElementById("disappearTimeoutRange").value = cfg.disappearanceThreshold || 5;
+          document.getElementById("disappearTimeoutVal").innerText = `${cfg.disappearanceThreshold || 5}s`;
+          document.getElementById("disappearToggle").checked = cfg.disappearanceEnabled !== false;
+        }
+      } catch (e) {}
+    }
+
+    // Stream Speed & Latency Controls
+    async function setInferenceStride(stride) {
+      setStrideUI(stride);
+      await fetch("/api/yolo/config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ inferenceStride: stride })
+      });
+      showToast(`Inference Stride set to ${stride}x`);
+    }
+    function setStrideUI(stride) {
+      document.getElementById("strideVal").innerText = `${stride}x (${stride === 1 ? 'Every Frame' : stride === 2 ? 'Alternate / Smooth' : 'Ultra Fast'})`;
+      [1, 2, 3].forEach(s => {
+        const btn = document.getElementById(`stride${s}Btn`);
+        if (btn) btn.className = s === stride ? "action-btn btn-dark active" : "action-btn btn-dark";
+      });
+    }
+
+    async function setStreamResolution(res) {
+      document.getElementById("resVal").innerText = res;
+      await fetch("/api/yolo/config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ streamResolution: res })
+      });
+      showToast(`Stream resolution updated to ${res}`);
+    }
+
+    async function setStreamQuality(val) {
+      document.getElementById("qualityVal").innerText = `${val}%`;
+      await fetch("/api/yolo/config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ streamQuality: parseInt(val) })
+      });
+    }
+
+    // Disappearance Alert Settings
+    async function toggleDisappearanceSentinel(enabled) {
+      await fetch("/api/yolo/config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ disappearanceEnabled: enabled })
+      });
+      showToast(`Disappearance Sentinel ${enabled ? "Enabled" : "Disabled"}`);
+    }
+
+    async function setDisappearanceTimeout(val) {
+      document.getElementById("disappearTimeoutVal").innerText = `${val}s`;
+      await fetch("/api/yolo/config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ disappearanceThreshold: parseFloat(val) })
+      });
+    }
+
+    async function triggerSimulatedDisappearance(force) {
+      await fetch("/api/yolo/config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ forceDisappearance: force })
+      });
+      showToast(force ? "⚠️ Simulated: Patient Left Room" : "Patient Presence Restored");
+    }
+
+    // Source Switcher
+    async function switchSource(source, deviceIdx = 0) {
+      if (source === "webcam" && deviceIdx === 1) {
+        await fetch("/api/yolo/webcam/device", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ deviceIndex: 1 })
+        });
+      }
+      await fetch("/api/yolo/source", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ source, autoStart: true })
+      });
+      reloadStream();
+      showToast(`Ingestion source switched to: ${source}`);
+    }
+
+    // Stream Viewport
+    function reloadStream() {
+      const img = document.getElementById("streamViewport");
+      img.src = `/api/yolo/video_feed?t=${Date.now()}`;
+    }
+    function toggleStreamMode() {
+      const btn = document.getElementById("streamModeBtn");
+      const img = document.getElementById("streamViewport");
+      if (streamMode === "mjpeg") {
+        streamMode = "snapshot";
+        btn.innerText = "Mode: Snapshot";
+        snapshotTimer = setInterval(() => {
+          img.src = `/api/yolo/snapshot?t=${Date.now()}`;
+        }, 60);
+      } else {
+        streamMode = "mjpeg";
+        btn.innerText = "Mode: MJPEG";
+        clearInterval(snapshotTimer);
+        reloadStream();
+      }
+    }
+
+    // Daemon Management
+    async function manageDaemon(action) {
+      await fetch(`/api/yolo/daemon/${action}`, { method: "POST" });
+      showToast(`YOLO daemon command: ${action}`);
+      setTimeout(reloadStream, 1500);
+    }
+    async function resetSentinelTracking() {
+      await fetch("/api/yolo/control", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "restart" })
+      });
+      showToast("Tracking and spatial baseline reset.");
+    }
+
+    // Telemetry & Vitals Overrides
+    function updateVital(param, val) {
+      currentVitals[param] = parseFloat(val);
+      const units = { hr: "bpm", spo2: "%", bpSys: "mmHg", bpDia: "mmHg", temp: "°C", glucose: "mg/dL" };
+      document.getElementById(`${param}Val`).innerText = `${val} ${units[param]}`;
+      syncOverrides();
+    }
+
+    function applyPreset(type) {
+      const presets = {
+        stable: { hr: 72, spo2: 98, bpSys: 120, bpDia: 80, temp: 37.0, glucose: 100 },
+        crisis: { hr: 115, spo2: 96, bpSys: 185, bpDia: 110, temp: 37.2, glucose: 140 },
+        hypoxemia: { hr: 125, spo2: 86, bpSys: 130, bpDia: 85, temp: 38.2, glucose: 110 },
+        tachycardia: { hr: 142, spo2: 97, bpSys: 135, bpDia: 88, temp: 37.1, glucose: 105 },
+        bradycardia: { hr: 44, spo2: 94, bpSys: 90, bpDia: 60, temp: 36.2, glucose: 85 }
+      };
+      const p = presets[type];
+      if (p) {
+        Object.keys(p).forEach(k => {
+          currentVitals[k] = p[k];
+          const range = document.getElementById(`${k}Range`);
+          if (range) range.value = p[k];
+          const units = { hr: "bpm", spo2: "%", bpSys: "mmHg", bpDia: "mmHg", temp: "°C", glucose: "mg/dL" };
+          const span = document.getElementById(`${k}Val`);
+          if (span) span.innerText = `${p[k]} ${units[k]}`;
+        });
+        syncOverrides();
+        showToast(`Preset Applied: ${type.toUpperCase()}`);
+      }
+    }
+
+    function resetVitalsToNormal() {
+      applyPreset("stable");
+    }
+
+    async function syncOverrides() {
+      await fetch("/api/dev/overrides", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-key": devKey },
+        body: JSON.stringify({ vitals: currentVitals, disconnectedDevices: disconnectedDevs })
+      });
+    }
+
+    function toggleDeviceDisconnect(devName) {
+      const idx = disconnectedDevs.indexOf(devName);
+      if (idx === -1) {
+        disconnectedDevs.push(devName);
+      } else {
+        disconnectedDevs.splice(idx, 1);
+      }
+      syncOverrides();
+      showToast(`Device state updated: ${devName}`);
+    }
+
+    // Emergency Tests
+    async function triggerEmergencyTest() {
+      await fetch("/api/dev/overrides", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-key": devKey },
+        body: JSON.stringify({
+          vitals: { hr: 165, bpSys: 195, spo2: 82, bpDia: 115, temp: 39.5, glucose: 280 }
+        })
+      });
+      showToast("🚨 Autonomous Emergency Dispatch Triggered!");
+    }
+
+    async function clearAllAlerts() {
+      applyPreset("stable");
+      await triggerSimulatedDisappearance(false);
+      showToast("All active alerts cleared & baseline restored.");
+    }
+
+    // Terminal Logs
+    async function fetchLogs() {
+      try {
+        const res = await fetch("/api/dev/logs", { headers: { "x-admin-key": devKey } });
+        if (res.ok) {
+          const data = await res.json();
+          const logs = (data.startupLog || "") + "\n" + (data.errorLog ? "ERRORS:\n" + data.errorLog : "");
+          document.getElementById("terminalOutput").innerText = logs.trim() || "[*] YOLO Sentinel online. No recent errors.";
+        }
+      } catch (e) {}
+    }
+
+    checkAuth();
+  </script>
+</body>
+</html>

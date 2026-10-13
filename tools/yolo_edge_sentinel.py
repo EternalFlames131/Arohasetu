@@ -175,6 +175,17 @@ class SentinelHub:
         self.last_inference_latency = 0.015
         self.new_frame_event = threading.Event()
 
+        # Video Performance & Disappearance Sentinel Settings
+        self.inference_stride = 2 if DEVICE_TARGET == "cpu" else 1
+        self.stream_quality = 65
+        self.stream_resolution = "480p"
+        self.disappearance_threshold = 5.0
+        self.disappearance_enabled = True
+        self.force_disappearance = False
+        self.cached_results = None
+        self.cached_kinematics = None
+        self.cached_persons_count = 0
+
         # Camera Lifecycle Management (Default context)
         self.camera_state = "CAMERA_OFFLINE"
         self.calibration_frames_left = 0
@@ -772,8 +783,22 @@ def draw_pose_overlays(frame, results, kinematics, privacy_mode=False):
         canvas = frame.copy()
 
     if not results or len(results[0].boxes) == 0:
-        cv2.putText(canvas, "Prajna Vision Sentinel: Scanning Perimeter...", (20, 35),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (140, 140, 140), 1, cv2.LINE_AA)
+        if kinematics.get("patient_disappeared"):
+            # Prominent warning banner across top of stream
+            overlay = canvas.copy()
+            cv2.rectangle(overlay, (0, 0), (w, 52), (24, 28, 220), -1) # Rose Red banner
+            cv2.addWeighted(overlay, 0.85, canvas, 0.15, 0, canvas)
+            dur = kinematics.get("disappearance_duration", 5.0)
+            cv2.putText(canvas, f"[!] ALERT: PATIENT LEFT CAMERA FIELD ({dur:.1f}s)", (16, 34),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.65, (255, 255, 255), 2, cv2.LINE_AA)
+        else:
+            dis_dur = kinematics.get("disappearance_duration", 0.0)
+            if dis_dur > 0.5:
+                cv2.putText(canvas, f"Prajna Vision Sentinel: Scanning (Absent {dis_dur:.1f}s)...", (20, 35),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (50, 190, 245), 1, cv2.LINE_AA)
+            else:
+                cv2.putText(canvas, "Prajna Vision Sentinel: Scanning Perimeter...", (20, 35),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (140, 140, 140), 1, cv2.LINE_AA)
         return canvas
 
     r = results[0]
@@ -945,15 +970,6 @@ def camera_processing_thread():
             time.sleep(0.02)
             continue
 
-        # Frame pacing for prerecorded video based on playback speed
-        if norm_frame.source_type == CameraSourceType.PRERECORDED_VIDEO:
-            speed = getattr(active_camera, "playback_speed", 1.0)
-            target_fps = getattr(active_camera, "target_fps", 25.0)
-            frame_target_dt = 1.0 / (target_fps * max(0.25, min(speed, 4.0)))
-            read_elapsed = time.time() - frame_read_start
-            sleep_target = max(0.002, frame_target_dt - read_elapsed)
-            time.sleep(sleep_target)
-
         current_time = norm_frame.timestamp
         frame = norm_frame.frame
         frame_counter += 1
@@ -970,23 +986,60 @@ def camera_processing_thread():
                 hub.playback_speed = active_camera.playback_speed
 
         try:
-            # Run Ultralytics YOLO-Pose inference
-            t_infer_start = time.time()
-            with inference_lock:
-                results = yolo_model(frame, imgsz=320, verbose=False, device=DEVICE_TARGET)
-            hub.last_inference_latency = time.time() - t_infer_start
-            r = results[0]
+            # Adaptive YOLO Inference Stride (speeds up CPU/edge pipeline without removing YOLO)
+            stride = max(1, getattr(hub, "inference_stride", 2 if DEVICE_TARGET == "cpu" else 1))
+            run_yolo = (frame_counter % stride == 0) or (hub.cached_results is None)
 
-            persons_count = len(r.boxes) if r.boxes is not None else 0
+            if run_yolo:
+                t_infer_start = time.time()
+                with inference_lock:
+                    results = yolo_model(frame, imgsz=320, verbose=False, device=DEVICE_TARGET)
+                hub.last_inference_latency = time.time() - t_infer_start
+                hub.cached_results = results
+            else:
+                results = hub.cached_results
+
+            r = results[0] if results else None
+
+            # Force disappearance testing support
+            if getattr(hub, "force_disappearance", False):
+                persons_count = 0
+            else:
+                persons_count = len(r.boxes) if (r and r.boxes is not None) else 0
+
             h_img, w_img = frame.shape[:2]
-
             ctx = active_camera.tracking_context
+
+            # Patient Disappearance / Left Camera Field State Tracking
+            dis_thresh = getattr(hub, "disappearance_threshold", 5.0)
+            dis_enabled = getattr(hub, "disappearance_enabled", True)
+
+            if persons_count > 0:
+                ctx.patient_ever_detected = True
+                ctx.last_person_seen_time = current_time
+                ctx.patient_disappeared = False
+                ctx.disappearance_duration = 0.0
+            else:
+                if ctx.patient_ever_detected and dis_enabled:
+                    if ctx.last_person_seen_time is None:
+                        ctx.last_person_seen_time = current_time
+                    dur = max(0.0, current_time - ctx.last_person_seen_time)
+                    ctx.disappearance_duration = dur
+                    if dur >= dis_thresh:
+                        ctx.patient_disappeared = True
+                    else:
+                        ctx.patient_disappeared = False
+                else:
+                    ctx.disappearance_duration = 0.0
+                    ctx.patient_disappeared = False
+
             # Check floor occlusion latch
             is_latch = ctx.fall_latched and (current_time - ctx.fall_latch_start_time < 4.0)
 
             if is_latch and persons_count == 0:
                 kinematics_data = {
                     "person_detected": False,
+                    "patient_disappeared": False,
                     "posture": "Acute Fall / Subject Below Camera View",
                     "risk_level": "HIGH_RISK",
                     "confidence": 92.0,
@@ -1018,33 +1071,73 @@ def camera_processing_thread():
                 ctx.prev_com_y = None
                 ctx.prev_time = None
                 ctx.consecutive_valid_frames = 0
-                kinematics_data = {
-                    "person_detected": False,
-                    "posture": "Perimeter Clear (No Subject)",
-                    "risk_level": "SAFE",
-                    "confidence": 99.2,
-                    "torso_angle": 0.0,
-                    "downward_velocity": 0.0,
-                    "hypothesis": {
-                        "id": "H0",
-                        "label": "Clear Perimeter",
-                        "mechanism": "Zero subjects detected in monitored clinical zone."
-                    },
-                    "canonical_event": {
-                        "eventId": f"EVT-SCAN-{int(current_time * 1000)}",
-                        "cameraId": active_camera.camera_id,
-                        "edgeId": hub.edge_node.edge_id,
-                        "sourceType": norm_frame.source_type,
-                        "state": "NORMAL",
-                        "probableMechanism": "NORMAL_ACTIVITY",
-                        "detectionConfidence": 0,
-                        "mechanismConfidence": 100,
-                        "severityConfidence": 0,
-                        "recoveryStatus": "NOT_APPLICABLE",
-                        "evidence": [],
-                        "counterEvidence": []
+                dur_sec = round(ctx.disappearance_duration, 1)
+
+                if ctx.patient_disappeared:
+                    kinematics_data = {
+                        "person_detected": False,
+                        "patient_disappeared": True,
+                        "disappearance_duration": dur_sec,
+                        "disappearance_threshold": dis_thresh,
+                        "posture": f"⚠️ Alert: Patient Left Camera Field / Bed Vacant ({dur_sec}s)",
+                        "risk_level": "CAUTION",
+                        "confidence": 94.0,
+                        "torso_angle": 0.0,
+                        "downward_velocity": 0.0,
+                        "timeline_stage": "STAGE_DISAPPEARED",
+                        "stage": "STAGE_DISAPPEARED",
+                        "hypothesis": {
+                            "id": "H8",
+                            "label": "Patient Out of Camera Field / Bed Vacant",
+                            "mechanism": f"Patient disappeared from camera view for {dur_sec}s. Unmonitored bed exit, wander, or room vacancy."
+                        },
+                        "canonical_event": {
+                            "eventId": f"EVT-DISAPPEAR-{int(current_time * 1000)}",
+                            "cameraId": active_camera.camera_id,
+                            "edgeId": hub.edge_node.edge_id,
+                            "sourceType": norm_frame.source_type,
+                            "state": "SUSPECTED_EVENT",
+                            "probableMechanism": "BED_EXIT_OR_WANDERING",
+                            "detectionConfidence": 95,
+                            "mechanismConfidence": 90,
+                            "severityConfidence": 65,
+                            "recoveryStatus": "MONITORING",
+                            "evidence": [f"Patient absent from field for {dur_sec}s", "Bed or monitored zone vacant"],
+                            "counterEvidence": ["No physical impact shock in camera zone"],
+                            "timestamp": current_time
+                        }
                     }
-                }
+                else:
+                    kinematics_data = {
+                        "person_detected": False,
+                        "patient_disappeared": False,
+                        "disappearance_duration": dur_sec,
+                        "disappearance_threshold": dis_thresh,
+                        "posture": f"Zone Vacant ({dur_sec}s)" if dur_sec > 0.5 else "Perimeter Clear (No Subject)",
+                        "risk_level": "SAFE",
+                        "confidence": 99.2,
+                        "torso_angle": 0.0,
+                        "downward_velocity": 0.0,
+                        "hypothesis": {
+                            "id": "H0",
+                            "label": "Clear Perimeter",
+                            "mechanism": "Zero subjects detected in monitored clinical zone."
+                        },
+                        "canonical_event": {
+                            "eventId": f"EVT-SCAN-{int(current_time * 1000)}",
+                            "cameraId": active_camera.camera_id,
+                            "edgeId": hub.edge_node.edge_id,
+                            "sourceType": norm_frame.source_type,
+                            "state": "NORMAL",
+                            "probableMechanism": "NORMAL_ACTIVITY",
+                            "detectionConfidence": 0,
+                            "mechanismConfidence": 100,
+                            "severityConfidence": 0,
+                            "recoveryStatus": "NOT_APPLICABLE",
+                            "evidence": [],
+                            "counterEvidence": []
+                        }
+                    }
             else:
                 primary_kp = r.keypoints.data[0].cpu().numpy()
                 kinematics_data = compute_kinematics(
@@ -1092,8 +1185,13 @@ def camera_processing_thread():
                 "engine": "Ultralytics YOLO11-Pose",
                 "fps": active_camera.health_metrics.received_fps or hub.fps,
                 "inference_latency_ms": round(hub.last_inference_latency * 1000, 1),
+                "inference_stride": getattr(hub, "inference_stride", 1),
                 "person_detected": persons_count > 0,
                 "persons_count": persons_count,
+                "patient_disappeared": getattr(ctx, "patient_disappeared", False),
+                "disappearance_duration": round(getattr(ctx, "disappearance_duration", 0.0), 1),
+                "disappearance_threshold": getattr(hub, "disappearance_threshold", 5.0),
+                "alert_patient_disappeared": getattr(ctx, "patient_disappeared", False),
                 "torso_angle": kinematics_data.get("torso_angle", 0.0),
                 "downward_velocity": kinematics_data.get("downward_velocity", 0.0),
                 "motion_energy_percent": kinematics_data.get("motion_energy_percent", 6 if persons_count == 0 else 12),
@@ -1105,6 +1203,16 @@ def camera_processing_thread():
                 "timestamp": current_time
             }
         hub.new_frame_event.set()
+
+        # Frame pacing for prerecorded video accounting for inference & rendering time
+        if norm_frame.source_type == CameraSourceType.PRERECORDED_VIDEO:
+            speed = getattr(active_camera, "playback_speed", 1.0)
+            target_fps = getattr(active_camera, "target_fps", 25.0)
+            frame_target_dt = 1.0 / (target_fps * max(0.25, min(speed, 4.0)))
+            read_elapsed = time.time() - frame_read_start
+            sleep_target = max(0.001, frame_target_dt - read_elapsed)
+            if sleep_target > 0.002:
+                time.sleep(sleep_target)
 
     if active_camera is not None:
         active_camera.release()
@@ -1258,6 +1366,31 @@ class SentinelRequestHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(heartbeat_payload, indent=2, cls=NumpyJSONEncoder).encode("utf-8"))
             return
 
+        # 6B. Configuration Endpoint (Performance Stride, Resolution, Disappearance Grace Period)
+        if path == "/api/yolo/config":
+            self.send_response(200)
+            self.send_cors_headers("application/json")
+            self.end_headers()
+            with hub.lock:
+                active_src = hub.edge_node.get_active_camera()
+                ctx = active_src.tracking_context if active_src else None
+                cfg = {
+                    "ok": True,
+                    "inferenceStride": getattr(hub, "inference_stride", 2 if DEVICE_TARGET == "cpu" else 1),
+                    "streamQuality": getattr(hub, "stream_quality", 65),
+                    "streamResolution": getattr(hub, "stream_resolution", "480p"),
+                    "disappearanceThreshold": getattr(hub, "disappearance_threshold", 5.0),
+                    "disappearanceEnabled": getattr(hub, "disappearance_enabled", True),
+                    "forceDisappearance": getattr(hub, "force_disappearance", False),
+                    "patientDisappeared": getattr(ctx, "patient_disappeared", False) if ctx else False,
+                    "disappearanceDuration": round(getattr(ctx, "disappearance_duration", 0.0), 1) if ctx else 0.0,
+                    "device": GPU_NAME,
+                    "cudaEnabled": CUDA_AVAILABLE,
+                    "engine": "Ultralytics YOLO11-Pose"
+                }
+            self.wfile.write(json.dumps(cfg).encode("utf-8"))
+            return
+
         # 7. Live MJPEG Video Stream
         if path in ["/api/yolo/stream", "/api/yolo/video_feed"]:
             privacy = query.get("privacy", ["0"])[0] == "1"
@@ -1296,8 +1429,14 @@ class SentinelRequestHandler(BaseHTTPRequestHandler):
 
                     if frame_to_stream is not None and current_frame_time != last_streamed_time:
                         last_streamed_time = current_frame_time
-                        # High-speed turbo JPEG encoding (Quality 68 for 40% faster encoding & lower payload)
-                        ret, jpeg = cv2.imencode(".jpg", frame_to_stream, [int(cv2.IMWRITE_JPEG_QUALITY), 68])
+                        # Dynamic turbo JPEG encoding with resolution scaling
+                        quality = max(35, min(95, int(getattr(hub, "stream_quality", 65))))
+                        if frame_to_stream.shape[1] > 640 and getattr(hub, "stream_resolution", "480p") in ["480p", "360p"]:
+                            scale = 640.0 / frame_to_stream.shape[1]
+                            out_frame = cv2.resize(frame_to_stream, (640, int(frame_to_stream.shape[0] * scale)), interpolation=cv2.INTER_AREA)
+                        else:
+                            out_frame = frame_to_stream
+                        ret, jpeg = cv2.imencode(".jpg", out_frame, [int(cv2.IMWRITE_JPEG_QUALITY), quality])
                         if ret:
                             data = jpeg.tobytes()
                             self.wfile.write(b"--frame\r\n")
@@ -1337,7 +1476,13 @@ class SentinelRequestHandler(BaseHTTPRequestHandler):
                 self.send_cors_headers("text/plain")
                 self.end_headers()
                 return
-            ret, jpeg = cv2.imencode(".jpg", frame, [int(cv2.IMWRITE_JPEG_QUALITY), 68])
+            quality = max(35, min(95, int(getattr(hub, "stream_quality", 65))))
+            if frame.shape[1] > 640 and getattr(hub, "stream_resolution", "480p") in ["480p", "360p"]:
+                scale = 640.0 / frame.shape[1]
+                out_frame = cv2.resize(frame, (640, int(frame.shape[0] * scale)), interpolation=cv2.INTER_AREA)
+            else:
+                out_frame = frame
+            ret, jpeg = cv2.imencode(".jpg", out_frame, [int(cv2.IMWRITE_JPEG_QUALITY), quality])
             if not ret:
                 self.send_response(500)
                 self.send_cors_headers("text/plain")
@@ -1757,6 +1902,57 @@ class SentinelRequestHandler(BaseHTTPRequestHandler):
             except Exception:
                 pass
             return
+
+        # 9. Configuration Update Endpoint (Performance Stride, Resolution, Disappearance Settings)
+        if path == "/api/yolo/config":
+            try:
+                content_len = int(self.headers.get("Content-Length", 0))
+                body = json.loads(self.rfile.read(content_len).decode("utf-8")) if content_len > 0 else {}
+                with hub.lock:
+                    if "inferenceStride" in body:
+                        hub.inference_stride = max(1, min(4, int(body["inferenceStride"])))
+                    if "streamQuality" in body:
+                        hub.stream_quality = max(30, min(95, int(body["streamQuality"])))
+                    if "streamResolution" in body:
+                        hub.stream_resolution = str(body["streamResolution"])
+                    if "disappearanceThreshold" in body:
+                        hub.disappearance_threshold = max(1.0, min(60.0, float(body["disappearanceThreshold"])))
+                        active_cam = hub.edge_node.get_active_camera()
+                        if active_cam and hasattr(active_cam, "tracking_context"):
+                            active_cam.tracking_context.disappearance_threshold = hub.disappearance_threshold
+                    if "disappearanceEnabled" in body:
+                        hub.disappearance_enabled = bool(body["disappearanceEnabled"])
+                    if "forceDisappearance" in body:
+                        hub.force_disappearance = bool(body["forceDisappearance"])
+                        active_cam = hub.edge_node.get_active_camera()
+                        if active_cam and hasattr(active_cam, "tracking_context"):
+                            if hub.force_disappearance:
+                                active_cam.tracking_context.last_person_seen_time = time.time() - hub.disappearance_threshold - 1.0
+                                active_cam.tracking_context.patient_ever_detected = True
+                                active_cam.tracking_context.patient_disappeared = True
+                            else:
+                                active_cam.tracking_context.patient_disappeared = False
+                                active_cam.tracking_context.disappearance_duration = 0.0
+
+                self.send_response(200)
+                self.send_cors_headers("application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({
+                    "ok": True,
+                    "inferenceStride": hub.inference_stride,
+                    "streamQuality": hub.stream_quality,
+                    "streamResolution": hub.stream_resolution,
+                    "disappearanceThreshold": hub.disappearance_threshold,
+                    "disappearanceEnabled": hub.disappearance_enabled,
+                    "forceDisappearance": hub.force_disappearance
+                }).encode("utf-8"))
+                return
+            except Exception as e:
+                self.send_response(400)
+                self.send_cors_headers("application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"ok": False, "error": str(e)}).encode("utf-8"))
+                return
 
         # 404 Fallback
         self.send_response(404)

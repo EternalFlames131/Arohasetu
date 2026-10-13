@@ -16,6 +16,7 @@
  */
 const path = require("path");
 const fs = require("fs");
+const crypto = require("crypto");
 const http = require("http");
 const { spawn, execSync } = require("child_process");
 const express = require("express");
@@ -45,6 +46,78 @@ const {
   generateEventId,
   createCanonicalEvent
 } = require("./canonical-events");
+const { simulationService, THRESHOLDS, BASELINE_PATIENTS } = require("./simulation-service");
+
+// Local development may keep the shared developer key in an ignored file.
+// Production must receive it from the Vercel environment settings.
+if (process.env.NODE_ENV !== "production" && !process.env.ADMIN_SIMULATOR_KEY) {
+  try {
+    const localEnv = fs.readFileSync(path.join(__dirname, ".env.local"), "utf8");
+    const localKey = localEnv.match(/^ADMIN_SIMULATOR_KEY\s*=\s*(.+)\s*$/m)?.[1]?.trim();
+    if (localKey) process.env.ADMIN_SIMULATOR_KEY = localKey;
+  } catch (_) {}
+}
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+// Vercel functions do not share their local filesystem or process memory. When
+// an Upstash Redis REST store is configured, hydrate the simulator before every
+// simulator/dashboard request and persist successful mutations before replying.
+// Local development keeps using the existing JSON-backed SimulationService.
+const sharedStoreUrl = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
+const sharedStoreToken = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
+const SIMULATION_STORE_KEY = "rejivan:simulation:v1";
+const sharedStateRoutes = /^\/api\/(?:patients|vitals|alerts|escalations|calls|admin\/simulator)(?:\/|$)/;
+
+async function sharedStoreCommand(command) {
+  const response = await fetch(sharedStoreUrl, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${sharedStoreToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify(command),
+  });
+  if (!response.ok) throw new Error(`Shared simulation store returned ${response.status}`);
+  const payload = await response.json();
+  if (payload.error) throw new Error(payload.error);
+  return payload.result;
+}
+
+app.use(async (req, res, next) => {
+  if (!sharedStoreUrl || !sharedStoreToken || !sharedStateRoutes.test(req.path)) return next();
+  try {
+    const storedState = await sharedStoreCommand(["GET", SIMULATION_STORE_KEY]);
+    if (storedState) {
+      simulationService.state = JSON.parse(storedState);
+    } else {
+      // Seed a new shared store once from the simulator's baseline/local state.
+      await sharedStoreCommand(["SET", SIMULATION_STORE_KEY, JSON.stringify(simulationService.state), "NX"]);
+      const seededState = await sharedStoreCommand(["GET", SIMULATION_STORE_KEY]);
+      if (seededState) simulationService.state = JSON.parse(seededState);
+    }
+
+    if (req.method !== "GET" && req.method !== "HEAD") {
+      const sendJson = res.json.bind(res);
+      res.json = (body) => {
+        if (res.statusCode >= 400) return sendJson(body);
+        sharedStoreCommand(["SET", SIMULATION_STORE_KEY, JSON.stringify(simulationService.state)])
+          .then(() => sendJson(body))
+          .catch((error) => {
+            console.error("Could not persist shared simulation state:", error.message);
+            if (!res.headersSent) {
+              res.json = sendJson;
+              res.status(503).json({ error: "shared_simulation_store_unavailable" });
+            }
+          });
+        return res;
+      };
+    }
+    next();
+  } catch (error) {
+    console.error("Could not load shared simulation state:", error.message);
+    res.status(503).json({ error: "shared_simulation_store_unavailable" });
+  }
+});
 
 // Alert-rate cap (matches reliability layer constants) — applied DETERMINISTICALLY
 // by alertsFor → same feed for /api/alerts and /api/calls on every server instance.
@@ -63,10 +136,46 @@ try {
 // referral hospital (GB Pant Hospital, Port Blair).
 const REGION = "Andaman & Nicobar Islands (UT), India";
 
-const app = express();
-app.use(cors());
-app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
+
+// Developer Backend Console routes
+app.get(["/dev", "/developer"], (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "dev.html"));
+});
+
+// Administrator-Only Simulation Application (HSC 2027)
+app.get(["/admin/simulator", "/admin/simulator.html"], (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "admin-simulator.html"));
+});
+
+// In-memory developer overrides for live testing
+let devOverrides = {
+  vitals: null,
+  disconnectedDevices: [],
+  disappearanceAlert: false,
+  lastUpdated: Date.now()
+};
+
+app.get("/api/dev/overrides", requireAdminAuth, (req, res) => {
+  res.json({ ok: true, overrides: devOverrides });
+});
+
+app.post("/api/dev/overrides", requireAdminAuth, (req, res) => {
+  devOverrides = { ...devOverrides, ...req.body, lastUpdated: Date.now() };
+  res.json({ ok: true, overrides: devOverrides });
+});
+
+app.get("/api/dev/logs", requireAdminAuth, (req, res) => {
+  try {
+    const startupLogPath = path.join(__dirname, "..", "tools", "yolo_startup.log");
+    const errorLogPath = path.join(__dirname, "..", "tools", "yolo_error.log");
+    const startupLog = fs.existsSync(startupLogPath) ? fs.readFileSync(startupLogPath, "utf-8").slice(-6000) : "";
+    const errorLog = fs.existsSync(errorLogPath) ? fs.readFileSync(errorLogPath, "utf-8").slice(-6000) : "";
+    res.json({ ok: true, startupLog, errorLog });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
 
 // ---- Seed users & patients -------------------------------------------------
 const auth = new AuthStore(DATA_DIR); // auto-seeds the three demo accounts
@@ -97,6 +206,9 @@ function requireAuth(req, res, next) {
 }
 
 function ownPatients(user) {
+  if (user && (user.email === "wardnurse@demo.in" || user.role === "ward" || user.role === "nurse")) {
+    return patients;
+  }
   return patients.filter((p) => p.userId === user.id);
 }
 function ownPatientIds(user) {
@@ -108,6 +220,36 @@ function patientName(id) {
 }
 function snapshotFor(p, now) {
   const g = generateVitals(p, now);
+
+  // Authoritative simulation state from SimulationService
+  const simPatient = simulationService.getPatient(p.id);
+  if (simPatient && simPatient.currentVitals) {
+    g.vitals = { ...g.vitals, ...simPatient.currentVitals };
+  }
+
+  // Apply real-time developer overrides if active
+  if (devOverrides.vitals) {
+    g.vitals = { ...g.vitals, ...devOverrides.vitals };
+  }
+  if (devOverrides.disconnectedDevices && devOverrides.disconnectedDevices.length > 0) {
+    if (devOverrides.disconnectedDevices.includes("SanketLife 12-Lead ECG") || devOverrides.disconnectedDevices.includes("ReJivan Smartwatch")) {
+      g.vitals.hr = null;
+    }
+    if (devOverrides.disconnectedDevices.includes("ReJivan Smartwatch")) {
+      g.vitals.spo2 = null;
+    }
+    if (devOverrides.disconnectedDevices.includes("Omron HEM-7156T")) {
+      g.vitals.bpSys = null;
+      g.vitals.bpDia = null;
+    }
+    if (devOverrides.disconnectedDevices.includes("TempTraq Patch")) {
+      g.vitals.temp = null;
+    }
+    if (devOverrides.disconnectedDevices.includes("Accu-Chek Instant")) {
+      g.vitals.glucose = null;
+    }
+  }
+
   // Reliability: validate readings + compute confidence
   const validation = validateVitals(g.vitals);
   let confidence = overallConfidence(g.vitals, g.deviceTier);
@@ -138,7 +280,10 @@ function snapshotFor(p, now) {
     region: REGION, condition: p.condition,
     vitals: validation.cleanVitals,
     rawVitals: g.vitals,
-    lastUpdated: now, episode: g.episode,
+    lastUpdated: (simPatient && simPatient.lastUpdated) || now,
+    scenarioId: (simPatient && simPatient.scenarioId) || "baseline",
+    scenarioLabel: (simPatient && simPatient.scenarioLabel) || "Normal Baseline",
+    episode: g.episode,
     deviceTier: deviceInfo.tier,
     devices: medicalDevices,
     reliability: {
@@ -281,9 +426,42 @@ function alertsFor(user, now) {
     });
   }
 
+  // Pass 3 — Merge authoritative simulated alerts from SimulationService with full clinical lifecycle
+  const simAlerts = (simulationService.state.alerts || []).filter((a) => ids.has(a.patientId));
+  for (const a of simAlerts) {
+    if (!alerts.some((existing) => existing.id === a.id)) {
+      alerts.push({
+        id: a.id,
+        patientId: a.patientId,
+        patientName: a.patientName,
+        ward: a.ward,
+        location: a.location,
+        type: a.type || "vitals",
+        vitalType: a.vitalType,
+        value: a.value,
+        unit: a.unit,
+        threshold: a.threshold,
+        conditionReason: a.conditionReason,
+        severity: a.severity,
+        status: a.status || "New",
+        message: a.conditionReason,
+        createdAt: a.createdAt,
+        acknowledgedAt: a.acknowledgedAt,
+        acknowledgedBy: a.acknowledgedBy,
+        followupAt: a.followupAt,
+        followupBy: a.followupBy,
+        followupAction: a.followupAction,
+        resolvedAt: a.resolvedAt,
+        resolvedBy: a.resolvedBy,
+        resolutionNote: a.resolutionNote,
+        history: a.history || [],
+      });
+    }
+  }
+
   alerts.sort((a, b) => b.createdAt - a.createdAt);
   escalations.sort((a, b) => b.dispatchedAt - a.dispatchedAt);
-  return { alerts: alerts.slice(0, 15), escalations: escalations.slice(0, 10) };
+  return { alerts: alerts.slice(0, 25), escalations: escalations.slice(0, 10) };
 }
 
 function stateAt(dial, ans, answered, el) {
@@ -397,13 +575,23 @@ app.get("/api/me", requireAuth, (req, res) => {
 // ---- Patients / vitals -----------------------------------------------------
 app.get("/api/patients", requireAuth, (req, res) => {
   const now = Date.now();
-  res.json({ patients: ownPatients(req.user).map((p) => snapshotFor(p, now)) });
+  const simState = simulationService.getState();
+  res.json({
+    patients: ownPatients(req.user).map((p) => snapshotFor(p, now)),
+    connectivity: simState.globalConnectivity,
+    stale: simState.globalConnectivity === "interrupted",
+    lastSynced: simState.globalConnectivity === "interrupted" ? simState.connectivityInterruptedAt : now,
+  });
 });
 
 app.get("/api/vitals", requireAuth, (req, res) => {
   const now = Date.now();
+  const simState = simulationService.getState();
   res.json({
     user: auth.publicUser(req.user),
+    connectivity: simState.globalConnectivity,
+    stale: simState.globalConnectivity === "interrupted",
+    lastSynced: simState.globalConnectivity === "interrupted" ? simState.connectivityInterruptedAt : now,
     patients: ownPatients(req.user).map((p) => {
       const snap = snapshotFor(p, now);
       return { ...snap, report: vitalsReport(p, snap.vitals) };
@@ -415,6 +603,109 @@ app.get("/api/vitals", requireAuth, (req, res) => {
 app.get("/api/alerts", requireAuth, (req, res) => {
   const { alerts, escalations } = alertsFor(req.user, Date.now());
   res.json({ alerts, escalations });
+});
+
+// Clinician Alert Review, Acknowledgement, Follow-up & Resolution Workflow
+app.post("/api/alerts/:id/acknowledge", requireAuth, (req, res) => {
+  try {
+    const clinicianName = (req.body && req.body.clinicianName) || (req.user ? req.user.name : "On-Duty Clinician");
+    const result = simulationService.acknowledgeAlert(req.params.id, clinicianName);
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ ok: false, error: err.message });
+  }
+});
+
+app.post("/api/alerts/:id/followup", requireAuth, (req, res) => {
+  try {
+    const clinicianName = (req.body && req.body.clinicianName) || (req.user ? req.user.name : "Attending Clinician");
+    const actionNote = req.body && req.body.actionNote;
+    const result = simulationService.recordFollowup(req.params.id, clinicianName, actionNote);
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ ok: false, error: err.message });
+  }
+});
+
+app.post("/api/alerts/:id/resolve", requireAuth, (req, res) => {
+  try {
+    const clinicianName = (req.body && req.body.clinicianName) || (req.user ? req.user.name : "Attending Clinician");
+    const resolutionNote = (req.body && req.body.resolutionNote) || "Vitals restabilized within normal threshold";
+    const result = simulationService.resolveAlert(req.params.id, clinicianName, resolutionNote);
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ ok: false, error: err.message });
+  }
+});
+
+// ---- Administrator Simulator API (Protected) ------------------------------
+function requireAdminAuth(req, res, next) {
+  const configuredKey = process.env.ADMIN_SIMULATOR_KEY || "";
+  const suppliedKey = req.headers["x-admin-key"];
+  const expectedBuffer = Buffer.from(configuredKey);
+  const suppliedBuffer = typeof suppliedKey === "string" ? Buffer.from(suppliedKey) : Buffer.alloc(0);
+  const matches = configuredKey && suppliedBuffer.length === expectedBuffer.length &&
+    crypto.timingSafeEqual(expectedBuffer, suppliedBuffer);
+  if (matches) return next();
+  if (!configuredKey) {
+    return res.status(503).json({ ok: false, error: "admin_simulator_unconfigured" });
+  }
+  return res.status(401).json({ ok: false, error: "admin_access_denied" });
+}
+
+app.get("/api/admin/simulator/state", requireAdminAuth, (req, res) => {
+  res.json(simulationService.getState());
+});
+
+app.post("/api/admin/simulator/update", requireAdminAuth, (req, res) => {
+  try {
+    const { patientId, vitals, source, scenarioId } = req.body || {};
+    if (!patientId || !vitals) {
+      return res.status(400).json({ ok: false, error: "missing_patient_or_vitals" });
+    }
+    const result = simulationService.updatePatientVitals(patientId, vitals, source || "Admin Manual Entry", scenarioId || "manual_override");
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ ok: false, error: err.message });
+  }
+});
+
+app.post("/api/admin/simulator/scenario", requireAdminAuth, (req, res) => {
+  try {
+    const { patientId, scenarioId } = req.body || {};
+    if (!patientId || !scenarioId) {
+      return res.status(400).json({ ok: false, error: "missing_patient_or_scenario" });
+    }
+    const result = simulationService.applyScenario(patientId, scenarioId);
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ ok: false, error: err.message });
+  }
+});
+
+app.post("/api/admin/simulator/connectivity", requireAdminAuth, (req, res) => {
+  try {
+    const { status } = req.body || {};
+    const result = simulationService.setConnectivity(status);
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ ok: false, error: err.message });
+  }
+});
+
+app.post("/api/admin/simulator/reset", requireAdminAuth, (req, res) => {
+  const result = simulationService.resetAllToBaseline();
+  res.json({ ok: true, state: result });
+});
+
+app.post("/api/admin/simulator/reset-patient", requireAdminAuth, (req, res) => {
+  try {
+    const { patientId } = req.body || {};
+    if (!patientId) return res.status(400).json({ ok: false, error: "missing_patient" });
+    res.json(simulationService.resetPatientToBaseline(patientId));
+  } catch (err) {
+    res.status(400).json({ ok: false, error: err.message });
+  }
 });
 
 app.get("/api/escalations", requireAuth, (req, res) => {

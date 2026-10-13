@@ -40,22 +40,25 @@ const Sidebar = ({
         {/* Brand Header */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-slate-200/80">
           <div className="flex items-center gap-3 min-w-0">
-            {/* ReJivan Brand Logo Mark */}
-            <div className="w-9 h-9 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-              <Activity className="w-5 h-5 stroke-[2.2]" />
+            {/* ReJivan Brand Logo Mark with Heart + ECG motif */}
+            <div className="w-9 h-9 rounded-xl bg-[#103663] text-[#08A6A6] flex items-center justify-center shrink-0 shadow-xs border border-[#08A6A6]/30">
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                <path d="M7 12h2.5l1.5-3 2 6 1.5-3H17" stroke="#08A6A6" strokeWidth="2" />
+              </svg>
             </div>
             {!collapsed && (
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <span className="font-bold text-base text-slate-900 tracking-tight">
+                  <span className="font-bold text-base text-[#103663] tracking-tight">
                     ReJivan
                   </span>
-                  <span className="text-[10px] uppercase font-semibold tracking-wider text-blue-700 bg-blue-50 border border-blue-200/70 px-1 py-0.2 rounded">
-                    Clinical
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-[#08A6A6] bg-[#08A6A6]/10 border border-[#08A6A6]/30 px-1 py-0.2 rounded">
+                    Care
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-400 truncate leading-tight mt-0.5">
-                  Better Care. Brighter Tomorrows.
+                <p className="text-[11px] text-slate-500 truncate leading-tight mt-0.5">
+                  Connected care. Earlier action.
                 </p>
               </div>
             )}

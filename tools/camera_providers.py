@@ -132,6 +132,11 @@ class TrackingContext:
     CALIBRATION_FRAMES_REQUIRED: int = DEFAULT_CALIBRATION_FRAMES
     source: str = "PRERECORDED_VIDEO"
     timeline_stage: str = "STAGE_RESTING"
+    patient_ever_detected: bool = False
+    last_person_seen_time: Optional[float] = None
+    disappearance_duration: float = 0.0
+    disappearance_threshold: float = 5.0
+    patient_disappeared: bool = False
 
     def reset(self):
         """Cleanly wipes all temporal history and derivatives to prevent false spikes."""
@@ -148,6 +153,10 @@ class TrackingContext:
         self.floor_contact_time = None
         self.calibration_frames_left = DEFAULT_CALIBRATION_FRAMES
         self.timeline_stage = "STAGE_RESTING"
+        self.patient_ever_detected = False
+        self.last_person_seen_time = None
+        self.disappearance_duration = 0.0
+        self.patient_disappeared = False
 
 # =============================================================================
 # 3. CREDENTIAL MASKING & CONFIGURATION VALIDATION

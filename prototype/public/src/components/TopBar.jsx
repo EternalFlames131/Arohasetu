@@ -94,13 +94,13 @@ const TopBar = ({
 
       {/* Right: Telemetry Status, Bell, Language, Profile */}
       <div className="flex items-center gap-2.5 lg:gap-3.5">
-        {/* System status badge */}
+        {/* Authoritative System status badge */}
         <div className="hidden sm:inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200 text-xs font-medium text-slate-700 shadow-2xs">
           <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#08A6A6] opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#08A6A6]"></span>
           </span>
-          <span>Live Simulation Mode</span>
+          <span className="font-semibold text-slate-800">Live Sync · Connected Care</span>
         </div>
 
         {/* Notification Bell */}

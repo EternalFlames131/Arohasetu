@@ -3,6 +3,9 @@
 // Treats prerecorded hospital video as an authentic virtual camera source alongside Live Webcam and RTSP CCTV.
 // Real-Time YOLO11-Pose 17-Keypoint Inference & Client Optical Consensus with Zero Hardcoded Time Gates.
 
+const SYSTEM_CAMERA_LABEL = /integrated|built[ -]?in|laptop|internal|facetime|computer camera/i;
+const MOBILE_CAMERA_LABEL = /phone|mobile|android|iphone|droidcam|iriun|camo|ivcam|epoccam|continuity/i;
+
 const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, activePatient }) => {
   // 1. Unified Camera Source Abstraction ('LIVE_WEBCAM' | 'PRERECORDED_VIDEO' | 'RTSP_CAMERA')
   // Default to LIVE_WEBCAM so user can immediately verify YOLO and motion monitoring
@@ -220,6 +223,7 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
   const prevCentroidYRef = React.useRef(null);
   const lastTimeRef = React.useRef(Date.now());
   const alarmLatchedRef = React.useRef(false);
+  const disappearanceAlertedRef = React.useRef(false);
   const verificationTimerRef = React.useRef(null);
 
   const YOLO_API_BASE = "http://127.0.0.1:5050";
@@ -228,43 +232,109 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
   const [liveCameraMode, setLiveCameraMode] = React.useState("HARDWARE_YOLO");
   const userSwitchedModeRef = React.useRef(false);
   const [availableWebcams, setAvailableWebcams] = React.useState([]);
-  const [selectedCameraDeviceId, setSelectedCameraDeviceId] = React.useState("");
+  const [selectedCameraDeviceId, setSelectedCameraDeviceId] = React.useState(() => {
+    try { return window.localStorage.getItem("rejivan_camera_device_id") || ""; } catch (e) { return ""; }
+  });
   const [hardwareCameraIndex, setHardwareCameraIndex] = React.useState(0);
+  const [cameraSwitchError, setCameraSwitchError] = React.useState("");
 
-  // Enumerate connected video devices
-  React.useEffect(() => {
-    const enumerate = async () => {
-      try {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
-        const devs = await navigator.mediaDevices.enumerateDevices();
-        const vInputs = devs.filter((d) => d.kind === "videoinput");
-        setAvailableWebcams(vInputs);
-        if (vInputs.length > 0 && !selectedCameraDeviceId) {
-          const lap = vInputs.find((d) => /integrated|built-in|laptop|internal/i.test(d.label));
-          setSelectedCameraDeviceId(lap ? lap.deviceId : vInputs[0].deviceId);
-        }
-      } catch (e) {}
-    };
-    enumerate();
+  // Device labels are hidden until camera permission is granted. Never guess
+  // that device 0 is a phone: on many laptops that entry is the system webcam.
+  const refreshAvailableWebcams = React.useCallback(async (requestPermission = false) => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return [];
+    let permissionStream = null;
+    try {
+      if (requestPermission) {
+        permissionStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      }
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const webcams = devices.filter((device) => device.kind === "videoinput");
+      setAvailableWebcams(webcams);
+      setSelectedCameraDeviceId((current) => {
+        if (current && webcams.some((device) => device.deviceId === current)) return current;
+        const labeled = webcams.some((device) => device.label);
+        if (!labeled) return "";
+        const preferred = webcams.find((device) => SYSTEM_CAMERA_LABEL.test(device.label) && !MOBILE_CAMERA_LABEL.test(device.label));
+        const nextId = (preferred || webcams[0])?.deviceId || "";
+        try {
+          if (nextId) window.localStorage.setItem("rejivan_camera_device_id", nextId);
+        } catch (e) {}
+        return nextId;
+      });
+      return webcams;
+    } finally {
+      if (permissionStream) permissionStream.getTracks().forEach((track) => track.stop());
+    }
   }, []);
 
+  React.useEffect(() => {
+    const enumerate = () => refreshAvailableWebcams(false).catch(() => {});
+    enumerate();
+    navigator.mediaDevices?.addEventListener?.("devicechange", enumerate);
+    window.addEventListener("focus", enumerate);
+    return () => {
+      navigator.mediaDevices?.removeEventListener?.("devicechange", enumerate);
+      window.removeEventListener("focus", enumerate);
+    };
+  }, [refreshAvailableWebcams]);
+
   const handleSwitchHardwareDevice = async (newIdx) => {
-    setHardwareCameraIndex(newIdx);
+    setCameraSwitchError("");
     if (localYoloActive) {
       try {
-        await fetch(`${YOLO_API_BASE}/api/yolo/webcam/device`, {
+        const response = await fetch(`${YOLO_API_BASE}/api/yolo/webcam/device`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ deviceIndex: newIdx })
         });
+        if (!response.ok) throw new Error("The hardware camera did not accept the switch.");
+        const result = await response.json();
+        if (!result.ok) throw new Error(result.error || "The hardware camera did not accept the switch.");
+        setHardwareCameraIndex(newIdx);
+        setLiveCameraMode("HARDWARE_YOLO");
+        setHardwareStreamPaused(false);
+        if (webcamStreamRef.current) {
+          webcamStreamRef.current.getTracks().forEach((track) => track.stop());
+          webcamStreamRef.current = null;
+        }
         setStreamRetryKey(Date.now());
-      } catch (e) {}
+      } catch (error) {
+        setCameraSwitchError(error.message || "Could not switch the hardware camera.");
+      }
+      return;
+    }
+
+    // Without the local edge daemon, use this device's browser camera API.
+    // This keeps the Phone / Computer controls functional on localhost and on
+    // HTTPS deployments, instead of changing only the button highlight.
+    try {
+      const webcams = await refreshAvailableWebcams(true);
+      const preferred = newIdx === 1
+        ? webcams.find((device) => SYSTEM_CAMERA_LABEL.test(device.label) && !MOBILE_CAMERA_LABEL.test(device.label))
+        : webcams.find((device) => MOBILE_CAMERA_LABEL.test(device.label));
+      const fallback = newIdx === 1
+        ? webcams.find((device) => !MOBILE_CAMERA_LABEL.test(device.label))
+        : webcams.find((device) => !SYSTEM_CAMERA_LABEL.test(device.label));
+      const device = preferred || fallback || webcams[newIdx] || webcams[0];
+      if (!device?.deviceId) throw new Error("No camera was found. Connect the camera and allow browser access, then try again.");
+      setHardwareCameraIndex(newIdx);
+      setLiveCameraMode("BROWSER_WEBCAM");
+      setHardwareStreamPaused(true);
+      setSelectedCameraDeviceId(device.deviceId);
+      try { window.localStorage.setItem("rejivan_camera_device_id", device.deviceId); } catch (e) {}
+      if (playbackState === "PLAYING" && cameraSource === "LIVE_WEBCAM") {
+        await handleSelectBrowserCamera(device.deviceId, true);
+      }
+    } catch (error) {
+      setCameraSwitchError(error.message || "Could not switch the camera.");
     }
   };
 
-  const handleSelectBrowserCamera = async (deviceId) => {
+  const handleSelectBrowserCamera = async (deviceId, switchWhilePlaying = false) => {
     setSelectedCameraDeviceId(deviceId);
-    if (playbackState === "PLAYING" && cameraSource === "LIVE_WEBCAM" && liveCameraMode === "BROWSER_WEBCAM") {
+    setCameraSwitchError("");
+    try { window.localStorage.setItem("rejivan_camera_device_id", deviceId); } catch (e) {}
+    if (playbackState === "PLAYING" && cameraSource === "LIVE_WEBCAM" && (liveCameraMode === "BROWSER_WEBCAM" || switchWhilePlaying)) {
       if (webcamStreamRef.current) {
         webcamStreamRef.current.getTracks().forEach((t) => t.stop());
       }
@@ -273,13 +343,15 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
           video: { deviceId: { exact: deviceId }, width: { ideal: 640 }, height: { ideal: 480 } },
           audio: false
         });
+        const previousStream = webcamStreamRef.current;
         webcamStreamRef.current = stream;
         if (videoElementRef.current) {
           videoElementRef.current.srcObject = stream;
           await videoElementRef.current.play();
         }
-      } catch (e) {
-        console.warn("Camera switch error:", e);
+        if (previousStream && previousStream !== stream) previousStream.getTracks().forEach((track) => track.stop());
+      } catch (error) {
+        setCameraSwitchError(error.message || "Could not open the selected camera.");
       }
     }
   };
@@ -430,6 +502,8 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
             torsoAngle: Math.round(data.torso_angle ?? 12),
             posture: data.posture || "Upright Tracking",
             riskLevel: data.risk_level || "SAFE",
+            patientDisappeared: Boolean(data.patient_disappeared || data.alert_patient_disappeared),
+            disappearanceDuration: data.disappearance_duration ?? 0,
             confidence: `${Math.round(data.confidence || 95)}%`,
             detectionConfidence: data.detection_confidence ?? (data.person_detected ? 95 : 10),
             mechanismConfidence: data.mechanism_confidence ?? 92,
@@ -444,6 +518,28 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
             hardwareBadge: data.cuda_enabled ? `${data.device || "CUDA"} Ingestion` : "Local Edge CPU",
             consensusSummary: data.hypothesis?.mechanism || "Continuous YOLO-Pose kinematics monitoring active."
           }));
+
+          // Trigger alert when patient disappears from camera view
+          if (data.patient_disappeared || data.alert_patient_disappeared) {
+            if (!disappearanceAlertedRef.current) {
+              disappearanceAlertedRef.current = true;
+              const dur = Math.round(data.disappearance_duration || 5);
+              if (onTriggerAlert) {
+                onTriggerAlert({
+                  id: `ALT-DISAPPEAR-${Date.now()}`,
+                  time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+                  category: "CAMERA_ZONE",
+                  severity: "danger",
+                  vital: "Presence",
+                  value: "0 Person",
+                  unit: "",
+                  msg: `PATIENT LEFT CAMERA FIELD — Bed/Room Unattended for ${dur}s`
+                });
+              }
+            }
+          } else if (data.person_detected) {
+            disappearanceAlertedRef.current = false;
+          }
 
           // Trigger Resident Verification on high risk fall
           if (isHighRisk && !alarmLatchedRef.current) {
@@ -570,20 +666,37 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
             : { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
           audio: false
         };
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        let stream = await navigator.mediaDevices.getUserMedia(constraints);
+        // Once permission is granted, device labels become available. Prefer a
+        // built-in system camera over a connected phone when the user has not
+        // explicitly chosen a device.
+        const webcams = await refreshAvailableWebcams(false);
+        const preferredSystemCamera = webcams.find((device) => SYSTEM_CAMERA_LABEL.test(device.label) && !MOBILE_CAMERA_LABEL.test(device.label));
+        const openedDeviceId = stream.getVideoTracks()[0]?.getSettings?.().deviceId || "";
+        if (!selectedCameraDeviceId && preferredSystemCamera?.deviceId && preferredSystemCamera.deviceId !== openedDeviceId) {
+          try {
+            const systemCameraStream = await navigator.mediaDevices.getUserMedia({
+              video: { deviceId: { exact: preferredSystemCamera.deviceId }, width: { ideal: 640 }, height: { ideal: 480 } },
+              audio: false
+            });
+            stream.getTracks().forEach((track) => track.stop());
+            stream = systemCameraStream;
+          } catch (e) {
+            // Keep the browser's working default if the built-in device cannot open.
+          }
+        }
         webcamStreamRef.current = stream;
+        const actualDeviceId = stream.getVideoTracks()[0]?.getSettings?.().deviceId || selectedCameraDeviceId;
+        if (actualDeviceId) {
+          setSelectedCameraDeviceId(actualDeviceId);
+          try { window.localStorage.setItem("rejivan_camera_device_id", actualDeviceId); } catch (e) {}
+        }
         if (videoElementRef.current) {
           videoElementRef.current.srcObject = stream;
           await videoElementRef.current.play();
         }
         setPlaybackState("PLAYING");
         startFrameProcessingLoop();
-        // Update device list with discovered labels now that permission was granted
-        if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
-          const devs = await navigator.mediaDevices.enumerateDevices();
-          const vInputs = devs.filter((d) => d.kind === "videoinput");
-          if (vInputs.length > 0) setAvailableWebcams(vInputs);
-        }
       } catch (err) {
         alert("Could not access browser webcam: " + err.message + "\n\nPlease ensure webcam permissions are enabled in your browser.");
       }
@@ -1670,7 +1783,7 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
                           : "text-slate-600 hover:text-slate-900"
                       }`}
                     >
-                      📱 Phone (0)
+                        📱 Connected mobile
                     </button>
                     <button
                       type="button"
@@ -1681,11 +1794,17 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
                           : "text-slate-600 hover:text-slate-900"
                       }`}
                     >
-                      💻 Laptop (1)
+                        💻 This computer
                     </button>
                   </div>
                 )}
               </div>
+            )}
+
+            {cameraSwitchError && (
+              <span role="alert" className="max-w-56 text-[10px] font-medium text-rose-700">
+                {cameraSwitchError}
+              </span>
             )}
 
             {cameraSource === "PRERECORDED_VIDEO" && (

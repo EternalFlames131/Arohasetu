@@ -12,3 +12,12 @@ __pycache__/
 # must never be committed/pushed)
 .venv/
 venv/
+
+# Simulator persistent store (updates dynamically on each demo click)
+prototype/data/simulation_store.json
+prototype/.env.local
+
+# Local Upstash CLI skill files
+prototype/.agents/
+prototype/skills-lock.json
+

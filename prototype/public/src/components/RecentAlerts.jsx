@@ -152,36 +152,55 @@ const RecentAlerts = ({ alerts = [], prependAlerts = [], onAcknowledge, currentU
                   ) : (
                     <CheckCircle2 className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                   )}
-                  <span>{alt.title}</span>
+                  <span>{alt.title || alt.patientName || "Threshold Alert"}</span>
                 </div>
-                <span
-                  className={`text-[10px] font-mono shrink-0 font-medium ${
-                    isCaution ? "text-amber-700" : "text-slate-400"
-                  }`}
-                >
-                  {alt.time}
-                </span>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {alt.status && (
+                    <span
+                      className={`text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded border ${
+                        alt.status === "New"
+                          ? "bg-rose-100 text-rose-800 border-rose-300"
+                          : alt.status === "Acknowledged"
+                          ? "bg-amber-100 text-amber-800 border-amber-300"
+                          : alt.status === "Follow-up recorded"
+                          ? "bg-blue-100 text-blue-800 border-blue-300"
+                          : "bg-emerald-100 text-emerald-800 border-emerald-300"
+                      }`}
+                    >
+                      {alt.status}
+                    </span>
+                  )}
+                  <span
+                    className={`text-[10px] font-mono shrink-0 font-medium ${
+                      isCaution ? "text-amber-700" : "text-slate-400"
+                    }`}
+                  >
+                    {alt.time || (alt.createdAt ? new Date(alt.createdAt).toLocaleTimeString() : "Just now")}
+                  </span>
+                </div>
               </div>
 
-              <div className="mt-1 flex items-baseline gap-2">
-                <span
-                  className={`text-xs font-bold font-mono ${
-                    isDanger
-                      ? "text-rose-700"
-                      : isCaution
-                      ? "text-amber-800"
-                      : "text-slate-900"
-                  }`}
-                >
-                  {alt.reading}
-                </span>
-                <span className="text-[11px] text-slate-500 truncate">
-                  • {alt.source}
-                </span>
-              </div>
+              {(alt.reading || alt.threshold) && (
+                <div className="mt-1 flex items-baseline gap-2">
+                  <span
+                    className={`text-xs font-bold font-mono ${
+                      isDanger
+                        ? "text-rose-700"
+                        : isCaution
+                        ? "text-amber-800"
+                        : "text-slate-900"
+                    }`}
+                  >
+                    {alt.reading || (alt.value != null ? `${alt.value} ${alt.unit || ""}` : "")}
+                  </span>
+                  <span className="text-[11px] text-slate-500 truncate">
+                    • {alt.threshold ? `Threshold: ${alt.threshold}` : alt.source || "Rules Engine"}
+                  </span>
+                </div>
+              )}
 
-              <p className="text-[11px] mt-1 leading-snug opacity-90 text-slate-600">
-                {alt.message}
+              <p className="text-[11px] mt-1 leading-snug opacity-90 text-slate-700 font-medium">
+                {alt.conditionReason || alt.message}
               </p>
             </div>
           );
