@@ -226,6 +226,14 @@ function snapshotFor(p, now) {
   if (simPatient && simPatient.currentVitals) {
     g.vitals = { ...g.vitals, ...simPatient.currentVitals };
   }
+  const offline = new Set(simPatient?.offlineDevices || []);
+  const metricProviders = {
+    hr: ["ecg", "watch"], spo2: ["watch"], sbp: ["bp"], dbp: ["bp"],
+    temp: ["temp"], glucose: ["glu"],
+  };
+  for (const [metric, providers] of Object.entries(metricProviders)) {
+    if (providers.every((deviceId) => offline.has(deviceId))) g.vitals[metric] = null;
+  }
 
   // Apply real-time developer overrides if active
   if (devOverrides.vitals) {
@@ -283,6 +291,7 @@ function snapshotFor(p, now) {
     lastUpdated: (simPatient && simPatient.lastUpdated) || now,
     scenarioId: (simPatient && simPatient.scenarioId) || "baseline",
     scenarioLabel: (simPatient && simPatient.scenarioLabel) || "Normal Baseline",
+    offlineDevices: simPatient?.offlineDevices || [],
     episode: g.episode,
     deviceTier: deviceInfo.tier,
     devices: medicalDevices,
@@ -703,6 +712,28 @@ app.post("/api/admin/simulator/reset-patient", requireAdminAuth, (req, res) => {
     const { patientId } = req.body || {};
     if (!patientId) return res.status(400).json({ ok: false, error: "missing_patient" });
     res.json(simulationService.resetPatientToBaseline(patientId));
+  } catch (err) {
+    res.status(400).json({ ok: false, error: err.message });
+  }
+});
+
+app.post("/api/admin/simulator/device-connectivity", requireAdminAuth, (req, res) => {
+  try {
+    const { patientId, deviceId, connected } = req.body || {};
+    if (!patientId || !deviceId || typeof connected !== "boolean") {
+      return res.status(400).json({ ok: false, error: "missing_patient_device_or_status" });
+    }
+    res.json(simulationService.setDeviceConnectivity(patientId, deviceId, connected));
+  } catch (err) {
+    res.status(400).json({ ok: false, error: err.message });
+  }
+});
+
+app.post("/api/admin/simulator/camera-event", requireAdminAuth, (req, res) => {
+  try {
+    const { patientId, eventType, confidence, source, summary } = req.body || {};
+    if (!patientId || !eventType) return res.status(400).json({ ok: false, error: "missing_patient_or_event" });
+    res.json(simulationService.recordCameraEvent({ patientId, eventType, confidence, source, summary }));
   } catch (err) {
     res.status(400).json({ ok: false, error: err.message });
   }
@@ -1373,8 +1404,10 @@ app.all("/api/yolo/*", (req, res) => {
     proxyReq.setHeader("Content-Type", "application/json");
     proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyData));
     proxyReq.write(bodyData);
-  }
-  proxyReq.end();
+    proxyReq.end();
+  } else if (["POST", "PUT", "PATCH"].includes(req.method)) {
+    req.pipe(proxyReq);
+  } else proxyReq.end();
 });
 
 // ---- System Infrastructure Health (7-Tier Status Hierarchy) ----------------

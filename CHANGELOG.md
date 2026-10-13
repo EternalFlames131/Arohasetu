@@ -495,6 +495,13 @@
 - Kept the simulator behind a server-checked developer key. Verified that requests without the key are denied.
 - Built and syntax-checked the server and admin page. Verified manual edits, a generated threshold alert, and baseline reset locally and on production at `https://rejivan2.vercel.app`.
 
+## 2026-10-13 — Judge wearable and video demonstrations (publish pending)
+- Added a visible smartwatch panel to the public dashboard. It can pair with compatible Bluetooth LE heart-rate devices in supported browsers; only heart rate is marked real, with other values kept simulated/manual. The manual sample feed remains labeled simulated.
+- Added matching Android dashboard controls for scanning a BLE heart-rate device, streaming HR, and using a simulated manual sample when no compatible watch is available.
+- Added protected admin simulator controls to disconnect/reconnect each simulated wearable. The shared patient state reflects unavailable sensor readings, preserves a redundant HR source when available, creates a dashboard alert, and resolves it on reconnect.
+- Added admin video selection and bundled fall-demo clip playback. The analyzer sends sampled frames to local YOLO when reachable; hosted pages use a limited browser motion estimate. Possible-event alerts identify the engine and confidence and require human review. Video stays in the browser.
+- Local checks: web bundle and scripts compile, admin page script parses, simulator checks pass for redundant devices/disconnect alerts/reconnect/camera demo alerts, and Android Kotlin compilation succeeds. GitHub push and Vercel production deployment are still pending.
+
 
 ## 2026-10-13 12:13 +05:30 — Live-normal reset and translation repair
 - Default reset and Scenario 1 now resume gently varying simulated readings within normal patient ranges; patient-specific demo alerts are resolved on reset.

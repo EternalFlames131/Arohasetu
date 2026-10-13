@@ -130,6 +130,44 @@
       </div>
     </div>
 
+    <!-- PRIVATE LOCAL VIDEO ANALYSIS + DEVICE DISCONNECT DEMO -->
+    <section class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
+        <div>
+          <h3 class="text-sm font-bold text-white">Demo video: check for fall-like movement</h3>
+          <p class="text-xs text-slate-400 mt-1">Choose a clip from this device or load the included sample. The clip stays in this browser; only sampled frames are sent to the local YOLO service when it is available.</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <label class="px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-xs font-bold cursor-pointer hover:bg-slate-700">
+            Choose video<input id="videoFileInput" type="file" accept="video/*" class="hidden" />
+          </label>
+          <button id="loadSampleVideoBtn" class="px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-xs font-bold hover:bg-slate-700">Use included fall demo</button>
+          <button id="analyzeVideoBtn" disabled class="px-3 py-2 rounded-lg bg-teal-500 text-slate-950 text-xs font-bold disabled:opacity-40 disabled:cursor-not-allowed">Analyze clip</button>
+        </div>
+        <video id="demoVideo" controls playsinline class="w-full max-h-72 rounded-xl bg-black border border-slate-800"></video>
+        <canvas id="videoFrameCanvas" width="320" height="180" class="hidden"></canvas>
+        <div id="videoAnalysisStatus" class="rounded-lg bg-slate-950 border border-slate-800 p-3 text-xs text-slate-300">No clip selected.</div>
+        <p class="text-[10px] leading-relaxed text-amber-300/90">Prototype demonstration only. A motion estimate cannot confirm a fall or prove a patient is safe. Review the clip; real emergency monitoring needs clinical validation.</p>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
+        <div>
+          <h3 class="text-sm font-bold text-white">Wearable connection demo</h3>
+          <p class="text-xs text-slate-400 mt-1">Disconnect one simulated device to show missing readings and a dashboard alert for the selected patient.</p>
+        </div>
+        <label for="wearableSelect" class="block text-xs font-semibold text-slate-300">Device</label>
+        <select id="wearableSelect" class="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2 text-sm text-white">
+          <option value="watch">ReJivan Smartwatch · HR + SpO₂</option>
+          <option value="ecg">SanketLife ECG · HR</option>
+          <option value="bp">Omron BP Monitor · blood pressure</option>
+          <option value="temp">TempTraq Patch · temperature</option>
+          <option value="glu">Accu-Chek · glucose</option>
+        </select>
+        <div id="wearableStatus" class="space-y-2"></div>
+        <p class="text-[10px] leading-relaxed text-slate-500">These connection switches are simulated. The main dashboard separately supports real Bluetooth heart-rate devices when the browser and watch expose the standard BLE heart-rate service.</p>
+      </div>
+    </section>
+
     <!-- 2-COLUMN CONTROL WORKBENCH -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
@@ -371,6 +409,8 @@
     let pollInterval = null;
     let hasUnsavedVitalEdits = false;
     let stateRequestSequence = 0;
+    let selectedVideoUrl = "";
+    let selectedVideoName = "";
 
     const gateModal = document.getElementById("gateModal");
     const gateForm = document.getElementById("gateForm");
@@ -455,6 +495,7 @@
         currentState = state;
         renderPatients(state.patients);
         renderActivePatient(state.patients[selectedPatientId]);
+        renderWearableControls(state.patients[selectedPatientId]);
         renderAlerts(state.alerts);
         renderConnectivity(state.globalConnectivity);
         document.getElementById("syncTimeText").textContent = new Date().toLocaleTimeString();
@@ -498,6 +539,7 @@
           selectedPatientId = id;
           renderActivePatient(currentState.patients[selectedPatientId]);
           renderPatients(currentState.patients);
+          renderWearableControls(currentState.patients[selectedPatientId]);
         };
 
         const statusColor = p.status === "danger" ? "text-rose-400 bg-rose-500/10 border-rose-500/30" : (p.status === "caution" ? "text-amber-400 bg-amber-500/10 border-amber-500/30" : "text-emerald-400 bg-emerald-500/10 border-emerald-500/30");
@@ -526,6 +568,7 @@
       document.getElementById("patientLocText").textContent = p.location + (p.address ? ` (${p.address})` : "");
       document.getElementById("patientLastUpdateText").textContent = new Date(p.lastUpdated).toLocaleTimeString();
       document.getElementById("activeScenarioLabel").textContent = `Active: ${p.scenarioLabel || (p.vitalMode === "normal_live" ? "Normal Live Simulation" : p.scenarioId || 'Baseline')}`;
+      renderWearableControls(p);
 
       const statusBadge = document.getElementById("patientStatusBadge");
       statusBadge.textContent = (p.status || "NORMAL").toUpperCase();
@@ -546,6 +589,185 @@
         setVitalSlider("rr", v.rr);
       }
     }
+
+    const WEARABLES = [
+      { id: "watch", name: "ReJivan Smartwatch", metrics: "HR + SpO₂" },
+      { id: "ecg", name: "SanketLife ECG", metrics: "HR" },
+      { id: "bp", name: "Omron BP Monitor", metrics: "Blood pressure" },
+      { id: "temp", name: "TempTraq Patch", metrics: "Temperature" },
+      { id: "glu", name: "Accu-Chek", metrics: "Glucose" },
+    ];
+
+    function renderWearableControls(patient) {
+      const container = document.getElementById("wearableStatus");
+      if (!container || !patient) return;
+      const offline = new Set(patient.offlineDevices || []);
+      container.innerHTML = WEARABLES.map((device) => {
+        const disconnected = offline.has(device.id);
+        return `<div class="flex items-center justify-between gap-3 rounded-lg border ${disconnected ? "border-rose-500/40 bg-rose-950/20" : "border-slate-800 bg-slate-950"} p-3">
+          <div><div class="text-xs font-bold text-white">${device.name}</div><div class="text-[10px] text-slate-400">${device.metrics} · ${disconnected ? "DISCONNECTED · simulated" : "Connected · simulated"}</div></div>
+          <button data-device-toggle="${device.id}" class="shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-bold ${disconnected ? "bg-emerald-500/10 text-emerald-300 border border-emerald-500/30" : "bg-rose-500/10 text-rose-300 border border-rose-500/30"}">${disconnected ? "Reconnect" : "Disconnect"}</button>
+        </div>`;
+      }).join("");
+    }
+
+    document.getElementById("wearableStatus").addEventListener("click", async (event) => {
+      const button = event.target.closest("[data-device-toggle]");
+      if (!button || !currentState?.patients?.[selectedPatientId]) return;
+      const patient = currentState.patients[selectedPatientId];
+      const deviceId = button.dataset.deviceToggle;
+      const connected = (patient.offlineDevices || []).includes(deviceId);
+      try {
+        await apiCall("/api/admin/simulator/device-connectivity", "POST", { patientId: selectedPatientId, deviceId, connected });
+        await fetchState();
+      } catch (error) {
+        alert("Could not change wearable connection: " + error.message);
+      }
+    });
+
+    const videoElement = document.getElementById("demoVideo");
+    const videoStatus = document.getElementById("videoAnalysisStatus");
+    const videoCanvas = document.getElementById("videoFrameCanvas");
+    const setDemoVideo = (url, name) => {
+      if (selectedVideoUrl.startsWith("blob:")) URL.revokeObjectURL(selectedVideoUrl);
+      selectedVideoUrl = url;
+      selectedVideoName = name;
+      videoElement.src = url;
+      document.getElementById("analyzeVideoBtn").disabled = false;
+      videoStatus.textContent = `Ready: ${name}. The video remains in this browser.`;
+    };
+    document.getElementById("videoFileInput").addEventListener("change", (event) => {
+      const file = event.target.files?.[0];
+      if (file) setDemoVideo(URL.createObjectURL(file), file.name);
+    });
+    document.getElementById("loadSampleVideoBtn").addEventListener("click", () => {
+      setDemoVideo("/videos/patient_bed_fall_demo.mp4", "Included patient fall demo clip");
+    });
+
+    function seekVideo(seconds) {
+      return new Promise((resolve, reject) => {
+        if (videoElement.readyState >= 2 && Math.abs(videoElement.currentTime - seconds) < 0.02) {
+          requestAnimationFrame(resolve);
+          return;
+        }
+        const fail = () => reject(new Error("Could not seek within this video."));
+        videoElement.addEventListener("error", fail, { once: true });
+        videoElement.addEventListener("seeked", () => {
+          videoElement.removeEventListener("error", fail);
+          resolve();
+        }, { once: true });
+        videoElement.currentTime = seconds;
+      });
+    }
+
+    document.getElementById("analyzeVideoBtn").addEventListener("click", async () => {
+      const button = document.getElementById("analyzeVideoBtn");
+      if (!videoElement.duration || !Number.isFinite(videoElement.duration)) {
+        videoStatus.textContent = "Wait for the video to finish loading, then analyze it.";
+        return;
+      }
+      button.disabled = true;
+      videoElement.pause();
+      videoStatus.textContent = "Sampling video frames and checking whether the local YOLO service is available…";
+      const context = videoCanvas.getContext("2d", { willReadFrequently: true });
+      const frameCount = 8;
+      const sampleTimes = Array.from({ length: frameCount }, (_, index) => videoElement.duration * (index / (frameCount - 1)));
+      let previousPixels = null;
+      let firstMotionY = null;
+      let lastMotionY = null;
+      let peakMotion = 0;
+      let yoloHighRisk = 0;
+      let yoloFrames = 0;
+      let bestConfidence = 0;
+      const yoloFindings = [];
+      try {
+        for (let index = 0; index < sampleTimes.length; index++) {
+          await seekVideo(sampleTimes[index]);
+          context.drawImage(videoElement, 0, 0, videoCanvas.width, videoCanvas.height);
+          const pixels = context.getImageData(0, 0, videoCanvas.width, videoCanvas.height);
+          let changed = 0;
+          let weightedY = 0;
+          if (previousPixels) {
+            for (let y = 0; y < videoCanvas.height; y += 2) {
+              for (let x = 0; x < videoCanvas.width; x += 2) {
+                const offset = (y * videoCanvas.width + x) * 4;
+                const oldLuma = (previousPixels.data[offset] * 3 + previousPixels.data[offset + 1] * 6 + previousPixels.data[offset + 2]) / 10;
+                const newLuma = (pixels.data[offset] * 3 + pixels.data[offset + 1] * 6 + pixels.data[offset + 2]) / 10;
+                if (Math.abs(newLuma - oldLuma) > 45) { changed++; weightedY += y; }
+              }
+            }
+            const fraction = changed / ((videoCanvas.width / 2) * (videoCanvas.height / 2));
+            peakMotion = Math.max(peakMotion, fraction);
+            if (changed > 0) {
+              const centerY = weightedY / changed / videoCanvas.height;
+              if (firstMotionY == null) firstMotionY = centerY;
+              lastMotionY = centerY;
+            }
+          }
+          previousPixels = pixels;
+
+          try {
+            const frameBlob = await new Promise((resolve) => videoCanvas.toBlob(resolve, "image/jpeg", 0.72));
+            if (!frameBlob) continue;
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 4200);
+            const response = await fetch("/api/yolo/process_frame", {
+              method: "POST", headers: { "Content-Type": "image/jpeg", "X-Video-Timestamp": String(sampleTimes[index]), "X-Source": "PRERECORDED_VIDEO" },
+              body: frameBlob, signal: controller.signal,
+            });
+            clearTimeout(timeout);
+            if (!response.ok) continue;
+            const result = await response.json();
+            if (result?.ok) {
+              yoloFrames++;
+              const confidence = Number(result.confidence ?? result.severity_confidence ?? 0);
+              bestConfidence = Math.max(bestConfidence, confidence);
+              if (result.risk_level === "HIGH_RISK" || /FALL|FLOOR|LONG_LIE/.test(String(result.canonical_event?.probableMechanism || ""))) {
+                yoloHighRisk++;
+                yoloFindings.push(result.posture || result.consensus_summary || "High-risk pose");
+              }
+            }
+          } catch (_) { /* local YOLO may not exist on the live hosted site */ }
+          videoStatus.textContent = `Analyzed frame ${index + 1} of ${frameCount}…`;
+        }
+
+        let engine = "Browser motion estimate";
+        let eventType = "";
+        let confidence = 0;
+        let summary = "No fall-like motion signal stood out in these sampled frames. That does not prove the patient is safe.";
+        if (yoloFrames > 0) {
+          engine = "Local YOLO pose model";
+          if (yoloHighRisk >= 1) {
+            eventType = "fall";
+            confidence = Math.max(70, Math.min(99, Math.round(bestConfidence || 75)));
+            summary = `Local YOLO pose model flagged high-risk posture in ${yoloHighRisk} of ${frameCount} sampled frames. Human review is required.`;
+          } else {
+            summary = `Local YOLO analyzed ${yoloFrames} frames and did not flag a high-risk pose. This is not proof the patient is safe.`;
+          }
+        } else {
+          const drop = firstMotionY == null || lastMotionY == null ? 0 : lastMotionY - firstMotionY;
+          if (drop > 0.12 && peakMotion > 0.012) {
+            eventType = "possible_fall";
+            confidence = Math.max(20, Math.min(55, Math.round(20 + drop * 90 + peakMotion * 140)));
+            summary = `Browser motion estimate found downward movement (${Math.round(drop * 100)}% of frame height). This low-confidence signal needs human review.`;
+          }
+        }
+
+        if (eventType) {
+          const result = await apiCall("/api/admin/simulator/camera-event", "POST", {
+            patientId: selectedPatientId, eventType, confidence, source: `${engine}: ${selectedVideoName}`, summary,
+          });
+          await fetchState();
+          videoStatus.innerHTML = `<strong class="text-rose-300">${engine}: possible event · ${confidence}%</strong><br/><span>${summary}</span><br/><span class="text-teal-300">Demo alert added for ${result.alert.patientName}; visible on the dashboard.</span>`;
+        } else {
+          videoStatus.innerHTML = `<strong class="text-teal-300">${engine}: no likely fall signal in sampled frames</strong><br/><span>${summary}</span>${yoloFrames === 0 ? "<br/><span class='text-slate-400'>Local YOLO was unavailable; the hosted site uses this limited browser motion estimate.</span>" : ""}`;
+        }
+      } catch (error) {
+        videoStatus.textContent = `Could not analyze this video: ${error.message || "video read error"}`;
+      } finally {
+        button.disabled = false;
+      }
+    });
 
     function setVitalSlider(key, val) {
       const slider = document.getElementById(`slider_${key}`);

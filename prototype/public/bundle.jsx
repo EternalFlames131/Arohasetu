@@ -2260,6 +2260,7 @@ const HardwareDiagnosticsBar = ({
   reliabilityScore = 98,
   currentUser,
   activePatient,
+  offlineDeviceIds = [],
 }) => {
   const getHardwareForUser = (user, patient) => {
     if (patient?.hardwareDevices && patient.hardwareDevices.length > 0) {
@@ -2333,6 +2334,13 @@ const HardwareDiagnosticsBar = ({
       hubText: "BLE Mesh Hub Active (Port Blair Gateway)",
       devices: [
         {
+          model: "ReJivan Smartwatch",
+          type: "Heart Rate + SpO₂ Wearable",
+          status: "Connected",
+          battery: 91,
+          protocol: "BLE Heart Rate Service",
+        },
+        {
           model: "Omron HEM-7156T",
           type: "BP Monitor",
           status: "Connected",
@@ -2381,7 +2389,16 @@ const HardwareDiagnosticsBar = ({
       {/* 4-Item Telemetry Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Device 1: Omron BP */}
-        {devices.map((dev, idx) => (
+        {devices.map((dev, idx) => {
+          const model = String(dev.model || "").toLowerCase();
+          const deviceId = model.includes("smartwatch") ? "watch"
+            : model.includes("sanket") ? "ecg"
+            : model.includes("omron") ? "bp"
+            : model.includes("temptraq") ? "temp"
+            : model.includes("accu-chek") ? "glu" : "";
+          const isOffline = deviceId && offlineDeviceIds.includes(deviceId);
+          const statusText = isOffline ? "DEMO · Disconnected" : `Simulated · ${dev.status}`;
+          return (
           <div
             key={idx}
             className="p-3 rounded-lg border border-slate-200/80 bg-slate-50/50 hover:bg-slate-50 transition-colors"
@@ -2399,16 +2416,17 @@ const HardwareDiagnosticsBar = ({
             <div className="text-[11px] text-slate-500 mt-0.5">{dev.type}</div>
 
             <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-200/60 text-[11px]">
-              <span className="inline-flex items-center gap-1 text-slate-700 font-medium">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span>{dev.status}</span>
+              <span className={`inline-flex items-center gap-1 font-medium ${isOffline ? "text-rose-700" : "text-slate-700"}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${isOffline ? "bg-rose-500" : "bg-emerald-500 animate-pulse"}`} />
+                <span>{statusText}</span>
               </span>
               <span className="text-[10px] text-slate-400 font-mono">
                 {dev.protocol}
               </span>
             </div>
           </div>
-        ))}
+          );
+        })}
 
         {/* Device Reliability Score */}
         <div className="p-3 rounded-lg border border-slate-200/80 bg-slate-50/50">
@@ -9243,13 +9261,71 @@ const DEMO_MANUAL_PRESETS = [
   { label: "Bradycardia", value: { hr: 46, spo2: 97.8, bpSys: 102, bpDia: 62, temp: 36.5, glucose: 104 } },
 ];
 
-const SensorDemoPanel = ({ disconnectedDevices = {}, onToggleDevice, feedOverride, onPushReading, onClearFeed }) => {
+const SensorDemoPanel = ({ disconnectedDevices = {}, serverDisconnectedDevices = [], onToggleDevice, feedOverride, onPushReading, onClearFeed, onBluetoothHeartRate }) => {
   const [manual, setManual] = React.useState({ hr: 84, spo2: 97.5, bpSys: 128, bpDia: 82, temp: 36.9, glucose: 118 });
+  const [bleState, setBleState] = React.useState({ status: "idle", name: "", hr: null, message: "Not connected" });
+  const bleDeviceRef = React.useRef(null);
+  const bleCharacteristicRef = React.useRef(null);
+  const onBluetoothHeartRateRef = React.useRef(onBluetoothHeartRate);
+  onBluetoothHeartRateRef.current = onBluetoothHeartRate;
 
-  const disconnectedCount = REJIVAN_DEMO_DEVICES.filter((d) => disconnectedDevices[d.id]).length;
-  const feedActive = !!feedOverride;
+  const disconnectedCount = REJIVAN_DEMO_DEVICES.filter((d) => disconnectedDevices[d.id] || serverDisconnectedDevices.includes(d.id)).length;
+  const manualFeedActive = !!feedOverride;
+  const feedActive = manualFeedActive || bleState.status === "connected";
 
   const setField = (key, value) => setManual((prev) => ({ ...prev, [key]: value }));
+
+  const disconnectBluetoothWatch = async () => {
+    try {
+      if (bleCharacteristicRef.current) await bleCharacteristicRef.current.stopNotifications();
+    } catch (_) {}
+    if (bleDeviceRef.current?.gatt?.connected) bleDeviceRef.current.gatt.disconnect();
+    bleCharacteristicRef.current = null;
+    bleDeviceRef.current = null;
+    setBleState({ status: "idle", name: "", hr: null, message: "Not connected" });
+    onBluetoothHeartRateRef.current?.(null, "");
+  };
+
+  const connectBluetoothWatch = async () => {
+    if (!navigator.bluetooth?.requestDevice) {
+      setBleState({ status: "unsupported", name: "", hr: null, message: "Use Chrome or Edge on HTTPS or localhost; this browser does not support Bluetooth pairing." });
+      return;
+    }
+    setBleState({ status: "connecting", name: "", hr: null, message: "Choose a heart-rate device in the browser prompt." });
+    try {
+      const device = await navigator.bluetooth.requestDevice({ filters: [{ services: ["heart_rate"] }] });
+      bleDeviceRef.current = device;
+      device.addEventListener("gattserverdisconnected", () => {
+        bleCharacteristicRef.current = null;
+        bleDeviceRef.current = null;
+        setBleState({ status: "idle", name: "", hr: null, message: "Watch disconnected." });
+        onBluetoothHeartRateRef.current?.(null, "");
+      }, { once: true });
+      const server = await device.gatt.connect();
+      const service = await server.getPrimaryService("heart_rate");
+      const characteristic = await service.getCharacteristic("heart_rate_measurement");
+      bleCharacteristicRef.current = characteristic;
+      characteristic.addEventListener("characteristicvaluechanged", (event) => {
+        const value = event.target.value;
+        const flags = value.getUint8(0);
+        const heartRate = flags & 1 ? value.getUint16(1, true) : value.getUint8(1);
+        if (!Number.isFinite(heartRate) || heartRate < 25 || heartRate > 240) return;
+        setBleState({ status: "connected", name: device.name || "Bluetooth heart-rate device", hr: heartRate, message: "REAL heart-rate packets received over Bluetooth." });
+        onBluetoothHeartRateRef.current?.(heartRate, device.name || "Bluetooth heart-rate device");
+      });
+      await characteristic.startNotifications();
+      setBleState((prev) => ({ ...prev, status: "connected", name: device.name || "Bluetooth heart-rate device", message: "Connected; waiting for the first heart-rate packet…" }));
+    } catch (error) {
+      setBleState({ status: "error", name: "", hr: null, message: error?.name === "NotFoundError" ? "No compatible heart-rate device selected." : (error?.message || "Could not connect to that device.") });
+      onBluetoothHeartRateRef.current?.(null, "");
+    }
+  };
+
+  React.useEffect(() => () => {
+    try { bleCharacteristicRef.current?.stopNotifications(); } catch (_) {}
+    try { if (bleDeviceRef.current?.gatt?.connected) bleDeviceRef.current.gatt.disconnect(); } catch (_) {}
+    onBluetoothHeartRate?.(null, "");
+  }, []);
 
   return (
     <div className="bg-white border border-slate-200/80 rounded-xl p-4 sm:p-5 shadow-xs mb-6">
@@ -9264,7 +9340,7 @@ const SensorDemoPanel = ({ disconnectedDevices = {}, onToggleDevice, feedOverrid
               Sensors &amp; Wearables — Live Judge Demo
             </h3>
             <p className="text-[11px] text-slate-500">
-              Hardware disconnect layering + manual smartwatch vital feed (judge-facing controls)
+              Simulated device toggles and manual feed, with optional real Bluetooth heart-rate pairing
             </p>
           </div>
         </div>
@@ -9288,7 +9364,8 @@ const SensorDemoPanel = ({ disconnectedDevices = {}, onToggleDevice, feedOverrid
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {REJIVAN_DEMO_DEVICES.map((dev) => {
               const Icon = dev.icon;
-              const isOff = !!disconnectedDevices[dev.id];
+              const serverOff = serverDisconnectedDevices.includes(dev.id);
+              const isOff = !!disconnectedDevices[dev.id] || serverOff;
               return (
                 <div
                   key={dev.id}
@@ -9319,17 +9396,20 @@ const SensorDemoPanel = ({ disconnectedDevices = {}, onToggleDevice, feedOverrid
                         : "bg-emerald-50 text-emerald-700 border border-emerald-200"
                     }`}>
                       <span className={`w-1.5 h-1.5 rounded-full ${isOff ? "bg-rose-500" : "bg-emerald-500 animate-pulse"}`} />
-                      <span>{isOff ? "Disconnected (Heartbeat Lost)" : "Connected & Streaming"}</span>
+                      <span>{isOff ? `SIMULATED · Disconnected${serverOff ? " (Admin demo)" : ""}` : "SIMULATED · Connected"}</span>
                     </span>
                     <button
+                      disabled={serverOff}
                       onClick={() => onToggleDevice(dev.id)}
                       className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-colors cursor-pointer ${
-                        isOff
+                        serverOff
+                          ? "bg-slate-100 text-slate-500 border border-slate-200 cursor-not-allowed"
+                          : isOff
                           ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200"
                           : "bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100"
                       }`}
                     >
-                      {isOff ? "Reconnect" : "Disconnect"}
+                      {serverOff ? "Reconnect in Admin" : isOff ? "Reconnect" : "Disconnect"}
                     </button>
                   </div>
                 </div>
@@ -9374,14 +9454,14 @@ const SensorDemoPanel = ({ disconnectedDevices = {}, onToggleDevice, feedOverrid
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-              2 · Manual Smartwatch Vital Feed
+              2 · Smartwatch Feed: Real Bluetooth or Simulated Manual
             </h4>
             <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
               feedActive
                 ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
                 : "bg-slate-100 text-slate-500 border border-slate-200"
             }`}>
-              {feedActive ? "MANUAL FEED ACTIVE" : "AUTO HARDWARE STREAM"}
+              {bleState.status === "connected" ? "REAL BLUETOOTH HR" : manualFeedActive ? "SIMULATED MANUAL FEED" : "SIMULATED STREAM"}
             </span>
           </div>
 
@@ -9400,6 +9480,24 @@ const SensorDemoPanel = ({ disconnectedDevices = {}, onToggleDevice, feedOverrid
                     ? "Streaming manually-pushed readings — triage re-run per packet"
                     : "Idle — push a reading to feed vitals into the live telemetry stream"}
                 </div>
+              </div>
+            </div>
+
+            <div className={`mb-3 rounded-xl border p-3 ${bleState.status === "connected" ? "border-emerald-300 bg-emerald-50" : "border-slate-200 bg-white"}`}>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <div className="text-xs font-bold text-slate-900">Connect a real Bluetooth heart-rate device</div>
+                  <div className="text-[10px] text-slate-500">REAL: heart rate only. SpO₂, blood pressure, temperature and glucose remain simulated/manual.</div>
+                </div>
+                {bleState.status === "connected" ? (
+                  <button onClick={disconnectBluetoothWatch} className="px-3 py-1.5 rounded-lg text-[11px] font-bold text-rose-700 border border-rose-200 bg-rose-50 hover:bg-rose-100">Disconnect</button>
+                ) : (
+                  <button onClick={connectBluetoothWatch} disabled={bleState.status === "connecting"} className="px-3 py-1.5 rounded-lg text-[11px] font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60">{bleState.status === "connecting" ? "Connecting…" : "Connect smartwatch"}</button>
+                )}
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px]">
+                <span className={`font-bold ${bleState.status === "connected" ? "text-emerald-700" : "text-slate-500"}`}>{bleState.status === "connected" ? `● ${bleState.name}${bleState.hr != null ? ` · ${bleState.hr} bpm` : ""}` : `○ ${bleState.message}`}</span>
+                <span className="text-slate-400">Compatible BLE Heart Rate Service required; device and browser support varies.</span>
               </div>
             </div>
 
@@ -9454,7 +9552,7 @@ const SensorDemoPanel = ({ disconnectedDevices = {}, onToggleDevice, feedOverrid
               >
                 Push Reading →
               </button>
-              {feedActive && (
+              {manualFeedActive && (
                 <button
                   onClick={onClearFeed}
                   className="px-3 py-2 rounded-lg text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
@@ -9477,6 +9575,7 @@ const SensorDemoPanel = ({ disconnectedDevices = {}, onToggleDevice, feedOverrid
     </div>
   );
 };
+
 // --- END: prototype\public\src\components\SensorDemoPanel.jsx ---
 
 // --- START: prototype\public\src\components\Modals.jsx ---
@@ -11123,6 +11222,8 @@ const App = () => {
   const [disconnectedDevices, setDisconnectedDevices] = React.useState({}); // { deviceId: true } when heartbeat lost
   const [feedOverride, setFeedOverride] = React.useState(null); // { hr, spo2, bpSys, bpDia, temp, glucose, label }
   const [demoAlerts, setDemoAlerts] = React.useState([]); // judge-demo alert entries prepended to Recent Alerts
+  const bluetoothHrRef = React.useRef(null);
+  const bluetoothAlertAtRef = React.useRef(0);
 
   // A vital is offline only when every wearable that supplies it is disconnected.
   const isVitalOffline = (vitalKey) => {
@@ -11130,44 +11231,9 @@ const App = () => {
     return feeders.length > 0 && feeders.every((device) => disconnectedDevices[device.id]);
   };
 
-  // Developer-only demo mode: the Sensors & Wearables panel is HIDDEN from judges by default.
-  // Reveal it with ?dev=1 in the URL or the Ctrl+Shift+D shortcut. Persisted for the session.
-  const [devMode, setDevMode] = React.useState(() => {
-    try {
-      const qs = new URLSearchParams(window.location.search);
-      return (
-        qs.get("dev") === "1" ||
-        /(^|[#&?])dev(=1)?\b/.test(window.location.hash || "") ||
-        (typeof sessionStorage !== "undefined" && sessionStorage.getItem("rejivan_devmode") === "1")
-      );
-    } catch (e) {
-      return false;
-    }
-  });
-
   // Emergency signal state (fired when a vital monitor loses its heartbeat)
   const [emergencySignal, setEmergencySignal] = React.useState(null); // { device, feeds, at }
   const [emergencyModalOpen, setEmergencyModalOpen] = React.useState(false);
-
-  // Dev mode shortcut (Ctrl+Shift+D) + URL/hash/session support
-  React.useEffect(() => {
-    const onKey = (e) => {
-      if (e.ctrlKey && e.shiftKey && (e.key === "D" || e.key === "d")) {
-        e.preventDefault();
-        setDevMode((v) => {
-          const n = !v;
-          try {
-            if (typeof sessionStorage !== "undefined") {
-              sessionStorage.setItem("rejivan_devmode", n ? "1" : "0");
-            }
-          } catch (_) {}
-          return n;
-        });
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
 
   // Vitals & Telemetry State
   const [vitals, setVitals] = React.useState({
@@ -11190,6 +11256,7 @@ const App = () => {
   const [selectedWardBed, setSelectedWardBed] = React.useState("bed-101"); // "bed-101" | "bed-102" | "bed-103" | "bed-104" | "all"
   const [serverConnectivity, setServerConnectivity] = React.useState("online");
   const [serverAlerts, setServerAlerts] = React.useState([]);
+  const [serverOfflineDevices, setServerOfflineDevices] = React.useState([]);
 
   const isNurse = user?.role === "nurse" || user?.email === "wardnurse@demo.in";
 
@@ -11253,11 +11320,11 @@ const App = () => {
         [
           {
             id: `demo-disc-${deviceId}-${Date.now()}`,
-            title: `DEVICE DISCONNECTED — ${dev.name}`,
+            title: `DEMO: DEVICE DISCONNECTED — ${dev.name}`,
             reading: "Telemetry interrupted",
             time: "Just now",
             severity: "danger",
-            message: `${dev.name} heartbeat lost. ${dev.feeds.map((f) => f.toUpperCase()).join(" + ")} now stale. Reliability safeguards #4 (sensor watchdog) + #7 (graceful degradation) engaged — overhead YOLO camera keeps monitoring falls / out-of-bed / low activity. Emergency signal initiated (caregiver → backup → 108/112 or Code Blue/MET).`,
+            message: `${dev.name} simulated heartbeat lost. ${dev.feeds.map((f) => f.toUpperCase()).join(" + ")} are marked unavailable. The camera layer remains available. This demo shows the alert/escalation flow; no real emergency message or call is sent.`,
             source: dev.name,
           },
           ...a,
@@ -11270,11 +11337,11 @@ const App = () => {
         [
           {
             id: `demo-rec-${deviceId}-${Date.now()}`,
-            title: `${dev.name} — Telemetry Restored`,
+            title: `DEMO: ${dev.name} — Telemetry Restored`,
             reading: "Reconnected",
             time: "Just now",
             severity: "info",
-            message: `Heartbeat restored. ${dev.feeds.map((f) => f.toUpperCase()).join(" + ")} streaming resumed.`,
+            message: `Simulated heartbeat restored. ${dev.feeds.map((f) => f.toUpperCase()).join(" + ")} are available again.`,
             source: dev.name,
           },
           ...a,
@@ -11284,7 +11351,7 @@ const App = () => {
   };
 
   // Feature B: push a manual smartwatch reading into the live stream and re-run clinical triage.
-  const handlePushReading = (reading) => {
+  const handlePushReading = (reading, sourceLabel = "Manual Smartwatch Feed") => {
     setFeedOverride({ ...reading });
     setVitals((prev) => ({
       ...prev,
@@ -11295,7 +11362,7 @@ const App = () => {
       temp: reading.temp,
       glucose: reading.glucose,
       lastSync: "Just now",
-      hardwareSource: "ReJivan Smartwatch · Manual Demo Feed",
+      hardwareSource: `ReJivan Smartwatch · ${sourceLabel}`,
       sparkHr: pushFifo(prev.sparkHr, reading.hr),
       sparkSpo2: pushFifo(prev.sparkSpo2, reading.spo2),
       sparkBp: pushFifo(prev.sparkBp, reading.bpSys),
@@ -11308,23 +11375,57 @@ const App = () => {
       [
         {
           id: `demo-feed-${Date.now()}`,
-          title: severity === "danger" ? "SMARTWATCH ALERT — " + label : label,
+          title: severity === "danger" ? "DEMO SMARTWATCH ALERT — " + label : `DEMO: ${label}`,
           reading: `${reading.hr} bpm · ${reading.spo2}% · ${reading.bpSys}/${reading.bpDia} · ${reading.temp}°C · ${reading.glucose} mg/dL`,
           time: "Just now",
           severity,
           message:
             severity === "danger"
-              ? `${label}. Esccalation chain primed — caregiver + emergency hub will be notified automatically.`
+              ? `${label}. The prototype escalation flow is shown for demonstration; no real caregiver or emergency-service message is sent.`
               : severity === "caution"
-              ? `${label}. Automated re-check scheduled; family informed for observation.`
-              : "Manual demo feed accepted. Clinical triage engine: all vitals within range — no intervention required.",
-          source: "ReJivan Smartwatch (Manual Feed)",
+              ? `${label}. The prototype schedules a demonstration re-check; external notifications are simulated.`
+              : "Simulated manual demo feed accepted. The prototype triage rules found no alert threshold crossed.",
+          source: `ReJivan Smartwatch (${sourceLabel})`,
         },
         ...a,
       ].slice(0, 6)
     );
 
     setPacketCount((p) => p + 1);
+    setSecondsAgo(0);
+  };
+
+  const handleBluetoothHeartRate = (heartRate, deviceName = "Bluetooth heart-rate device") => {
+    bluetoothHrRef.current = Number.isFinite(heartRate) ? heartRate : null;
+    if (!Number.isFinite(heartRate)) {
+      setVitals((prev) => ({
+        ...prev,
+        hardwareSource: feedOverride ? "ReJivan Smartwatch · Manual Demo Feed" : (activePatient?.hardwareSource || ACCOUNT_PROFILES["asharma@demo.in"].hardwareSource),
+      }));
+      return;
+    }
+    setVitals((prev) => ({
+      ...prev,
+      hr: heartRate,
+      lastSync: "Just now",
+      hardwareSource: `${deviceName} · REAL Bluetooth HR`,
+      sparkHr: pushFifo(prev.sparkHr, heartRate),
+    }));
+    const now = Date.now();
+    const severity = heartRate >= 130 || heartRate < 45 ? "danger" : (heartRate > 100 || heartRate < 60 ? "caution" : "info");
+    const label = severity === "info" ? "Bluetooth heart rate is within the demo range" : `Heart rate ${severity === "danger" ? "danger" : "needs review"} at ${heartRate} bpm`;
+    if (severity !== "info" && now - bluetoothAlertAtRef.current > 30000) {
+      bluetoothAlertAtRef.current = now;
+      setDemoAlerts((alerts) => [{
+        id: `bluetooth-hr-${now}`,
+        title: `BLUETOOTH HEART-RATE ${severity.toUpperCase()} — ${label}`,
+        reading: `${heartRate} bpm · real Bluetooth heart-rate packet`,
+        time: "Just now",
+        severity,
+        message: `${label}. Prototype alert from a real Bluetooth heart-rate reading; emergency delivery is simulated.`,
+        source: deviceName,
+      }, ...alerts].slice(0, 6));
+    }
     setSecondsAgo(0);
   };
 
@@ -11385,15 +11486,16 @@ const App = () => {
 
               if (matching && matching.vitals && vData.connectivity !== "interrupted") {
                 const sv = matching.vitals;
+                setServerOfflineDevices(matching.offlineDevices || []);
                 setVitals((prev) => ({
                   ...prev,
-                  hr: sv.hr != null ? sv.hr : prev.hr,
-                  spo2: sv.spo2 != null ? sv.spo2 : prev.spo2,
-                  bpSys: sv.bpSys != null ? sv.bpSys : prev.bpSys,
-                  bpDia: sv.bpDia != null ? sv.bpDia : prev.bpDia,
-                  temp: sv.temp != null ? sv.temp : prev.temp,
-                  glucose: sv.glucose != null ? sv.glucose : prev.glucose,
-                  sparkHr: sv.hr != null ? pushFifo(prev.sparkHr, sv.hr) : prev.sparkHr,
+                  hr: bluetoothHrRef.current ?? (sv.hr !== undefined ? sv.hr : prev.hr),
+                  spo2: sv.spo2 !== undefined ? sv.spo2 : prev.spo2,
+                  bpSys: sv.bpSys !== undefined ? sv.bpSys : prev.bpSys,
+                  bpDia: sv.bpDia !== undefined ? sv.bpDia : prev.bpDia,
+                  temp: sv.temp !== undefined ? sv.temp : prev.temp,
+                  glucose: sv.glucose !== undefined ? sv.glucose : prev.glucose,
+                  sparkHr: bluetoothHrRef.current != null ? prev.sparkHr : (sv.hr != null ? pushFifo(prev.sparkHr, sv.hr) : prev.sparkHr),
                   sparkSpo2: sv.spo2 != null ? pushFifo(prev.sparkSpo2, sv.spo2) : prev.sparkSpo2,
                   sparkBp: sv.bpSys != null ? pushFifo(prev.sparkBp, sv.bpSys) : prev.sparkBp,
                   sparkTemp: sv.temp != null ? pushFifo(prev.sparkTemp, sv.temp) : prev.sparkTemp,
@@ -11550,7 +11652,7 @@ const App = () => {
         const tempOff = isVitalOffline("temp");
         const gluOff = isVitalOffline("glucose");
 
-        const nextHr = hrOff ? null : Math.round(drift(prev.hr ?? baseVitals.hr, targetHr, 0.35, 1.2));
+        const nextHr = hrOff ? null : (bluetoothHrRef.current ?? Math.round(drift(prev.hr ?? baseVitals.hr, targetHr, 0.35, 1.2)));
         const nextSpo2 = spo2Off ? null : Math.round(drift(prev.spo2 ?? baseVitals.spo2, targetSpo2, 0.3, 0.15) * 10) / 10;
         const nextBpSys = bpOff ? null : Math.round(drift(prev.bpSys ?? baseVitals.bpSys, targetBpSys, 0.35, 1.5));
         const nextBpDia = bpOff ? null : Math.round(drift(prev.bpDia ?? baseVitals.bpDia, targetBpDia, 0.35, 1.2));
@@ -11566,7 +11668,9 @@ const App = () => {
           temp: nextTemp,
           glucose: nextGlucose,
           lastSync: "Just now",
-          hardwareSource: feedOverride ? "ReJivan Smartwatch · Manual Demo Feed" : prev.hardwareSource,
+          hardwareSource: bluetoothHrRef.current != null
+            ? "Bluetooth Heart Rate · REAL"
+            : feedOverride ? "ReJivan Smartwatch · Manual Demo Feed" : prev.hardwareSource,
           sparkHr: hrOff ? prev.sparkHr : pushFifo(prev.sparkHr, nextHr),
           sparkSpo2: spo2Off ? prev.sparkSpo2 : pushFifo(prev.sparkSpo2, nextSpo2),
           sparkBp: bpOff ? prev.sparkBp : pushFifo(prev.sparkBp, nextBpSys),
@@ -11914,23 +12018,31 @@ const App = () => {
                 </div>
               </div>
 
+              <SensorDemoPanel
+                disconnectedDevices={disconnectedDevices}
+                serverDisconnectedDevices={serverOfflineDevices}
+                onToggleDevice={handleToggleDevice}
+                feedOverride={feedOverride}
+                onPushReading={handlePushReading}
+                onClearFeed={handleClearFeed}
+                onBluetoothHeartRate={handleBluetoothHeartRate}
+              />
+
               {/* 4. Main Content Area (2-Column Grid: 70% Left, 30% Right) */}
               <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
                 {/* Left Column (Primary Telemetry & Patient Detail - 70%) */}
                 <div className="xl:col-span-8 space-y-6">
-                  {/* Emergency Signal Banner (fired when wearable loses heartbeat) */}
+                  {/* Simulated signal banner (fired when demo wearable loses heartbeat) */}
                   {emergencySignal && (
                     <div className="rounded-2xl border-2 border-rose-400 bg-rose-600 text-white p-4 shadow-lg animate-pulse flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
                         <span className="w-3 h-3 rounded-full bg-white animate-ping" />
                         <div>
                           <h4 className="text-sm font-bold tracking-tight">
-                            EMERGENCY: Vital monitor disconnected — patient now unmonitored
+                            DEMO ALERT: Wearable connection lost
                           </h4>
                           <p className="text-[11px] mt-0.5 opacity-95">
-                            {emergencySignal.device} heartbeat lost for{" "}
-                            {emergencySignal.feeds.map((f) => f.toUpperCase()).join(" + ")} telemetry. Emergency
-                            escalation chain initiated (caregiver → backup → 108/112 / Code Blue/MET).
+                            {emergencySignal.device} is marked disconnected for this demonstration. {emergencySignal.feeds.map((f) => f.toUpperCase()).join(" + ")} readings are unavailable. The alert flow is simulated; no real emergency call or message is sent.
                           </p>
                         </div>
                       </div>
@@ -11939,7 +12051,7 @@ const App = () => {
                           onClick={() => setEmergencyModalOpen(true)}
                           className="px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-xs font-bold border border-white/30 backdrop-blur-xs"
                         >
-                          View Escalation
+                          View Demo Alert
                         </button>
                         <button
                           onClick={() => {
@@ -12099,6 +12211,7 @@ const App = () => {
                     reliabilityScore={98}
                     currentUser={user}
                     activePatient={activePatient}
+                    offlineDeviceIds={serverOfflineDevices}
                   />
                 </div>
 

@@ -1,6 +1,30 @@
 package com.rejivan.app.ui
 
+import android.Manifest
+import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothGatt
+import android.bluetooth.BluetoothGattCallback
+import android.bluetooth.BluetoothGattCharacteristic
+import android.bluetooth.BluetoothGattDescriptor
+import android.bluetooth.BluetoothProfile
+import android.bluetooth.BluetoothManager
 import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
+import android.os.Handler
+import android.os.Looper
+import android.os.ParcelUuid
+import android.bluetooth.le.ScanCallback
+import android.bluetooth.le.ScanFilter
+import android.bluetooth.le.ScanResult
+import android.bluetooth.le.ScanSettings
+import java.util.UUID
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -170,7 +194,7 @@ private data class NavItem(val label: String, val icon: ImageVector, val selecte
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainShell(state: AppState) {
-    val isNurse = state.user?.role == "ward" || state.user?.role == "nurse" || state.user?.email?.contains("nurse") == true
+    val isNurse = state.currentUser?.role == "ward" || state.currentUser?.role == "nurse" || state.currentUser?.email?.contains("nurse") == true
     var tab by remember(isNurse) { mutableStateOf(if (isNurse) "Ward" else "Dashboard") }
     val tabs = buildList {
         add(NavItem("Dashboard", Icons.Outlined.Home, Icons.Filled.Home))
@@ -269,6 +293,9 @@ fun Dashboard(state: AppState) {
     val tick = state.tick
     val isNurse = state.currentUser?.role == "ward" || state.currentUser?.role == "nurse" || state.currentUser?.email?.contains("nurse") == true
     var selectedPatientId by remember { mutableStateOf("ALL") }
+    var dashboardWatchHr by remember { mutableStateOf<Int?>(null) }
+    var dashboardWatchSource by remember { mutableStateOf("SIMULATED") }
+    var dashboardWatchPatientId by remember { mutableStateOf("") }
 
     val displayedPatients = if (isNurse && selectedPatientId != "ALL") {
         state.patients.filter { it.id == selectedPatientId }
@@ -284,6 +311,14 @@ fun Dashboard(state: AppState) {
                 "Data fetched from rejivan2.vercel.app" else "OFFLINE: local engine"
             Text(srcNote, color = if (state.dataSource == Repository.Source.SERVER) AppColors.ok else AppColors.muted, fontSize = 11.sp)
             Text("SIMULATED vital data • REAL monitoring logic", color = AppColors.muted, fontSize = 11.sp)
+        }
+        item {
+            val watchPatient = displayedPatients.firstOrNull()
+            SmartwatchBluetoothPanel { heartRate, source ->
+                dashboardWatchHr = heartRate
+                dashboardWatchSource = source
+                dashboardWatchPatientId = watchPatient?.id.orEmpty()
+            }
         }
         item {
             val nNormal = state.patients.count { worstStatus(state.reportOf(it)) == "normal" }
@@ -344,6 +379,8 @@ fun Dashboard(state: AppState) {
         }
         items(displayedPatients) { p ->
             val r = state.reportOf(p)
+            val liveWatchHr = dashboardWatchHr?.takeIf { p.id == dashboardWatchPatientId }
+            val watchHrStatus = liveWatchHr?.let { if (it >= 130 || it < 45) "danger" else if (it > 100 || it < 60) "caution" else "normal" }
             Card(colors = CardDefaults.cardColors(containerColor = AppColors.panel),
                 shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth()
                     .border(1.dp, AppColors.line, RoundedCornerShape(14.dp))) {
@@ -364,7 +401,7 @@ fun Dashboard(state: AppState) {
                     val tempMap = r["temp"] as? Map<*, *> ?: mapOf("value" to "--", "status" to "normal")
                     val glucoseMap = r["glucose"] as? Map<*, *> ?: mapOf("value" to "--", "status" to "normal")
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        VitalCard("HR", hrMap["value"].toString(), hrMap["status"] as? String ?: "normal") { Modifier.weight(1f) }
+                        VitalCard(if (liveWatchHr != null) "HR · $dashboardWatchSource" else "HR", liveWatchHr?.toString() ?: hrMap["value"].toString(), watchHrStatus ?: (hrMap["status"] as? String ?: "normal")) { Modifier.weight(1f) }
                         VitalCard("SpO2", spo2Map["value"].toString() + "%", spo2Map["status"] as? String ?: "normal") { Modifier.weight(1f) }
                     }
                     Spacer(Modifier.height(8.dp))
@@ -423,6 +460,194 @@ private fun VitalCard(label: String, value: String, status: String, weight: @Com
                 StatusBadge(status)
             }
             Text(value, color = AppColors.txt, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+@Composable
+private fun SmartwatchBluetoothPanel(onHeartRate: (Int?, String) -> Unit) {
+    val context = LocalContext.current
+    val manager = remember { context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager }
+    val adapter = manager?.adapter
+    val discovered = remember { mutableStateListOf<BluetoothDevice>() }
+    var status by remember { mutableStateOf("No real watch connected. Dashboard vitals are simulated.") }
+    var scanning by remember { mutableStateOf(false) }
+    var liveHr by remember { mutableStateOf<Int?>(null) }
+    var watchSource by remember { mutableStateOf("SIMULATED") }
+    var manualHr by remember { mutableFloatStateOf(84f) }
+    var gatt by remember { mutableStateOf<BluetoothGatt?>(null) }
+    var scanCallback by remember { mutableStateOf<ScanCallback?>(null) }
+    val scanAction = remember { mutableStateOf<(() -> Unit)?>(null) }
+    val mainHandler = remember { Handler(Looper.getMainLooper()) }
+    val requiredPermissions = remember {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            arrayOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT)
+        } else arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
+        if (result.values.all { it }) scanAction.value?.invoke()
+        else status = "Bluetooth permission was declined; simulated demo readings are still available."
+    }
+
+    fun hasPermissions(): Boolean = requiredPermissions.all {
+        ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+    }
+
+    fun stopScan() {
+        try { scanCallback?.let { adapter?.bluetoothLeScanner?.stopScan(it) } } catch (_: SecurityException) {}
+        scanning = false
+    }
+
+    fun beginScan() {
+        val scanner = adapter?.bluetoothLeScanner
+        if (scanner == null) { status = "Bluetooth is unavailable or switched off on this device."; return }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !adapter.isEnabled) {
+            status = "Turn on Bluetooth, then scan again."
+            return
+        }
+        discovered.clear()
+        val callback = object : ScanCallback() {
+            override fun onScanResult(callbackType: Int, result: ScanResult) {
+                val device = result.device
+                if (discovered.none { it.address == device.address }) discovered.add(device)
+            }
+            override fun onScanFailed(errorCode: Int) {
+                scanning = false
+                status = "Bluetooth scan could not start (code $errorCode)."
+            }
+        }
+        scanCallback = callback
+        scanning = true
+        status = "Looking for nearby devices that publish the standard BLE heart-rate service…"
+        try {
+            scanner.startScan(
+                listOf(ScanFilter.Builder().setServiceUuid(ParcelUuid(UUID.fromString("0000180d-0000-1000-8000-00805f9b34fb"))).build()),
+                ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build(),
+                callback
+            )
+            mainHandler.postDelayed({ stopScan(); if (discovered.isEmpty()) status = "No compatible watch found. Try the SIMULATED demo reading below." }, 10000)
+        } catch (_: SecurityException) {
+            scanning = false
+            status = "Bluetooth permission is needed to scan."
+        }
+    }
+
+    fun requestScan() {
+        if (adapter == null) { status = "This device does not have Bluetooth LE."; return }
+        scanAction.value = { beginScan() }
+        if (hasPermissions()) beginScan() else permissionLauncher.launch(requiredPermissions)
+    }
+
+    fun connect(device: BluetoothDevice) {
+        stopScan()
+        try { gatt?.close() } catch (_: Exception) {}
+        status = "Connecting to the selected watch…"
+        try {
+            gatt = device.connectGatt(context, false, object : BluetoothGattCallback() {
+                fun receive(bytes: ByteArray) {
+                    if (bytes.size < 2) return
+                    val flags = bytes[0].toInt() and 0xff
+                    val hr = if ((flags and 1) != 0 && bytes.size >= 3) {
+                        (bytes[1].toInt() and 0xff) or ((bytes[2].toInt() and 0xff) shl 8)
+                    } else bytes[1].toInt() and 0xff
+                    mainHandler.post {
+                        liveHr = hr
+                        watchSource = "REAL BLE"
+                        status = "REAL Bluetooth heart-rate packets are arriving from ${device.name ?: "the paired device"}."
+                        onHeartRate(hr, "REAL BLE")
+                    }
+                }
+                override fun onConnectionStateChange(connection: BluetoothGatt, statusCode: Int, newState: Int) {
+                    if (newState == BluetoothProfile.STATE_CONNECTED) {
+                        mainHandler.post { status = "Connected; enabling the watch heart-rate stream…" }
+                        connection.discoverServices()
+                    } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                        mainHandler.post { liveHr = null; watchSource = "SIMULATED"; status = "Watch disconnected. Dashboard vitals return to simulated values."; onHeartRate(null, "SIMULATED") }
+                        connection.close()
+                        if (gatt === connection) gatt = null
+                    }
+                }
+                @Suppress("DEPRECATION")
+                override fun onServicesDiscovered(connection: BluetoothGatt, statusCode: Int) {
+                    val service = connection.getService(UUID.fromString("0000180d-0000-1000-8000-00805f9b34fb"))
+                    val characteristic = service?.getCharacteristic(UUID.fromString("00002a37-0000-1000-8000-00805f9b34fb"))
+                    if (characteristic == null) {
+                        mainHandler.post { status = "This device did not provide a heart-rate measurement stream." }
+                        return
+                    }
+                    connection.setCharacteristicNotification(characteristic, true)
+                    val descriptor = characteristic.getDescriptor(UUID.fromString("00002902-0000-1000-8000-00805f9b34fb"))
+                    if (descriptor != null) {
+                        if (Build.VERSION.SDK_INT >= 33) connection.writeDescriptor(descriptor, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
+                        else { descriptor.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE; connection.writeDescriptor(descriptor) }
+                    }
+                }
+                @Suppress("DEPRECATION")
+                override fun onCharacteristicChanged(connection: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
+                    characteristic.value?.let { receive(it) }
+                }
+                override fun onCharacteristicChanged(connection: BluetoothGatt, characteristic: BluetoothGattCharacteristic, value: ByteArray) {
+                    receive(value)
+                }
+                override fun onDescriptorWrite(connection: BluetoothGatt, descriptor: BluetoothGattDescriptor, statusCode: Int) {
+                    if (statusCode == BluetoothGatt.GATT_SUCCESS) mainHandler.post { status = "Connected; waiting for the first real heart-rate packet…" }
+                }
+            }, BluetoothDevice.TRANSPORT_LE)
+        } catch (_: SecurityException) {
+            status = "Android Bluetooth permission is needed to connect."
+        } catch (error: Exception) {
+            status = "Could not connect: ${error.message ?: "device error"}"
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            try { scanCallback?.let { adapter?.bluetoothLeScanner?.stopScan(it) } } catch (_: Exception) {}
+            try { gatt?.disconnect(); gatt?.close() } catch (_: Exception) {}
+        }
+    }
+
+    Card(colors = CardDefaults.cardColors(containerColor = AppColors.panel),
+        shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth().border(1.dp, AppColors.line, RoundedCornerShape(14.dp))) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Smartwatch connection", color = AppColors.txt, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Spacer(Modifier.weight(1f))
+                Text(if (liveHr != null) watchSource else "SIMULATED", color = if (watchSource == "REAL BLE" && liveHr != null) AppColors.ok else AppColors.warn, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+            }
+            Text("Bluetooth supplies heart rate only. Other patient readings stay simulated unless measured by their own devices.", color = AppColors.muted, fontSize = 10.sp)
+            Text(status, color = if (liveHr != null) AppColors.ok else AppColors.muted, fontSize = 11.sp)
+            if (liveHr != null) Text("Live heart rate: $liveHr bpm", color = AppColors.txt, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                Button(onClick = { requestScan() }, enabled = !scanning,
+                    colors = ButtonDefaults.buttonColors(containerColor = AppColors.accent)) {
+                    Text(if (scanning) "Scanning…" else "Scan for BLE watch", color = AppColors.bg, fontSize = 11.sp)
+                }
+                if (gatt != null) OutlinedButton(onClick = { try { gatt?.disconnect(); gatt?.close() } catch (_: Exception) {}; gatt = null; liveHr = null; watchSource = "SIMULATED"; onHeartRate(null, "SIMULATED"); status = "Disconnected; simulated dashboard data resumed." }) {
+                    Text("Disconnect", color = AppColors.danger, fontSize = 11.sp)
+                }
+            }
+            discovered.forEach { device ->
+                Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(AppColors.panel2).padding(horizontal = 9.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(device.name ?: "Heart-rate device", color = AppColors.txt, fontSize = 11.sp, modifier = Modifier.weight(1f))
+                    TextButton(onClick = { if (hasPermissions()) connect(device) else { scanAction.value = { connect(device) }; permissionLauncher.launch(requiredPermissions) } }) {
+                        Text("Connect", color = AppColors.accent2, fontSize = 10.sp)
+                    }
+                }
+            }
+            HorizontalDivider(color = AppColors.line)
+            Text("No compatible watch? Use a clearly simulated sample", color = AppColors.muted, fontSize = 10.sp)
+            Slider(value = manualHr, onValueChange = { manualHr = it }, valueRange = 40f..180f)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("$manualHr bpm · SIMULATED", color = AppColors.warn, fontSize = 10.sp, modifier = Modifier.weight(1f))
+                TextButton(onClick = { liveHr = manualHr.toInt(); watchSource = "SIMULATED"; status = "SIMULATED manual demo reading; this is not a wearable packet."; onHeartRate(manualHr.toInt(), "SIMULATED") }) {
+                    Text("Use demo reading", color = AppColors.accent2, fontSize = 10.sp)
+                }
+                TextButton(onClick = { liveHr = null; watchSource = "SIMULATED"; status = "No real watch connected. Dashboard vitals are simulated."; onHeartRate(null, "SIMULATED") }) {
+                    Text("Clear", color = AppColors.muted, fontSize = 10.sp)
+                }
+            }
         }
     }
 }

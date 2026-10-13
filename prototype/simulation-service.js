@@ -290,14 +290,131 @@ class SimulationService {
     return { ok: true, patient, state: this.getState() };
   }
 
+  setDeviceConnectivity(patientId, deviceId, connected) {
+    const patient = this.state.patients[patientId];
+    const devices = {
+      ecg: { name: "SanketLife 12-Lead ECG", metrics: ["hr"] },
+      watch: { name: "ReJivan Smartwatch", metrics: ["hr", "spo2"] },
+      bp: { name: "Omron HEM-7156T", metrics: ["sbp", "dbp"] },
+      temp: { name: "TempTraq Patch", metrics: ["temp"] },
+      glu: { name: "Accu-Chek Instant", metrics: ["glucose"] },
+    };
+    const device = devices[deviceId];
+    if (!patient) throw new Error(`Patient ${patientId} not found`);
+    if (!device) throw new Error("Unknown wearable device");
+    if (typeof connected !== "boolean") throw new Error("Connection status must be true or false");
+
+    const now = Date.now();
+    const offline = new Set(patient.offlineDevices || []);
+    const wasConnected = !offline.has(deviceId);
+    if (!connected && offline.size === 0) patient.statusBeforeDeviceDisconnect = patient.status || "normal";
+    if (connected) offline.delete(deviceId); else offline.add(deviceId);
+    patient.offlineDevices = [...offline];
+    patient.lastUpdated = now;
+
+    const matchingAlerts = this.state.alerts.filter((a) =>
+      a.patientId === patientId && a.deviceId === deviceId && a.status !== "Resolved"
+    );
+    if (!connected && wasConnected) {
+      if (!matchingAlerts.length) {
+        const metricNames = device.metrics.map((metric) => metric.toUpperCase()).join(" / ");
+        const alert = {
+          id: `ALT-${patientId}-device-${deviceId}-${now}`,
+          patientId,
+          patientName: patient.name,
+          ward: patient.ward || null,
+          location: patient.location,
+          type: "device",
+          vitalType: "device_disconnected",
+          deviceId,
+          value: null,
+          unit: "",
+          threshold: "Wearable heartbeat lost",
+          conditionReason: `${device.name} disconnected. ${metricNames} readings are unavailable until it reconnects; other monitoring layers remain active. This is a simulated demonstration alert.`,
+          severity: "danger",
+          status: "New",
+          createdAt: now,
+          history: [{ time: now, action: "ALERT_GENERATED", user: "Admin Simulator", note: `${device.name} disconnected.` }],
+        };
+        this.state.alerts.unshift(alert);
+      }
+    } else if (connected && !wasConnected) {
+      for (const alert of matchingAlerts) {
+        alert.status = "Resolved";
+        alert.resolvedAt = now;
+        alert.resolvedBy = "Admin Simulator Reconnect";
+        alert.resolutionNote = `${device.name} reconnected in the demonstration.`;
+        alert.history = [...(alert.history || []), { time: now, action: "RESOLVED", user: "Admin Simulator", note: alert.resolutionNote }];
+      }
+    }
+
+    const activeAlerts = this.state.alerts.filter((a) => a.patientId === patientId && a.status !== "Resolved");
+    patient.status = offline.size || activeAlerts.some((a) => a.severity === "danger")
+      ? "danger"
+      : activeAlerts.some((a) => a.severity === "caution")
+      ? "caution"
+      : (patient.statusBeforeDeviceDisconnect || patient.status || "normal");
+    if (connected && offline.size === 0) delete patient.statusBeforeDeviceDisconnect;
+    this.state.lastUpdated = now;
+    this.save();
+    return { ok: true, patient: this.getPatient(patientId), state: this.getState() };
+  }
+
+  recordCameraEvent({ patientId, eventType, confidence, source, summary }) {
+    const patient = this.state.patients[patientId];
+    if (!patient) throw new Error(`Patient ${patientId} not found`);
+    if (!["fall", "possible_fall", "bed_exit", "motion_review"].includes(eventType)) {
+      throw new Error("Unsupported camera event type");
+    }
+    const score = Math.max(0, Math.min(100, Math.round(Number(confidence) || 0)));
+    const now = Date.now();
+    const severity = eventType === "fall" && score >= 70 ? "danger" : "caution";
+    const title = eventType === "fall" ? "Possible fall detected in demo clip" :
+      eventType === "bed_exit" ? "Bed-exit movement detected in demo clip" :
+      eventType === "possible_fall" ? "Possible fall-like movement in demo clip" : "Camera movement needs review";
+    const alert = {
+      id: `ALT-${patientId}-camera-${now}`,
+      patientId,
+      patientName: patient.name,
+      ward: patient.ward || null,
+      location: patient.location,
+      type: "camera",
+      vitalType: "camera_fall",
+      value: score,
+      unit: "% confidence",
+      threshold: "Demo video analysis; human review required",
+      conditionReason: `${title} (${score}% engine confidence). ${String(summary || "Review the clip.").slice(0, 240)} Source: ${String(source || "uploaded video").slice(0, 100)}. Synthetic demo alert; not a clinical diagnosis.`,
+      severity,
+      status: "New",
+      createdAt: now,
+      history: [{ time: now, action: "ALERT_GENERATED", user: "Admin Video Demo", note: title }],
+    };
+    this.state.alerts.unshift(alert);
+    if (this.state.alerts.length > 50) this.state.alerts = this.state.alerts.slice(0, 50);
+    const activeAlerts = this.state.alerts.filter((a) => a.patientId === patientId && a.status !== "Resolved");
+    patient.status = activeAlerts.some((a) => a.severity === "danger") ? "danger" :
+      activeAlerts.some((a) => a.severity === "caution") ? "caution" : "normal";
+    this.state.lastUpdated = now;
+    this.save();
+    return { ok: true, alert, state: this.getState() };
+  }
+
   getState() {
     const now = Date.now();
-    const patients = Object.fromEntries(Object.entries(this.state.patients).map(([id, patient]) => [
-      id,
-      patient.vitalMode === "normal_live"
-        ? { ...patient, currentVitals: this.getNormalLiveVitals(id, now), lastUpdated: now }
-        : patient,
-    ]));
+    const providers = {
+      hr: ["ecg", "watch"], spo2: ["watch"], bpSys: ["bp"], bpDia: ["bp"],
+      temp: ["temp"], glucose: ["glu"],
+    };
+    const patients = Object.fromEntries(Object.entries(this.state.patients).map(([id, patient]) => {
+      const currentVitals = patient.vitalMode === "normal_live"
+        ? this.getNormalLiveVitals(id, now)
+        : { ...patient.currentVitals };
+      const offline = new Set(patient.offlineDevices || []);
+      for (const [metric, deviceIds] of Object.entries(providers)) {
+        if (deviceIds.every((deviceId) => offline.has(deviceId))) currentVitals[metric] = null;
+      }
+      return [id, { ...patient, currentVitals, lastUpdated: now }];
+    }));
     return {
       ok: true,
       patients,
@@ -312,11 +429,7 @@ class SimulationService {
   }
 
   getPatient(patientId) {
-    const patient = this.state.patients[patientId];
-    if (!patient) return null;
-    return patient.vitalMode === "normal_live"
-      ? { ...patient, currentVitals: this.getNormalLiveVitals(patientId), lastUpdated: Date.now() }
-      : patient;
+    return this.getState().patients[patientId] || null;
   }
 
   // Update specific vital readings for a patient

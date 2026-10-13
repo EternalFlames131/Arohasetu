@@ -6,6 +6,7 @@ const HardwareDiagnosticsBar = ({
   reliabilityScore = 98,
   currentUser,
   activePatient,
+  offlineDeviceIds = [],
 }) => {
   const getHardwareForUser = (user, patient) => {
     if (patient?.hardwareDevices && patient.hardwareDevices.length > 0) {
@@ -79,6 +80,13 @@ const HardwareDiagnosticsBar = ({
       hubText: "BLE Mesh Hub Active (Port Blair Gateway)",
       devices: [
         {
+          model: "ReJivan Smartwatch",
+          type: "Heart Rate + SpO₂ Wearable",
+          status: "Connected",
+          battery: 91,
+          protocol: "BLE Heart Rate Service",
+        },
+        {
           model: "Omron HEM-7156T",
           type: "BP Monitor",
           status: "Connected",
@@ -127,7 +135,16 @@ const HardwareDiagnosticsBar = ({
       {/* 4-Item Telemetry Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Device 1: Omron BP */}
-        {devices.map((dev, idx) => (
+        {devices.map((dev, idx) => {
+          const model = String(dev.model || "").toLowerCase();
+          const deviceId = model.includes("smartwatch") ? "watch"
+            : model.includes("sanket") ? "ecg"
+            : model.includes("omron") ? "bp"
+            : model.includes("temptraq") ? "temp"
+            : model.includes("accu-chek") ? "glu" : "";
+          const isOffline = deviceId && offlineDeviceIds.includes(deviceId);
+          const statusText = isOffline ? "DEMO · Disconnected" : `Simulated · ${dev.status}`;
+          return (
           <div
             key={idx}
             className="p-3 rounded-lg border border-slate-200/80 bg-slate-50/50 hover:bg-slate-50 transition-colors"
@@ -145,16 +162,17 @@ const HardwareDiagnosticsBar = ({
             <div className="text-[11px] text-slate-500 mt-0.5">{dev.type}</div>
 
             <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-200/60 text-[11px]">
-              <span className="inline-flex items-center gap-1 text-slate-700 font-medium">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span>{dev.status}</span>
+              <span className={`inline-flex items-center gap-1 font-medium ${isOffline ? "text-rose-700" : "text-slate-700"}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${isOffline ? "bg-rose-500" : "bg-emerald-500 animate-pulse"}`} />
+                <span>{statusText}</span>
               </span>
               <span className="text-[10px] text-slate-400 font-mono">
                 {dev.protocol}
               </span>
             </div>
           </div>
-        ))}
+          );
+        })}
 
         {/* Device Reliability Score */}
         <div className="p-3 rounded-lg border border-slate-200/80 bg-slate-50/50">
