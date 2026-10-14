@@ -229,12 +229,42 @@ function snapshotFor(p, now) {
   // Authoritative simulation state from SimulationService
   const simPatient = simulationService.getPatient(p.id);
   if (simPatient && simPatient.currentVitals) {
-    g.vitals = { ...g.vitals, ...simPatient.currentVitals };
+    const cv = simPatient.currentVitals;
+    const sys = cv.bpSys !== undefined ? cv.bpSys : (cv.sbp !== undefined ? cv.sbp : g.vitals.sbp);
+    const dia = cv.bpDia !== undefined ? cv.bpDia : (cv.dbp !== undefined ? cv.dbp : g.vitals.dbp);
+    g.vitals = {
+      ...g.vitals,
+      ...cv,
+      sbp: sys,
+      dbp: dia,
+      bpSys: sys,
+      bpDia: dia,
+      sys,
+      dia,
+    };
+    if (g.rawVitals) {
+      g.rawVitals = {
+        ...g.rawVitals,
+        ...cv,
+        sbp: sys,
+        dbp: dia,
+        bpSys: sys,
+        bpDia: dia,
+      };
+    }
   }
   const offline = new Set(simPatient?.offlineDevices || []);
   const metricProviders = {
-    hr: ["ecg", "watch"], spo2: ["watch"], sbp: ["bp"], dbp: ["bp"],
-    temp: ["temp"], glucose: ["glu"],
+    hr: ["ecg", "watch"],
+    spo2: ["watch"],
+    sbp: ["bp"],
+    dbp: ["bp"],
+    bpSys: ["bp"],
+    bpDia: ["bp"],
+    sys: ["bp"],
+    dia: ["bp"],
+    temp: ["temp"],
+    glucose: ["glu"],
   };
   for (const [metric, providers] of Object.entries(metricProviders)) {
     if (providers.every((deviceId) => offline.has(deviceId))) g.vitals[metric] = null;
@@ -243,6 +273,10 @@ function snapshotFor(p, now) {
   // Apply real-time developer overrides if active
   if (devOverrides.vitals) {
     g.vitals = { ...g.vitals, ...devOverrides.vitals };
+    if (devOverrides.vitals.bpSys !== undefined) g.vitals.sbp = devOverrides.vitals.bpSys;
+    if (devOverrides.vitals.bpDia !== undefined) g.vitals.dbp = devOverrides.vitals.bpDia;
+    if (devOverrides.vitals.sbp !== undefined) g.vitals.bpSys = devOverrides.vitals.sbp;
+    if (devOverrides.vitals.dbp !== undefined) g.vitals.bpDia = devOverrides.vitals.dbp;
   }
   if (devOverrides.disconnectedDevices && devOverrides.disconnectedDevices.length > 0) {
     if (devOverrides.disconnectedDevices.includes("SanketLife 12-Lead ECG") || devOverrides.disconnectedDevices.includes("Aroha Smartwatch") || devOverrides.disconnectedDevices.includes("ReJivan Smartwatch")) {
@@ -254,6 +288,8 @@ function snapshotFor(p, now) {
     if (devOverrides.disconnectedDevices.includes("Omron HEM-7156T")) {
       g.vitals.bpSys = null;
       g.vitals.bpDia = null;
+      g.vitals.sbp = null;
+      g.vitals.dbp = null;
     }
     if (devOverrides.disconnectedDevices.includes("TempTraq Patch")) {
       g.vitals.temp = null;
