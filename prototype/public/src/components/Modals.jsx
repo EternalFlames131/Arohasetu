@@ -571,3 +571,351 @@ const AddMedicationModal = ({ isOpen, onClose, activePatient }) => {
     </div>
   );
 };
+
+// Interactive Clinical Escalation Review & Emergency Dispatch Decision Modal
+const ReviewEscalationModal = ({
+  isOpen,
+  onClose,
+  alert,
+  vitals = {},
+  activePatient,
+  currentUser,
+  onsetTimestamp,
+  onAcknowledge,
+  onNavigateToAlerts,
+}) => {
+  const [decision, setDecision] = React.useState(null); // null | 'dispatched' | 'caregiver' | 'observation'
+  const [observationSeconds, setObservationSeconds] = React.useState(30);
+  const [elapsedSeconds, setElapsedSeconds] = React.useState(0);
+
+  // Live timer for elapsed deviation duration and observation countdown
+  React.useEffect(() => {
+    if (!isOpen) {
+      setDecision(null);
+      setObservationSeconds(30);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      if (onsetTimestamp) {
+        setElapsedSeconds(Math.max(1, Math.floor((Date.now() - onsetTimestamp) / 1000)));
+      } else {
+        setElapsedSeconds((prev) => prev + 1);
+      }
+
+      setObservationSeconds((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isOpen, onsetTimestamp]);
+
+  if (!isOpen) return null;
+
+  const patientName = alert?.patientName || activePatient?.name || "Anita Sharma";
+  const patientLocation = (activePatient?.location || "Living Room, Junglighat, Port Blair").split("→")[1]?.trim() || activePatient?.location || "Junglighat, Port Blair";
+  const isNurse = currentUser?.role === "nurse" || currentUser?.email === "wardnurse@demo.in";
+
+  // Determine anomaly details based on alert and current vitals
+  let metricLabel = "Physiological Vitals";
+  let abnormalReading = alert?.reading || "Abnormal Value";
+  let baselineRange = "Normal Safe Range";
+  let deviationDesc = "Physiological reading exceeded early warning threshold.";
+  let clinicalRisk = "High (NEWS2 Score: 7)";
+
+  const titleLower = (alert?.title || "").toLowerCase();
+  const readingLower = (alert?.reading || "").toLowerCase();
+
+  if (titleLower.includes("heart") || readingLower.includes("bpm") || alert?.vitalType === "hr") {
+    metricLabel = "Heart Rate (Pulse)";
+    abnormalReading = vitals.hr ? `${vitals.hr} bpm` : (alert?.reading || "130 bpm");
+    baselineRange = "60 – 100 bpm";
+    deviationDesc = "Acute sinus tachycardia sustained for >30 seconds. Elevated cardiac stress.";
+    clinicalRisk = "High Risk (Tachycardia Score 3)";
+  } else if (titleLower.includes("pressure") || readingLower.includes("mmhg") || alert?.vitalType === "bp" || alert?.vitalType === "bpSys") {
+    metricLabel = "Blood Pressure (NIBP)";
+    abnormalReading = vitals.bpSys ? `${vitals.bpSys}/${vitals.bpDia} mmHg` : (alert?.reading || "178/104 mmHg");
+    baselineRange = "< 136 / < 86 mmHg";
+    deviationDesc = "Stage 2 / Hypertensive Crisis threshold exceeded. Increased cerebrovascular risk.";
+    clinicalRisk = "Urgent Risk (Hypertension Score 3)";
+  } else if (titleLower.includes("oxygen") || titleLower.includes("spo2") || readingLower.includes("%") || alert?.vitalType === "spo2") {
+    metricLabel = "Oxygen Saturation (SpO2)";
+    abnormalReading = vitals.spo2 ? `${vitals.spo2}%` : (alert?.reading || "88%");
+    baselineRange = "95% – 100%";
+    deviationDesc = "Acute nocturnal hypoxemia. Immediate airway & oxygenation check recommended.";
+    clinicalRisk = "Critical Risk (Hypoxia Score 3)";
+  } else if (titleLower.includes("temp") || readingLower.includes("°c") || alert?.vitalType === "temp") {
+    metricLabel = "Body Temperature";
+    abnormalReading = vitals.temp ? `${vitals.temp} °C` : (alert?.reading || "39.2 °C");
+    baselineRange = "36.3°C – 37.4°C";
+    deviationDesc = "High pyrexia / hyperthermic spike. Infection/sepsis early warning triggered.";
+    clinicalRisk = "Moderate-High Risk";
+  } else if (titleLower.includes("fall")) {
+    metricLabel = "Motion & Skeletal Posture";
+    abnormalReading = "Impact + Post-Fall Immobility";
+    baselineRange = "Upright / Stable";
+    deviationDesc = "Bedside optical AI sentinel detected rapid vertical collapse followed by prolonged immobility.";
+    clinicalRisk = "High Physical Trauma Risk";
+  }
+
+  const effectiveElapsed = elapsedSeconds > 0 ? elapsedSeconds : 48;
+  const elapsedFormatted = effectiveElapsed >= 60
+    ? `${Math.floor(effectiveElapsed / 60)}m ${effectiveElapsed % 60}s`
+    : `${effectiveElapsed}s`;
+
+  const onsetTimeStr = onsetTimestamp
+    ? new Date(onsetTimestamp).toLocaleTimeString()
+    : new Date(Date.now() - effectiveElapsed * 1000).toLocaleTimeString();
+
+  return (
+    <div className="fixed inset-0 z-[60] bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+      <div className="bg-white border-2 border-rose-300 rounded-3xl max-w-xl w-full p-5 sm:p-6 shadow-2xl animate-in zoom-in-95 my-auto">
+        {/* Modal Header */}
+        <div className="flex items-start justify-between pb-3.5 border-b border-slate-100 gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-11 h-11 rounded-2xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-md">
+              <AlertTriangle className="w-6 h-6 animate-pulse" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
+                  Clinical Escalation Review
+                </h3>
+                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-200 animate-pulse">
+                  Level 3 Escalation
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 truncate mt-0.5">
+                Patient: <strong className="text-slate-800">{patientName}</strong> • {patientLocation}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+            title="Close review"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* 1. When the Escalation & Changes Began (Timeline & Onset Breakdown) */}
+        <div className="mt-4 p-4 rounded-2xl bg-rose-50/70 border border-rose-200/80">
+          <div className="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-rose-200/50">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-rose-900">
+              <Clock className="w-4 h-4 text-rose-600" />
+              <span>When Did Changes Begin?</span>
+            </div>
+            <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-white text-rose-700 border border-rose-200 shadow-2xs">
+              Onset: {onsetTimeStr} ({elapsedFormatted} ago)
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 mt-2.5">
+            <div className="bg-white p-2.5 rounded-xl border border-rose-100 shadow-2xs">
+              <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-400">Parameter</div>
+              <div className="text-xs font-bold text-slate-900 truncate mt-0.5">{metricLabel}</div>
+            </div>
+            <div className="bg-white p-2.5 rounded-xl border border-rose-200 shadow-2xs">
+              <div className="text-[10px] uppercase tracking-wider font-semibold text-rose-500">Current Reading</div>
+              <div className="text-sm font-black font-mono text-rose-700 truncate mt-0.5">{abnormalReading}</div>
+            </div>
+            <div className="bg-white p-2.5 rounded-xl border border-rose-100 shadow-2xs col-span-2 sm:col-span-1">
+              <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-400">Baseline Target</div>
+              <div className="text-xs font-semibold text-slate-700 truncate mt-0.5">{baselineRange}</div>
+            </div>
+          </div>
+
+          <p className="text-xs text-rose-800 leading-relaxed mt-2.5 font-medium">
+            <strong>Clinical Trigger:</strong> {deviationDesc} <span className="opacity-90">Overall Early Warning Score: <strong>{clinicalRisk}</strong>.</span>
+          </p>
+        </div>
+
+        {/* 2. Emergency Services Decision Prompt: "Should the system call the emergency services or not?" */}
+        <div className="mt-4 p-4 rounded-2xl bg-slate-900 text-white shadow-md border border-slate-800">
+          <div className="flex items-center gap-2 mb-1.5">
+            <ShieldAlert className="w-5 h-5 text-rose-400" />
+            <h4 className="text-sm sm:text-base font-bold text-white tracking-tight">
+              Should Arohasetu dispatch Emergency Services (108 / 112)?
+            </h4>
+          </div>
+          <p className="text-xs text-slate-300 leading-snug">
+            Autonomous decision support recommends emergency escalation for sustained vital deviations. Choose an immediate protocol action:
+          </p>
+
+          {/* Interactive Decision Action Buttons */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-3.5">
+            <button
+              onClick={() => setDecision("dispatched")}
+              className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                decision === "dispatched"
+                  ? "bg-rose-600 text-white border-rose-400 shadow-lg ring-2 ring-white/40"
+                  : "bg-rose-950/60 border-rose-700/70 text-rose-100 hover:bg-rose-900/80"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-xs flex items-center gap-1.5">
+                  <span>🚨 YES — Dispatch 108/112</span>
+                </span>
+                {decision === "dispatched" && <span className="text-[10px] font-bold bg-white text-rose-700 px-1.5 py-0.2 rounded">CONFIRMED</span>}
+              </div>
+              <p className="text-[10px] text-rose-200 mt-1 opacity-90 leading-tight">
+                Authorizes immediate ambulance dispatch with live GPS & vital telemetry packet to GB Pant Hospital.
+              </p>
+            </button>
+
+            <button
+              onClick={() => setDecision("caregiver")}
+              className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                decision === "caregiver"
+                  ? "bg-blue-600 text-white border-blue-400 shadow-lg ring-2 ring-white/40"
+                  : "bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-750"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-xs flex items-center gap-1.5">
+                  <span>👨‍⚕️ NO — Notify Family Only</span>
+                </span>
+                {decision === "caregiver" && <span className="text-[10px] font-bold bg-white text-blue-700 px-1.5 py-0.2 rounded">NOTIFIED</span>}
+              </div>
+              <p className="text-[10px] text-slate-300 mt-1 opacity-90 leading-tight">
+                Alerts primary caregiver Priya Sharma (+91 94342 81101) & clinician. Holds 108 ambulance on standby.
+              </p>
+            </button>
+          </div>
+
+          <div className="mt-2.5">
+            <button
+              onClick={() => setDecision("observation")}
+              className={`w-full py-2 px-3 rounded-xl text-xs font-semibold border transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                decision === "observation"
+                  ? "bg-amber-500 text-slate-950 border-amber-300 font-bold"
+                  : "bg-slate-800/80 text-amber-300 border-amber-500/30 hover:bg-slate-800"
+              }`}
+            >
+              <span>⏱️ HOLD — 30-Second Active Observation Window</span>
+              {decision === "observation" && <span>({observationSeconds}s left)</span>}
+            </button>
+          </div>
+        </div>
+
+        {/* 3. Real-Time Action Feedback Result */}
+        {decision === "dispatched" && (
+          <div className="mt-3.5 p-3.5 bg-emerald-50 border border-emerald-300 rounded-2xl animate-in fade-in">
+            <div className="flex items-center gap-2 text-xs font-bold text-emerald-900">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-ping" />
+              <span>🚑 Emergency Ambulance Dispatched (Unit PB-04)</span>
+            </div>
+            <div className="mt-1 text-xs text-emerald-800 space-y-0.5">
+              <p>• <strong>Destination:</strong> {patientLocation} (Referral: GB Pant Hospital Emergency)</p>
+              <p>• <strong>Estimated Arrival (ETA):</strong> ~6 to 8 minutes</p>
+              <p>• <strong>Telemetry:</strong> Real-time ECG, SpO2, and ABHA Health Record transmitted to 108 Dispatch Hub.</p>
+            </div>
+          </div>
+        )}
+
+        {decision === "caregiver" && (
+          <div className="mt-3.5 p-3.5 bg-blue-50 border border-blue-300 rounded-2xl animate-in fade-in">
+            <div className="flex items-center gap-2 text-xs font-bold text-blue-900">
+              <CheckCircle2 className="w-4 h-4 text-blue-600" />
+              <span>📞 Family Caregiver & On-Call Clinician Notified</span>
+            </div>
+            <div className="mt-1 text-xs text-blue-800 space-y-0.5">
+              <p>• <strong>Contact:</strong> Priya Sharma (+91 94342 81101) alerted via high-priority audio chime.</p>
+              <p>• <strong>Protocol:</strong> Caregiver instructed to assess patient comfort and offer oral fluids.</p>
+              <p>• <strong>Emergency 108 Services:</strong> Kept on active standby.</p>
+            </div>
+          </div>
+        )}
+
+        {decision === "observation" && (
+          <div className="mt-3.5 p-3.5 bg-amber-50 border border-amber-300 rounded-2xl animate-in fade-in">
+            <div className="flex items-center gap-2 text-xs font-bold text-amber-900">
+              <Clock className="w-4 h-4 text-amber-600 animate-spin" />
+              <span>⏱️ Active 30-Second Observation Period Active ({observationSeconds}s remaining)</span>
+            </div>
+            <p className="mt-1 text-xs text-amber-800 leading-snug">
+              Continuous 1 Hz telemetry monitoring is actively watching for vital sign stabilization. If values return to baseline, the alert will auto-clear.
+            </p>
+          </div>
+        )}
+
+        {/* 4. 3-Tier Emergency Call Ladder Status */}
+        <div className="mt-4 pt-3 border-t border-slate-100">
+          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+            3-Tier Emergency Call Ladder Status
+          </div>
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-200/70 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-bold">1</span>
+                <span className="font-semibold text-slate-800">Family Caregiver: Priya Sharma</span>
+              </div>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                Connected · 2-way Link
+              </span>
+            </div>
+            <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-200/70 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px] font-bold">2</span>
+                <span className="font-semibold text-slate-800">Backup Physician: Dr. A. Sen (On-Call)</span>
+              </div>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800">
+                {decision === "caregiver" ? "Paging Active" : "Armed · Standby"}
+              </span>
+            </div>
+            <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-200/70 text-xs">
+              <div className="flex items-center gap-2">
+                <span className={`w-5 h-5 rounded-full text-white flex items-center justify-center text-[10px] font-bold ${
+                  decision === "dispatched" ? "bg-rose-600 animate-pulse" : "bg-slate-400"
+                }`}>3</span>
+                <span className="font-semibold text-slate-800">108 Emergency Ambulance (Port Blair)</span>
+              </div>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                decision === "dispatched"
+                  ? "bg-rose-100 text-rose-800 border border-rose-300 font-black animate-pulse"
+                  : "bg-slate-100 text-slate-600"
+              }`}>
+                {decision === "dispatched" ? "DISPATCHED (ETA 7m)" : "Armed (Standby)"}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Modal Action Footer */}
+        <div className="mt-5 pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-2.5">
+          <button
+            onClick={() => {
+              if (onNavigateToAlerts) onNavigateToAlerts();
+              onClose();
+            }}
+            className="w-full sm:w-auto text-xs font-semibold text-blue-600 hover:text-blue-800 py-1.5 px-2 cursor-pointer flex items-center justify-center gap-1"
+          >
+            <span>View Complete Alerts Queue</span>
+            <span>→</span>
+          </button>
+
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            {onAcknowledge && alert?.id && (
+              <button
+                onClick={() => {
+                  onAcknowledge(alert.id);
+                  onClose();
+                }}
+                className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
+              >
+                Acknowledge Alert
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-colors cursor-pointer"
+            >
+              Done &amp; Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+

@@ -1544,10 +1544,13 @@ const App = () => {
     ? "caution"
     : "normal";
 
-  // Mobile / Phone View Alert Jump State
+  // Mobile / Phone View Alert Jump State & Escalation Review
   const [jumpAlert, setJumpAlert] = React.useState(null);
   const [jumpDismissed, setJumpDismissed] = React.useState(false);
   const [isScrolledDown, setIsScrolledDown] = React.useState(false);
+  const [reviewEscalationModalOpen, setReviewEscalationModalOpen] = React.useState(false);
+  const [escalationOnsetTimestamp, setEscalationOnsetTimestamp] = React.useState(null);
+  const [selectedEscalationAlert, setSelectedEscalationAlert] = React.useState(null);
   const lastAlertIdRef = React.useRef(null);
 
   // Monitor scroll position to show floating jump-to-alert pill on phone view
@@ -1611,6 +1614,7 @@ const App = () => {
         lastAlertIdRef.current = urgentAlert.id;
         setJumpAlert(urgentAlert);
         setJumpDismissed(false);
+        setEscalationOnsetTimestamp((prev) => prev || Date.now());
 
         // Auto jump upwards smoothly so viewer spots the issue instantly
         const triggerJumpUpwards = () => {
@@ -1636,6 +1640,7 @@ const App = () => {
         setJumpAlert(null);
         setJumpDismissed(false);
       }
+      setEscalationOnsetTimestamp(null);
       lastAlertIdRef.current = null;
     }
   }, [unresolvedFamilyAlerts, vitals, disconnectedDevices]);
@@ -1839,8 +1844,8 @@ const App = () => {
                 <div className="flex items-center sm:flex-col gap-2 shrink-0 self-end sm:self-center mt-2 sm:mt-0">
                   <button
                     onClick={() => {
-                      setActiveTab("alerts");
-                      window.scrollTo({ top: 0, behavior: "smooth" });
+                      setSelectedEscalationAlert(jumpAlert);
+                      setReviewEscalationModalOpen(true);
                     }}
                     className="px-3.5 py-1.5 rounded-xl bg-white text-rose-800 text-xs font-bold hover:bg-rose-50 shadow-xs cursor-pointer transition-all flex items-center gap-1.5"
                   >
@@ -2321,10 +2326,38 @@ const App = () => {
             setVitals((prev) => ({ ...prev, bpSys: 178, hr: 124 }));
           }}
         />
+        <ReviewEscalationModal
+          isOpen={reviewEscalationModalOpen}
+          onClose={() => setReviewEscalationModalOpen(false)}
+          alert={selectedEscalationAlert || jumpAlert}
+          vitals={vitals}
+          activePatient={activePatient}
+          currentUser={user}
+          onsetTimestamp={escalationOnsetTimestamp}
+          onAcknowledge={(alertId) => {
+            handleAcknowledgeAlert(alertId);
+            setJumpDismissed(true);
+          }}
+          onNavigateToAlerts={() => {
+            setActiveTab("alerts");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+        />
 
         {/* Floating Mobile Jump-to-Alert Pill (visible when scrolled down on phone view while alert is active) */}
         {jumpAlert && !jumpDismissed && isScrolledDown && (
-          <div className="fixed bottom-6 right-4 sm:right-6 z-50 animate-bounce">
+          <div className="fixed bottom-6 right-4 sm:right-6 z-50 animate-bounce flex items-center gap-2">
+            <button
+              onClick={() => {
+                setSelectedEscalationAlert(jumpAlert);
+                setReviewEscalationModalOpen(true);
+              }}
+              className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-full bg-rose-600 text-white font-black text-xs shadow-2xl border-2 border-white hover:bg-rose-700 transition-all cursor-pointer ring-4 ring-rose-400/50"
+              title="Review Active Escalation"
+            >
+              <span className="text-sm leading-none">🚨</span>
+              <span>Review Escalation</span>
+            </button>
             <button
               onClick={() => {
                 if (typeof window !== "undefined") {
@@ -2333,11 +2366,10 @@ const App = () => {
                   if (anchor) anchor.scrollIntoView({ behavior: "smooth", block: "start" });
                 }
               }}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-rose-600 text-white font-black text-xs shadow-2xl border-2 border-white hover:bg-rose-700 transition-all cursor-pointer ring-4 ring-rose-400/50"
-              title="Jump upwards to see active alert"
+              className="w-9 h-9 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs shadow-lg border border-white hover:bg-slate-800 transition-all cursor-pointer"
+              title="Jump to Top"
             >
-              <span className="text-base leading-none">⬆️</span>
-              <span>Jump to Urgent Alert</span>
+              ⬆️
             </button>
           </div>
         )}
