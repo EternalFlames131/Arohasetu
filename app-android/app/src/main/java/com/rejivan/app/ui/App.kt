@@ -42,17 +42,77 @@ import androidx.compose.material.icons.outlined.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.Canvas
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rejivan.app.core.*
 import com.rejivan.app.data.Repository
+
+@Composable
+fun BrandLogoMark(modifier: Modifier = Modifier, size: Dp = 32.dp) {
+    val logoBg = Color(0xFFE8F6F5)
+    val logoNavy = Color(0xFF103663)
+    val logoBorder = Color(0xFFC2E8E4)
+
+    Box(
+        modifier = modifier
+            .size(size)
+            .clip(RoundedCornerShape(size * 0.24f))
+            .background(logoBg)
+            .border(1.dp, logoBorder, RoundedCornerShape(size * 0.24f)),
+        contentAlignment = Alignment.Center
+    ) {
+        Canvas(modifier = Modifier.size(size * 0.68f)) {
+            val w = this.size.width
+            val h = this.size.height
+            val strokeW = (w * 0.08f).coerceAtLeast(1.8f)
+
+            // Heart outline
+            val heartPath = Path().apply {
+                moveTo(w * 0.50f, h * 0.78f)
+                cubicTo(w * 0.34f, h * 0.65f, w * 0.20f, h * 0.53f, w * 0.20f, h * 0.38f)
+                cubicTo(w * 0.20f, h * 0.25f, w * 0.305f, h * 0.17f, w * 0.415f, h * 0.17f)
+                cubicTo(w * 0.465f, h * 0.17f, w * 0.488f, h * 0.195f, w * 0.50f, h * 0.22f)
+                cubicTo(w * 0.512f, h * 0.195f, w * 0.535f, h * 0.17f, w * 0.585f, h * 0.17f)
+                cubicTo(w * 0.695f, h * 0.17f, w * 0.80f, h * 0.25f, w * 0.80f, h * 0.38f)
+                cubicTo(w * 0.80f, h * 0.53f, w * 0.66f, h * 0.65f, w * 0.50f, h * 0.78f)
+                close()
+            }
+            drawPath(
+                path = heartPath,
+                color = logoNavy,
+                style = Stroke(width = strokeW, cap = StrokeCap.Round, join = StrokeJoin.Round)
+            )
+
+            // ECG pulse line
+            val pulsePath = Path().apply {
+                moveTo(w * 0.20f, h * 0.50f)
+                lineTo(w * 0.41f, h * 0.50f)
+                lineTo(w * 0.45f, h * 0.61f)
+                lineTo(w * 0.525f, h * 0.33f)
+                lineTo(w * 0.575f, h * 0.50f)
+                lineTo(w * 0.80f, h * 0.50f)
+            }
+            drawPath(
+                path = pulsePath,
+                color = logoNavy,
+                style = Stroke(width = strokeW, cap = StrokeCap.Round, join = StrokeJoin.Round)
+            )
+        }
+    }
+}
 
 @Composable
 fun App(state: AppState) {
@@ -108,8 +168,14 @@ private fun LoginScreen(state: AppState) {
             shape = RoundedCornerShape(18.dp),
             modifier = Modifier.padding(20.dp).widthIn(max = 400.dp)) {
             Column(Modifier.padding(26.dp)) {
-                Text("ReJivan FS", color = AppColors.accent, fontSize = 26.sp, fontWeight = FontWeight.Bold)
-                Text("A Personal Nurse for Every Family", color = AppColors.muted, fontSize = 13.sp)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    BrandLogoMark(size = 44.dp)
+                    Spacer(Modifier.width(12.dp))
+                    Column {
+                        Text("ReJivan FS", color = AppColors.accent, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                        Text("A Personal Nurse for Every Family", color = AppColors.muted, fontSize = 12.sp)
+                    }
+                }
                 Spacer(Modifier.height(14.dp))
                 if (isRegistering) {
                     OutlinedTextField(value = name, onValueChange = { name = it },
@@ -210,9 +276,7 @@ fun MainShell(state: AppState) {
         containerColor = AppColors.bg,
         topBar = {
             Row(Modifier.fillMaxWidth().padding(start = 14.dp, end = 14.dp, top = 12.dp, bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(32.dp).background(AppColors.accent, RoundedCornerShape(9.dp)), contentAlignment = Alignment.Center) {
-                    Text("R", color = AppColors.bg, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                }
+                BrandLogoMark(size = 32.dp)
                 Spacer(Modifier.width(10.dp))
                 Column {
                     Text("ReJivan FS", color = AppColors.txt, fontSize = 19.sp, fontWeight = FontWeight.Bold, lineHeight = 20.sp)
@@ -423,11 +487,110 @@ fun Dashboard(state: AppState) {
                             }
                         }
                     }
+                    if (!isNurse && displayedPatients.size == 1) {
+                        Spacer(Modifier.height(6.dp))
+                        CareAssistantCard(
+                            patient = p,
+                            report = if (liveWatchHr != null) r + ("hr" to mapOf("value" to liveWatchHr, "status" to (watchHrStatus ?: "normal"))) else r,
+                            alerts = state.alerts().filter { it.patientId == p.id },
+                            serverConnected = state.dataSource == Repository.Source.SERVER,
+                            hasRealWatchReading = liveWatchHr != null && dashboardWatchSource != "SIMULATED"
+                        )
+                    }
                 }
             }
         }
         item { Text("Updated: $tick", color = AppColors.muted, fontSize = 10.sp) }
     }
+}
+
+@Composable
+private fun CareAssistantCard(
+    patient: Patient,
+    report: Map<String, Any>,
+    alerts: List<AlertEngine.Alert>,
+    serverConnected: Boolean,
+    hasRealWatchReading: Boolean
+) {
+    var question by remember(patient.id) { mutableStateOf("") }
+    var conversation by remember(patient.id) { mutableStateOf<List<Pair<String, String>>>(emptyList()) }
+    val dangerLabels = RulesEngine.dangerLabels(report)
+    val condition = alerts.any { it.status == "danger" } || dangerLabels.isNotEmpty()
+    val latestAlerts = alerts.take(3).map { it.message }.filter { it.isNotBlank() }
+    val hr = reportValue(report, "hr")
+    val oxygen = reportValue(report, "spo2")
+    val sbp = reportValue(report, "sbp")
+    val dbp = reportValue(report, "dbp")
+    val temperature = reportValue(report, "temp")
+    val glucose = reportValue(report, "glucose")
+
+    fun ask(raw: String) {
+        val prompt = raw.trim()
+        if (prompt.isBlank()) return
+        val lower = prompt.lowercase()
+        val feed = if (serverConnected) "The app is receiving updates from the ReJivan server." else "The app is offline and showing its local demo data."
+        val snapshot = "Current readings for ${patient.name}: heart rate $hr bpm; oxygen $oxygen%; blood pressure $sbp/$dbp mmHg; temperature $temperature °C; glucose $glucose mg/dL."
+        val reply = when {
+            listOf("alert", "fall", "event", "warning").any { it in lower } -> if (latestAlerts.isEmpty()) {
+                "No active alerts are currently shown for ${patient.name}. $feed"
+            } else "Recent alerts for ${patient.name}: ${latestAlerts.joinToString("; ")}. Check the Alerts page for their status."
+            listOf("online", "connect", "update", "fresh", "stale").any { it in lower } -> "$feed Patient readings update automatically when the app is online."
+            "oxygen" in lower || "spo2" in lower -> "The current oxygen reading is $oxygen%. ${if (serverConnected) "Use the displayed alerts and ask the care team to interpret concerns." else "This is local demo data, not a live measurement."}"
+            "heart" in lower || "pulse" in lower || "rate" in lower -> "The current heart-rate reading is $hr bpm. ${if (hasRealWatchReading) "It includes a connected watch reading." else "It is simulated demo data."}"
+            "pressure" in lower || "blood" in lower || "bp" in lower -> "The current blood-pressure reading is $sbp/$dbp mmHg. Follow the patient's care plan and ask their clinician about concerning readings."
+            "temperature" in lower || "fever" in lower -> "The current temperature reading is $temperature °C. This assistant cannot diagnose illness."
+            "glucose" in lower || "sugar" in lower -> "The current glucose reading is $glucose mg/dL. Follow the patient's care plan for interpretation."
+            else -> "$snapshot $feed${if (latestAlerts.isEmpty()) " No active alerts are shown." else " Recent alert: ${latestAlerts.first()}."}"
+        } + if (condition) {
+            " A danger-level reading or alert is present. Contact the care team promptly; for an immediate emergency, contact local emergency services. This demo does not diagnose."
+        } else " These summaries are not a diagnosis or treatment plan."
+        conversation = (conversation + ("You" to prompt) + ("ReJivan assistant" to reply)).takeLast(6)
+        question = ""
+    }
+
+    Card(
+        colors = CardDefaults.cardColors(containerColor = AppColors.panel),
+        shape = RoundedCornerShape(14.dp),
+        modifier = Modifier.fillMaxWidth().border(1.dp, AppColors.line, RoundedCornerShape(14.dp))
+    ) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+            Text("REJIVAN CARE ASSISTANT · DEMO", color = AppColors.accent, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+            Text("Ask about ${patient.name}'s situation", color = AppColors.txt, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Text("Summarizes this account's displayed readings and alerts in the app. No external AI service is used; this is not a diagnosis.", color = AppColors.muted, fontSize = 11.sp)
+            if (conversation.isNotEmpty()) {
+                conversation.takeLast(4).forEach { (speaker, message) ->
+                    Card(colors = CardDefaults.cardColors(containerColor = AppColors.panel2), shape = RoundedCornerShape(9.dp)) {
+                        Column(Modifier.fillMaxWidth().padding(9.dp)) {
+                            Text(speaker, color = AppColors.accent2, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                            Text(message, color = AppColors.txt, fontSize = 12.sp)
+                        }
+                    }
+                }
+            }
+            OutlinedTextField(
+                value = question,
+                onValueChange = { question = it },
+                label = { Text("Ask about current readings or alerts") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                colors = fieldColors()
+            )
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = { ask(question.ifBlank { "Summarize the situation" }) }, modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = AppColors.accent)) {
+                    Text("Ask / Summarize", color = AppColors.bg)
+                }
+                OutlinedButton(onClick = { ask("Any current alerts?") }, modifier = Modifier.weight(1f)) {
+                    Text("Check alerts", color = AppColors.accent2)
+                }
+            }
+        }
+    }
+}
+
+private fun reportValue(report: Map<String, Any>, key: String): String {
+    val metric = report[key] as? Map<*, *> ?: return "not available"
+    return metric["value"]?.toString() ?: "not available"
 }
 
 @Composable

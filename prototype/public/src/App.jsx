@@ -781,6 +781,24 @@ const App = () => {
   const [user, setUser] = React.useState(ACCOUNT_PROFILES["asharma@demo.in"]);
   const [token, setToken] = React.useState(localStorage.getItem("rejivan_token") || "");
 
+  React.useEffect(() => {
+    if (!token) {
+      fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "asharma@demo.in", password: "demo123" }),
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          if (data && data.token) {
+            setToken(data.token);
+            try { localStorage.setItem("rejivan_token", data.token); } catch (e) {}
+          }
+        })
+        .catch(() => {});
+    }
+  }, []);
+
   // Load the bundled dictionary and apply translations to rendered UI text. The
   // observer also covers labels added later as dashboard panels refresh or change.
   React.useEffect(() => {
@@ -1165,21 +1183,50 @@ const App = () => {
                 "bed-102": "P2",
                 "bed-103": "P3",
                 "bed-104": "P4",
+                "REJ-8042": "P1",
+                "REJ-9120": "P2",
+                "P1": "P1",
+                "P2": "P2",
+                "P3": "P3",
+                "P4": "P4",
               };
-              const targetId = mapBedToId[activePatient.id] || activePatient.id || "P1";
-              const matching = vData.patients.find((p) => p.id === targetId || p.id === activePatient.id);
+              const targetId = mapBedToId[activePatient?.id] || mapBedToId[activePatient?.patientId] || activePatient?.id || "P1";
+              const matching = vData.patients.find((p) => p.id === targetId || p.id === activePatient?.id || p.id === activePatient?.patientId);
 
               if (matching && matching.vitals && vData.connectivity !== "interrupted") {
                 const sv = matching.vitals;
-                setServerOfflineDevices(matching.offlineDevices || []);
+                const offlineList = matching.offlineDevices || [];
+                setServerOfflineDevices(offlineList);
+                const offlineMap = {};
+                offlineList.forEach((dId) => { offlineMap[dId] = true; });
+                setDisconnectedDevices(offlineMap);
+
+                const metricFeeders = {
+                  hr: ["ecg", "watch"],
+                  spo2: ["watch"],
+                  bpSys: ["bp"],
+                  bpDia: ["bp"],
+                  temp: ["temp"],
+                  glucose: ["glu"],
+                };
+                const offlineSet = new Set(offlineList);
+                const isMetricOffline = (m) => metricFeeders[m] && metricFeeders[m].every((d) => offlineSet.has(d));
+
+                const effHr = isMetricOffline("hr") ? null : (bluetoothHrRef.current ?? (sv.hr !== undefined ? sv.hr : prev => prev.hr));
+                const effSpo2 = isMetricOffline("spo2") ? null : (sv.spo2 !== undefined ? sv.spo2 : null);
+                const effBpSys = isMetricOffline("bpSys") ? null : (sv.bpSys !== undefined ? sv.bpSys : null);
+                const effBpDia = isMetricOffline("bpDia") ? null : (sv.bpDia !== undefined ? sv.bpDia : null);
+                const effTemp = isMetricOffline("temp") ? null : (sv.temp !== undefined ? sv.temp : null);
+                const effGlucose = isMetricOffline("glucose") ? null : (sv.glucose !== undefined ? sv.glucose : null);
+
                 setVitals((prev) => ({
                   ...prev,
-                  hr: bluetoothHrRef.current ?? (sv.hr !== undefined ? sv.hr : prev.hr),
-                  spo2: sv.spo2 !== undefined ? sv.spo2 : prev.spo2,
-                  bpSys: sv.bpSys !== undefined ? sv.bpSys : prev.bpSys,
-                  bpDia: sv.bpDia !== undefined ? sv.bpDia : prev.bpDia,
-                  temp: sv.temp !== undefined ? sv.temp : prev.temp,
-                  glucose: sv.glucose !== undefined ? sv.glucose : prev.glucose,
+                  hr: isMetricOffline("hr") ? null : (bluetoothHrRef.current ?? (sv.hr !== undefined ? sv.hr : prev.hr)),
+                  spo2: isMetricOffline("spo2") ? null : (sv.spo2 !== undefined ? sv.spo2 : prev.spo2),
+                  bpSys: isMetricOffline("bpSys") ? null : (sv.bpSys !== undefined ? sv.bpSys : prev.bpSys),
+                  bpDia: isMetricOffline("bpDia") ? null : (sv.bpDia !== undefined ? sv.bpDia : prev.bpDia),
+                  temp: isMetricOffline("temp") ? null : (sv.temp !== undefined ? sv.temp : prev.temp),
+                  glucose: isMetricOffline("glucose") ? null : (sv.glucose !== undefined ? sv.glucose : prev.glucose),
                   sparkHr: bluetoothHrRef.current != null ? prev.sparkHr : (sv.hr != null ? pushFifo(prev.sparkHr, sv.hr) : prev.sparkHr),
                   sparkSpo2: sv.spo2 != null ? pushFifo(prev.sparkSpo2, sv.spo2) : prev.sparkSpo2,
                   sparkBp: sv.bpSys != null ? pushFifo(prev.sparkBp, sv.bpSys) : prev.sparkBp,
@@ -1436,6 +1483,68 @@ const App = () => {
   };
 
   const triage = getTriageMetrics();
+  const familyAlerts = [...demoAlerts, ...serverAlerts];
+  const unresolvedFamilyAlerts = familyAlerts.filter((alert) => alert.status !== "Resolved");
+  const familyMonitorStatus = triage.dangerCount > 0 || unresolvedFamilyAlerts.some((alert) => alert.severity === "danger")
+    ? "danger"
+    : triage.cautionCount > 0 || unresolvedFamilyAlerts.some((alert) => alert.severity === "caution")
+    ? "caution"
+    : "normal";
+
+  // Mobile / Phone View Alert Jump State
+  const [jumpAlert, setJumpAlert] = React.useState(null);
+  const [jumpDismissed, setJumpDismissed] = React.useState(false);
+  const [isScrolledDown, setIsScrolledDown] = React.useState(false);
+  const lastAlertIdRef = React.useRef(null);
+
+  // Monitor scroll position to show floating jump-to-alert pill on phone view
+  React.useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolledDown(typeof window !== "undefined" && window.scrollY > 150);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // When an alert comes in on phone/mobile, jump upwards automatically so viewer sees the issue first!
+  React.useEffect(() => {
+    const urgentAlert = unresolvedFamilyAlerts.find(
+      (a) => a.severity === "danger" || a.severity === "critical" || a.severity === "caution"
+    );
+
+    if (urgentAlert) {
+      if (lastAlertIdRef.current !== urgentAlert.id) {
+        lastAlertIdRef.current = urgentAlert.id;
+        setJumpAlert(urgentAlert);
+        setJumpDismissed(false);
+
+        // Auto jump upwards smoothly so viewer spots the issue instantly
+        const triggerJumpUpwards = () => {
+          if (typeof window !== "undefined") {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+            const anchor = document.getElementById("mobile-urgent-alert-anchor");
+            if (anchor) {
+              anchor.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+          }
+        };
+
+        triggerJumpUpwards();
+        const t1 = setTimeout(triggerJumpUpwards, 80);
+        const t2 = setTimeout(triggerJumpUpwards, 260);
+        return () => {
+          clearTimeout(t1);
+          clearTimeout(t2);
+        };
+      }
+    } else {
+      if (jumpAlert && !jumpDismissed) {
+        setJumpAlert(null);
+        setJumpDismissed(false);
+      }
+      lastAlertIdRef.current = null;
+    }
+  }, [unresolvedFamilyAlerts]);
 
   // Auth Handlers
   const handleLogin = async (email, password) => {
@@ -1539,6 +1648,9 @@ const App = () => {
     if (!isNurse && activeTab === "ward") {
       setActiveTab("dashboard");
     }
+    if (isNurse && activeTab === "family-monitor") {
+      setActiveTab("dashboard");
+    }
   }, [user, activeTab]);
 
   return (
@@ -1575,6 +1687,95 @@ const App = () => {
 
         {/* Page Content Body */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1600px] w-full mx-auto">
+          {/* Mobile Alert Jump Target Anchor */}
+          <div id="mobile-urgent-alert-anchor" />
+
+          {/* Top Priority Urgent Alert Jump Banner (Renders across mobile/all viewports when active alert fires) */}
+          {jumpAlert && !jumpDismissed && (
+            <div
+              className={`mb-6 rounded-2xl p-4 sm:p-5 text-white shadow-xl transition-all duration-300 relative overflow-hidden ${
+                jumpAlert.severity === "danger" || jumpAlert.severity === "critical"
+                  ? "bg-gradient-to-r from-rose-700 via-rose-600 to-red-700 border-2 border-rose-300 ring-4 ring-rose-400/40"
+                  : "bg-gradient-to-r from-amber-600 via-amber-500 to-orange-600 border-2 border-amber-300 ring-4 ring-amber-400/40"
+              } animate-in slide-in-from-top-6`}
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-start gap-3.5">
+                  <div className="w-11 h-11 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center shrink-0 animate-bounce mt-0.5 shadow-xs">
+                    <AlertTriangle className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-white text-rose-700 shadow-2xs">
+                        {jumpAlert.severity === "danger" || jumpAlert.severity === "critical"
+                          ? "🚨 EMERGENCY ALERT · IMMEDIATE ACTION"
+                          : "⚠️ CLINICAL WARNING"}
+                      </span>
+                      <span className="text-xs text-white/90 font-medium">
+                        {jumpAlert.time || "Just now"}
+                      </span>
+                      {jumpAlert.source && (
+                        <span className="text-xs text-white/80 font-mono">
+                          via {jumpAlert.source}
+                        </span>
+                      )}
+                    </div>
+                    <h2 className="text-base sm:text-lg font-black text-white mt-1 leading-tight">
+                      {jumpAlert.title || jumpAlert.conditionReason || "Critical Clinical Threshold Exceeded"}
+                    </h2>
+                    {jumpAlert.reading && (
+                      <div className="mt-1 flex items-center gap-2 flex-wrap">
+                        <span className="inline-block bg-black/30 backdrop-blur-xs px-2.5 py-0.5 rounded-md font-mono text-xs font-bold text-white border border-white/20">
+                          Reading: {jumpAlert.reading}
+                        </span>
+                        <span className="text-xs text-white/90">
+                          Patient: <strong>{jumpAlert.patientName || activePatient?.name || "Patient"}</strong>
+                        </span>
+                      </div>
+                    )}
+                    {jumpAlert.message && (
+                      <p className="text-xs text-white/95 mt-1.5 leading-relaxed max-w-3xl">
+                        {jumpAlert.message}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center sm:flex-col gap-2 shrink-0 self-end sm:self-center mt-2 sm:mt-0">
+                  <button
+                    onClick={() => {
+                      setActiveTab("alerts");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className="px-3.5 py-1.5 rounded-xl bg-white text-rose-800 text-xs font-bold hover:bg-rose-50 shadow-xs cursor-pointer transition-all flex items-center gap-1.5"
+                  >
+                    <span>Review Escalation</span>
+                    <span>→</span>
+                  </button>
+                  {jumpAlert.id && (
+                    <button
+                      onClick={() => {
+                        handleAcknowledgeAlert(jumpAlert.id);
+                        setJumpDismissed(true);
+                      }}
+                      className="px-3.5 py-1 rounded-xl bg-black/25 text-white text-[11px] font-semibold hover:bg-black/35 cursor-pointer transition-all"
+                    >
+                      Acknowledge
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setJumpDismissed(true)}
+                    className="px-2 py-1 rounded-lg text-white/70 hover:text-white hover:bg-white/10 text-[11px] transition-all cursor-pointer"
+                    title="Dismiss Banner"
+                  >
+                    Dismiss ✕
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {activeTab === "dashboard" && (
             <div className="animate-in fade-in duration-150">
               {/* Hospital Inpatient Bed Selector Bar (Active Census & Bed Toggle) */}
@@ -1698,20 +1899,10 @@ const App = () => {
 
                 <div className="flex items-center gap-2">
                   <span className="text-[11px] text-slate-500 font-medium bg-slate-50 border border-slate-200/80 px-2.5 py-1 rounded-md">
-                    HSC 2027 Demonstration Mode · Synthetic Telemetry
+                    Judge Demo · Admin-synced synthetic telemetry
                   </span>
                 </div>
               </div>
-
-              <SensorDemoPanel
-                disconnectedDevices={disconnectedDevices}
-                serverDisconnectedDevices={serverOfflineDevices}
-                onToggleDevice={handleToggleDevice}
-                feedOverride={feedOverride}
-                onPushReading={handlePushReading}
-                onClearFeed={handleClearFeed}
-                onBluetoothHeartRate={handleBluetoothHeartRate}
-              />
 
               {/* 4. Main Content Area (2-Column Grid: 70% Left, 30% Right) */}
               <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
@@ -1891,13 +2082,6 @@ const App = () => {
                   {/* Comprehensive Vital Signs Table */}
                   <VitalSignsTable vitalsData={vitals} />
 
-                  {/* Hardware Diagnostics & Sensor Telemetry Bar (Pinned at bottom of left area) */}
-                  <HardwareDiagnosticsBar
-                    reliabilityScore={98}
-                    currentUser={user}
-                    activePatient={activePatient}
-                    offlineDeviceIds={serverOfflineDevices}
-                  />
                 </div>
 
                 {/* Right Column (Alerts & Care Coordination Panel - 30%) */}
@@ -1925,6 +2109,18 @@ const App = () => {
                 />
               </div>
             </div>
+          )}
+
+          {activeTab === "family-monitor" && !isNurse && (
+            <FamilyMonitorView
+              patient={activePatient}
+              vitals={vitals}
+              alerts={familyAlerts}
+              connectivity={serverConnectivity}
+              secondsAgo={secondsAgo}
+              status={familyMonitorStatus}
+              onViewAlerts={() => setActiveTab("alerts")}
+            />
           )}
 
           {/* Dedicated "Camera Zones" Route */}
@@ -2031,6 +2227,26 @@ const App = () => {
             setVitals((prev) => ({ ...prev, bpSys: 178, hr: 124 }));
           }}
         />
+
+        {/* Floating Mobile Jump-to-Alert Pill (visible when scrolled down on phone view while alert is active) */}
+        {jumpAlert && !jumpDismissed && isScrolledDown && (
+          <div className="fixed bottom-6 right-4 sm:right-6 z-50 animate-bounce">
+            <button
+              onClick={() => {
+                if (typeof window !== "undefined") {
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                  const anchor = document.getElementById("mobile-urgent-alert-anchor");
+                  if (anchor) anchor.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
+              }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-rose-600 text-white font-black text-xs shadow-2xl border-2 border-white hover:bg-rose-700 transition-all cursor-pointer ring-4 ring-rose-400/50"
+              title="Jump upwards to see active alert"
+            >
+              <span className="text-base leading-none">⬆️</span>
+              <span>Jump to Urgent Alert</span>
+            </button>
+          </div>
+        )}
 
         {/* Clinical Software Compliance Footer */}
         <footer className="border-t border-slate-200/80 py-4 px-6 bg-white text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-2">

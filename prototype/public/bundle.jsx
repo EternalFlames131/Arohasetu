@@ -585,6 +585,42 @@ const Heart = (props) => (
   />
 );
 
+const HeartPulse = (props) => (
+  <IconBase
+    {...props}
+    d={
+      <>
+        <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+        <path d="M3.2 12h5.8l1.5 3 2.5-6 1.8 3h6" />
+      </>
+    }
+  />
+);
+
+// Official ReJivan Brand Logo Mark matching the user-provided identity
+const BrandLogo = ({ className = "w-9 h-9", imgClassName = "w-5 h-5", rounded = "rounded-xl", withBg = true }) => {
+  if (withBg) {
+    return (
+      <div className={`${className} ${rounded} bg-[#E8F6F5] border border-[#C2E8E4] flex items-center justify-center shrink-0 shadow-xs overflow-hidden`}>
+        <svg className={imgClassName} viewBox="0 0 100 100" fill="none">
+          <g fill="none" stroke="#103663" strokeWidth="7.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M 50,78 C 34,65 20,53 20,38 C 20,25 30.5,17 41.5,17 C 46.5,17 48.8,19.5 50,22 C 51.2,19.5 53.5,17 58.5,17 C 69.5,17 80,25 80,38 C 80,53 66,65 50,78 Z" />
+            <path d="M 20,50 L 41,50 L 45,61 L 52.5,33 L 57.5,50 L 80,50" />
+          </g>
+        </svg>
+      </div>
+    );
+  }
+  return (
+    <svg className={className} viewBox="0 0 100 100" fill="none">
+      <g fill="none" stroke="#103663" strokeWidth="7.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M 50,78 C 34,65 20,53 20,38 C 20,25 30.5,17 41.5,17 C 46.5,17 48.8,19.5 50,22 C 51.2,19.5 53.5,17 58.5,17 C 69.5,17 80,25 80,38 C 80,53 66,65 50,78 Z" />
+        <path d="M 20,50 L 41,50 L 45,61 L 52.5,33 L 57.5,50 L 80,50" />
+      </g>
+    </svg>
+  );
+};
+
 const Droplets = (props) => (
   <IconBase
     {...props}
@@ -1320,6 +1356,7 @@ const Sidebar = ({
 
   const navItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+    ...(!isNurse ? [{ id: "family-monitor", label: "Family Monitor", icon: Activity, badge: "Remote" }] : []),
     { id: "medicines", label: "Medicines", icon: Pill },
     { id: "camera", label: "Camera Zones", icon: Video, badge: "Live CCTV" },
     ...(isNurse ? [{ id: "ward", label: "Virtual Ward", icon: Building2, badge: "Hospital" }] : []),
@@ -1345,13 +1382,8 @@ const Sidebar = ({
         {/* Brand Header */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-slate-200/80">
           <div className="flex items-center gap-3 min-w-0">
-            {/* ReJivan Brand Logo Mark with Heart + ECG motif */}
-            <div className="w-9 h-9 rounded-xl bg-[#103663] text-[#08A6A6] flex items-center justify-center shrink-0 shadow-xs border border-[#08A6A6]/30">
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-                <path d="M7 12h2.5l1.5-3 2 6 1.5-3H17" stroke="#08A6A6" strokeWidth="2" />
-              </svg>
-            </div>
+            {/* ReJivan Brand Logo Mark matching official identity */}
+            <BrandLogo className="w-9 h-9" imgClassName="w-5 h-5" rounded="rounded-xl" withBg={true} />
             {!collapsed && (
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
@@ -1445,14 +1477,14 @@ const Sidebar = ({
               <p className="text-[11px] text-slate-500 mt-1 leading-normal">
                 Simulated for demonstration purposes.
               </p>
+              <a href="/downloads/ReJivan-Demo.apk" download className="mt-2 flex items-center gap-1.5 text-[11px] font-semibold text-blue-700 hover:text-blue-900">
+                <Download className="h-3.5 w-3.5" /> Download Android demo
+              </a>
             </div>
           ) : (
-            <div
-              className="w-full flex justify-center py-2 text-amber-600"
-              title="Simulation Demo - Simulated for demonstration purposes"
-            >
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
-            </div>
+            <a href="/downloads/ReJivan-Demo.apk" download className="w-full flex justify-center py-2 text-blue-700" title="Download ReJivan Android demo APK" aria-label="Download ReJivan Android demo APK">
+              <Download className="h-4 w-4" />
+            </a>
           )}
         </div>
       </aside>
@@ -1482,6 +1514,7 @@ const TopBar = ({
 
   const tabTitles = {
     dashboard: "Patient Telemetry Dashboard",
+    "family-monitor": "Family Remote Monitor & Care Assistant",
     medicines: "Medication Administration Record",
     camera: "Live Camera Zones & CCTV",
     ward: "Virtual Ward Telemetry Center",
@@ -1716,6 +1749,397 @@ const TopBar = ({
 };
 
 // --- END: prototype\public\src\components\TopBar.jsx ---
+
+// --- START: prototype\public\src\components\FamilyMonitorView.jsx ---
+// Remote family view and Prajñā AI readings-grounded care assistant.
+const FamilyMonitorView = ({ patient, vitals, alerts = [], connectivity, secondsAgo = 0, status = "normal", onViewAlerts }) => {
+  const [question, setQuestion] = React.useState("");
+  const [messages, setMessages] = React.useState([]);
+  const [isThinking, setIsThinking] = React.useState(false);
+  const [geminiKey, setGeminiKey] = React.useState(() => {
+    try {
+      return localStorage.getItem("rejivan_gemini_key") || "";
+    } catch (e) {
+      return "";
+    }
+  });
+  const [showKeyInput, setShowKeyInput] = React.useState(false);
+
+  const activeAlerts = alerts.filter((alert) => alert.status !== "Resolved");
+  const groupedAlerts = Array.from(activeAlerts.reduce((groups, alert) => {
+    const message = alert.conditionReason || alert.message || alert.title || "Patient alert";
+    const key = `${alert.status || "Open"}:${alert.severity || "caution"}:${message}`;
+    const existing = groups.get(key);
+    if (existing) existing.count += 1;
+    else groups.set(key, { ...alert, summary: message, count: 1 });
+    return groups;
+  }, new Map()).values());
+
+  React.useEffect(() => {
+    setMessages([{
+      role: "assistant",
+      text: `Hello! I am Prajñā, your AI care assistant connected to ${patient?.name || "the patient"}'s live physiological telemetry. I can provide real-time updates on their vitals, active alerts, and wellness status. What would you like to know?`,
+    }]);
+  }, [patient?.patientId, patient?.id]);
+
+  const handleSaveGeminiKey = (newKey) => {
+    const trimmed = newKey.trim();
+    setGeminiKey(trimmed);
+    try {
+      if (trimmed) localStorage.setItem("rejivan_gemini_key", trimmed);
+      else localStorage.removeItem("rejivan_gemini_key");
+    } catch (e) {}
+    setShowKeyInput(false);
+  };
+
+  const getVitalStatus = (key, val) => {
+    if (val == null) return "offline";
+    const num = Number(val);
+    if (key === "hr") return (num < 55 || num > 115) ? "danger" : (num < 60 || num > 100) ? "caution" : "normal";
+    if (key === "spo2") return num < 92 ? "danger" : num < 95 ? "caution" : "normal";
+    if (key === "temp") return (num < 35.5 || num >= 38.2) ? "danger" : num >= 37.5 ? "caution" : "normal";
+    if (key === "glucose") return (num < 70 || num > 180) ? "danger" : num > 140 ? "caution" : "normal";
+    return "normal";
+  };
+
+  const getBpStatus = (sys, dia) => {
+    if (sys == null || dia == null) return "offline";
+    const s = Number(sys);
+    const d = Number(dia);
+    if (s >= 160 || d >= 100) return "danger";
+    if (s >= 135 || d >= 85) return "caution";
+    return "normal";
+  };
+
+  const readings = [
+    { label: "Heart rate", value: vitals?.hr, unit: "bpm", status: getVitalStatus("hr", vitals?.hr) },
+    { label: "Oxygen (SpO2)", value: vitals?.spo2, unit: "%", status: getVitalStatus("spo2", vitals?.spo2) },
+    {
+      label: "Blood pressure",
+      value: vitals?.bpSys != null && vitals?.bpDia != null ? `${vitals.bpSys}/${vitals.bpDia}` : null,
+      unit: "mmHg",
+      status: getBpStatus(vitals?.bpSys, vitals?.bpDia),
+    },
+    { label: "Temperature", value: vitals?.temp, unit: "°C", status: getVitalStatus("temp", vitals?.temp) },
+    { label: "Glucose", value: vitals?.glucose, unit: "mg/dL", status: getVitalStatus("glucose", vitals?.glucose) },
+  ];
+
+  const answerQuestion = async (rawQuestion) => {
+    const q = rawQuestion.trim();
+    if (!q || isThinking) return;
+
+    setMessages((prev) => [...prev, { role: "user", text: q }]);
+    setQuestion("");
+    setIsThinking(true);
+
+    try {
+      const res = await fetch("/api/assistant/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          question: q,
+          patient: {
+            name: patient.name,
+            patientId: patient.patientId || patient.id,
+            condition: patient.condition,
+            location: patient.location,
+          },
+          vitals,
+          alerts: groupedAlerts,
+          connectivity,
+          secondsAgo,
+          apiKey: geminiKey || undefined,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            text: data.reply || "Telemetry analysis complete.",
+            source: data.source || "prajna",
+          },
+        ]);
+      } else {
+        throw new Error("Assistant service returned " + res.status);
+      }
+    } catch (err) {
+      // Graceful offline fallback
+      const urgent = status === "danger" || activeAlerts.some((a) => a.severity === "danger");
+      let fallbackText = `${patient.name} is currently being monitored. Readings: HR ${vitals?.hr ?? "—"} bpm, SpO2 ${vitals?.spo2 ?? "—"}%, BP ${vitals?.bpSys ?? "—"}/${vitals?.bpDia ?? "—"} mmHg.`;
+      if (urgent) {
+        fallbackText += " A danger-level alert is active; please contact the clinical care team or 108/112 promptly.";
+      } else {
+        fallbackText += " All active readings are being evaluated against continuous clinical thresholds.";
+      }
+      setMessages((prev) => [...prev, { role: "assistant", text: fallbackText }]);
+    } finally {
+      setIsThinking(false);
+    }
+  };
+
+  const statusLabel = status === "danger" ? "Needs prompt review" : status === "caution" ? "Review readings" : "No active warning";
+  const connected = connectivity !== "interrupted" && secondsAgo <= 20;
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-150">
+      {/* 1. REMOTE PATIENT SNAPSHOT CARD */}
+      <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></span>
+              <p className="text-xs font-bold uppercase tracking-wider text-teal-700">Family Remote Monitor · Real-Time</p>
+            </div>
+            <h2 className="mt-1 text-2xl font-bold text-slate-900">{patient.name}</h2>
+            <p className="mt-1 text-sm text-slate-600">{patient.location} · Patient ID {patient.patientId || patient.id}</p>
+            <p className="mt-1 text-xs text-slate-500">Care focus: {patient.condition}</p>
+          </div>
+          <div className={`rounded-xl border px-3 py-2 text-sm font-semibold transition-colors ${connected ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-rose-200 bg-rose-50 text-rose-800"}`}>
+            <span className="mr-2">{connected ? "●" : "●"}</span>{connected ? "Remote feed connected" : "Connection interrupted · readings may be stale"}
+            <div className="mt-1 text-xs font-normal">Last update: {secondsAgo === 0 ? "just now" : `${secondsAgo}s ago`}</div>
+          </div>
+        </div>
+
+        <div className={`mt-5 rounded-xl p-3 text-sm font-semibold transition-colors ${status === "danger" ? "bg-rose-50 text-rose-800 border border-rose-200" : status === "caution" ? "bg-amber-50 text-amber-800 border border-amber-200" : "bg-emerald-50 text-emerald-800 border border-emerald-200"}`}>
+          Current monitoring status: {statusLabel}
+          <span className="ml-2 text-xs font-normal">Synchronized live with the central clinical dashboard every 1.8 seconds.</span>
+        </div>
+
+        {/* 2. LIVE VITALS GRID */}
+        <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-5">
+          {readings.map((item) => {
+            const isDanger = item.status === "danger";
+            const isCaution = item.status === "caution";
+            const isOffline = item.status === "offline";
+
+            return (
+              <div
+                key={item.label}
+                className={`rounded-xl border p-3 transition-all ${
+                  isDanger
+                    ? "border-rose-300 bg-rose-50/70"
+                    : isCaution
+                    ? "border-amber-300 bg-amber-50/60"
+                    : isOffline
+                    ? "border-slate-200 bg-slate-100/80"
+                    : "border-slate-200 bg-slate-50"
+                }`}
+              >
+                <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
+                  <span>{item.label}</span>
+                  {isOffline ? (
+                    <span className="text-[9px] font-bold text-rose-600 bg-rose-100 px-1 py-0.2 rounded">OFFLINE</span>
+                  ) : isDanger ? (
+                    <span className="text-[9px] font-bold text-rose-700 bg-rose-100 px-1 py-0.2 rounded">CRITICAL</span>
+                  ) : isCaution ? (
+                    <span className="text-[9px] font-bold text-amber-700 bg-amber-100 px-1 py-0.2 rounded">ELEVATED</span>
+                  ) : (
+                    <span className="text-[9px] font-semibold text-emerald-700">NORMAL</span>
+                  )}
+                </div>
+                <div className="mt-1 font-mono text-lg font-bold text-slate-900">
+                  {item.value == null ? (
+                    <span className="text-xs text-rose-700 font-sans font-semibold">No Signal (Offline)</span>
+                  ) : (
+                    <>
+                      {item.value}
+                      <span className="ml-1 text-xs font-medium text-slate-500 font-sans">{item.unit}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <p className="mt-3 text-xs text-slate-500">Live synthetic physiological simulation (HSC 2027 Demonstration). Camera sentinel operates with strict privacy guarantees.</p>
+      </section>
+
+      {/* 3. RECENT PATIENT ALERTS */}
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Recent patient alerts</p>
+            <h3 className="mt-1 text-lg font-bold text-slate-900">What needs attention</h3>
+          </div>
+          {onViewAlerts && (
+            <button onClick={onViewAlerts} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
+              Open alerts
+            </button>
+          )}
+        </div>
+        {groupedAlerts.length === 0 ? (
+          <p className="mt-4 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800 border border-emerald-100">
+            No unresolved alerts are currently shown. All monitored thresholds are nominal.
+          </p>
+        ) : (
+          <div className="mt-4 space-y-2">
+            {groupedAlerts.slice(0, 4).map((alert, index) => (
+              <div
+                key={alert.id || `${alert.createdAt}-${index}`}
+                className={`rounded-xl border p-3 ${
+                  alert.severity === "danger"
+                    ? "border-rose-200 bg-rose-50/80 text-rose-950"
+                    : "border-amber-200 bg-amber-50/70 text-amber-950"
+                }`}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className={`text-xs font-bold ${alert.severity === "danger" ? "text-rose-800" : "text-amber-800"}`}>
+                    {alert.title || alert.summary}
+                  </span>
+                  <span className="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-white/80 border border-slate-200 text-slate-700">
+                    {alert.status || "Open"}
+                  </span>
+                </div>
+                {alert.conditionReason && alert.conditionReason !== alert.summary && (
+                  <p className="mt-1 text-xs text-slate-700 leading-snug">{alert.conditionReason}</p>
+                )}
+                {alert.count > 1 && <p className="mt-1 text-[10px] text-slate-500">Seen in {alert.count} recent checks</p>}
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* 4. PRAJÑĀ AI CLINICAL CARE ASSISTANT */}
+      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
+        <div className="border-b border-slate-100 p-5 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-teal-600"></span>
+              <p className="text-xs font-bold uppercase tracking-wider text-teal-700">Prajñā AI Care Assistant</p>
+              {geminiKey ? (
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                  ✨ Gemini 1.5 Powered
+                </span>
+              ) : (
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                  ⚡ Clinical NLP Engine
+                </span>
+              )}
+            </div>
+            <h3 className="mt-1 text-lg font-bold text-slate-900">Ask about {patient.name}&apos;s current health</h3>
+            <p className="mt-0.5 text-xs text-slate-500">
+              Grounded in live biometric telemetry, threshold alarms, and medication timing.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowKeyInput(!showKeyInput)}
+            className="text-xs text-slate-500 hover:text-slate-800 font-medium px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors"
+          >
+            {geminiKey ? "⚙️ Gemini API Key (Configured)" : "⚙️ Add Gemini API Key"}
+          </button>
+        </div>
+
+        {/* Optional Gemini Key Input Drawer */}
+        {showKeyInput && (
+          <div className="p-4 bg-purple-50/50 border-b border-purple-100 text-xs">
+            <p className="font-semibold text-purple-900 mb-1">Optional: Connect Personal Google Gemini API Key</p>
+            <p className="text-purple-700 mb-2">
+              If left empty, Prajñā uses the built-in clinical intelligence engine. If entered, questions route directly to Gemini 1.5 Flash.
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="password"
+                placeholder="AIzaSy..."
+                defaultValue={geminiKey}
+                id="geminiKeyInput"
+                className="flex-1 px-3 py-1.5 rounded-lg border border-purple-200 bg-white font-mono text-xs outline-none focus:border-purple-500"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const val = document.getElementById("geminiKeyInput")?.value || "";
+                  handleSaveGeminiKey(val);
+                }}
+                className="px-3 py-1.5 rounded-lg bg-purple-700 text-white font-bold text-xs hover:bg-purple-800"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Chat Messages Log */}
+        <div className="max-h-88 min-h-48 space-y-3 overflow-y-auto bg-slate-50/60 p-4" aria-live="polite">
+          {messages.map((message, index) => (
+            <div
+              key={`${index}-${message.role}`}
+              className={`max-w-[85%] rounded-xl px-4 py-3 text-sm leading-relaxed shadow-2xs ${
+                message.role === "user"
+                  ? "ml-auto bg-[#103663] text-white"
+                  : "border border-slate-200 bg-white text-slate-800"
+              }`}
+            >
+              <div className="mb-1 flex items-center justify-between gap-2 text-[10px] font-bold uppercase tracking-wider opacity-70">
+                <span>{message.role === "user" ? "You" : "Prajñā Care Assistant"}</span>
+                {message.source === "gemini" && <span>✨ Gemini</span>}
+              </div>
+              <div className="whitespace-pre-wrap">{message.text}</div>
+            </div>
+          ))}
+
+          {isThinking && (
+            <div className="max-w-[80%] rounded-xl px-4 py-3 text-sm border border-slate-200 bg-white text-slate-600 shadow-2xs">
+              <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-teal-700">Prajñā Care Assistant</div>
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-teal-500 animate-ping"></span>
+                <span className="text-xs font-medium text-slate-500">Analyzing live biometric telemetry &amp; trends...</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Input Bar */}
+        <div className="flex flex-col gap-2 border-t border-slate-100 p-4 sm:flex-row">
+          <input
+            value={question}
+            onChange={(event) => setQuestion(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !isThinking) answerQuestion(question);
+            }}
+            placeholder="Ask Prajñā: How are Anita's readings today? Any elevated vitals?"
+            className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
+            aria-label="Ask about the patient's current status"
+            disabled={isThinking}
+          />
+          <button
+            onClick={() => answerQuestion(question)}
+            disabled={isThinking || !question.trim()}
+            className="rounded-lg bg-[#103663] px-5 py-2 text-sm font-semibold text-white hover:bg-[#174b83] disabled:opacity-50 transition-colors shadow-xs"
+          >
+            {isThinking ? "Thinking..." : "Ask"}
+          </button>
+        </div>
+
+        {/* Suggested Quick Prompts */}
+        <div className="flex flex-wrap gap-2 px-4 pb-4">
+          {[
+            "Summarize the current situation",
+            "Are there any active clinical alerts?",
+            "How is the patient's blood pressure?",
+            "Is the remote feed connected and healthy?",
+          ].map((prompt) => (
+            <button
+              key={prompt}
+              disabled={isThinking}
+              onClick={() => answerQuestion(prompt)}
+              className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-600 hover:border-teal-500 hover:text-teal-800 transition-colors disabled:opacity-50"
+            >
+              {prompt}
+            </button>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+};
+
+// --- END: prototype\public\src\components\FamilyMonitorView.jsx ---
 
 // --- START: prototype\public\src\components\TriageMetricStrip.jsx ---
 // prototype/public/src/components/TriageMetricStrip.jsx
@@ -4014,8 +4438,8 @@ const ResidentCheckinModal = ({ isOpen, onClose, scenario, onEmergencyConfirmed,
 // Treats prerecorded hospital video as an authentic virtual camera source alongside Live Webcam and RTSP CCTV.
 // Real-Time YOLO11-Pose 17-Keypoint Inference & Client Optical Consensus with Zero Hardcoded Time Gates.
 
-const SYSTEM_CAMERA_LABEL = /integrated|built[ -]?in|laptop|internal|facetime|computer camera/i;
-const MOBILE_CAMERA_LABEL = /phone|mobile|android|iphone|droidcam|iriun|camo|ivcam|epoccam|continuity/i;
+const SYSTEM_CAMERA_LABEL = /integrated|built[ -]?in|laptop|internal|facetime|computer|user facing|front|hd user|webcam|camera/i;
+const MOBILE_CAMERA_LABEL = /phone|mobile|android|iphone|droidcam|iriun|camo|ivcam|epoccam|continuity|phone link|link to windows|cross device|virtual camera/i;
 
 const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, activePatient }) => {
   // 1. Unified Camera Source Abstraction ('LIVE_WEBCAM' | 'PRERECORDED_VIDEO' | 'RTSP_CAMERA')
@@ -4320,12 +4744,13 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
     // HTTPS deployments, instead of changing only the button highlight.
     try {
       const webcams = await refreshAvailableWebcams(true);
-      const preferred = newIdx === 1
+      const isComputer = newIdx === 0;
+      const preferred = isComputer
         ? webcams.find((device) => SYSTEM_CAMERA_LABEL.test(device.label) && !MOBILE_CAMERA_LABEL.test(device.label))
         : webcams.find((device) => MOBILE_CAMERA_LABEL.test(device.label));
-      const fallback = newIdx === 1
+      const fallback = isComputer
         ? webcams.find((device) => !MOBILE_CAMERA_LABEL.test(device.label))
-        : webcams.find((device) => !SYSTEM_CAMERA_LABEL.test(device.label));
+        : webcams.find((device) => MOBILE_CAMERA_LABEL.test(device.label) || device.label.toLowerCase().includes("phone"));
       const device = preferred || fallback || webcams[newIdx] || webcams[0];
       if (!device?.deviceId) throw new Error("No camera was found. Connect the camera and allow browser access, then try again.");
       setHardwareCameraIndex(newIdx);
@@ -4389,6 +4814,16 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
           const data = await res.json();
           setLocalYoloActive(true);
           setLocalYoloInfo(data);
+          setLiveCameraMode("HARDWARE_YOLO");
+          setHardwareStreamPaused(false);
+          setStreamRetryKey(Date.now());
+          setCameraSwitchError("");
+          fetch(`${YOLO_API_BASE}/api/yolo/start`, { method: "POST" }).catch(() => {});
+          if (webcamStreamRef.current) {
+            webcamStreamRef.current.getTracks().forEach((track) => track.stop());
+            webcamStreamRef.current = null;
+          }
+          if (cameraSource === "LIVE_WEBCAM") setPlaybackState("PLAYING");
           setIsStartingDaemon(false);
           clearInterval(pollTimer);
           return;
@@ -4396,6 +4831,7 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
       } catch (e) {}
       if (attempts >= 12) {
         setIsStartingDaemon(false);
+        setCameraSwitchError("YOLO Edge is offline on this computer. In-Browser analysis is still available.");
         clearInterval(pollTimer);
       }
     }, 1000);
@@ -4682,7 +5118,7 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
         // built-in system camera over a connected phone when the user has not
         // explicitly chosen a device.
         const webcams = await refreshAvailableWebcams(false);
-        const preferredSystemCamera = webcams.find((device) => SYSTEM_CAMERA_LABEL.test(device.label) && !MOBILE_CAMERA_LABEL.test(device.label));
+        const preferredSystemCamera = webcams.find((device) => !MOBILE_CAMERA_LABEL.test(device.label) && SYSTEM_CAMERA_LABEL.test(device.label)) || webcams.find((device) => !MOBILE_CAMERA_LABEL.test(device.label));
         const openedDeviceId = stream.getVideoTracks()[0]?.getSettings?.().deviceId || "";
         if (!selectedCameraDeviceId && preferredSystemCamera?.deviceId && preferredSystemCamera.deviceId !== openedDeviceId) {
           try {
@@ -4858,9 +5294,12 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
     let frameCount = 0;
     let lastFpsCheck = Date.now();
+    let lastAnalysisAt = 0;
     let currentFps = 25;
     let calibrationFrames = 0;
-    const CALIBRATION_TOTAL = 30; // 30 frames (~1.2s) startup baseline calibration
+    const ANALYSIS_INTERVAL_MS = 100; // Analyze at 10 FPS; native video playback stays smooth.
+    const MAX_ANALYSIS_WIDTH = 640;
+    const CALIBRATION_TOTAL = 10; // About one second at the analysis rate.
 
     // YOLO inference bridge state
     let latestKeypoints = null;
@@ -4895,6 +5334,10 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
       }
 
       try {
+        const frameTime = performance.now();
+        if (frameTime - lastAnalysisAt < ANALYSIS_INTERVAL_MS) return;
+        lastAnalysisAt = frameTime;
+
         // Check for video ended
       if (video.ended || (cameraSource !== "LIVE_WEBCAM" && video.currentTime >= (video.duration - 0.05))) {
         setPlaybackState("VIDEO_ENDED");
@@ -4915,9 +5358,12 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
       }
 
       if (video.videoWidth > 0 && video.videoHeight > 0) {
-        if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
+        const analysisScale = Math.min(1, MAX_ANALYSIS_WIDTH / video.videoWidth);
+        const analysisWidth = Math.max(1, Math.round(video.videoWidth * analysisScale));
+        const analysisHeight = Math.max(1, Math.round(video.videoHeight * analysisScale));
+        if (canvas.width !== analysisWidth || canvas.height !== analysisHeight) {
+          canvas.width = analysisWidth;
+          canvas.height = analysisHeight;
         }
 
         const width = canvas.width;
@@ -5717,10 +6163,9 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
 
           {/* Right: Controls, Device Selector & Quick Actions */}
           <div className="flex flex-wrap items-center gap-2.5 shrink-0 self-start md:self-center">
-            {cameraSource === "LIVE_WEBCAM" && (
-              <div className="flex items-center gap-2">
-                {/* Engine Toggle: Browser vs Hardware YOLO */}
-                <div className="flex items-center bg-white p-0.5 rounded-lg border border-slate-200 shadow-2xs text-[11px]">
+            <div className="flex items-center gap-2">
+              {/* Keep both engine choices visible while switching camera sources or modes. */}
+              <div className="flex items-center bg-white p-0.5 rounded-lg border border-slate-200 shadow-2xs text-[11px]">
                   <button
                     type="button"
                     onClick={() => {
@@ -5741,33 +6186,39 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
                     <span>🌐 In-Browser</span>
                   </button>
 
-                  {localYoloActive && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setLiveCameraMode("HARDWARE_YOLO");
-                        setHardwareStreamPaused(false);
-                        setStreamRetryKey(Date.now());
-                        fetch(`${YOLO_API_BASE}/api/yolo/start`, { method: "POST" }).catch(() => {});
-                        if (webcamStreamRef.current) {
-                          webcamStreamRef.current.getTracks().forEach((t) => t.stop());
-                          webcamStreamRef.current = null;
-                        }
-                      }}
-                      className={`px-2.5 py-1 rounded-md font-semibold transition-all flex items-center gap-1 ${
-                        liveCameraMode === "HARDWARE_YOLO"
-                          ? "bg-indigo-600 text-white shadow-2xs"
-                          : "text-slate-600 hover:text-slate-900"
-                      }`}
-                    >
-                      <Activity className="w-3 h-3" />
-                      <span>⚡ YOLO CUDA</span>
-                    </button>
-                  )}
-                </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!localYoloActive) {
+                        handleStartDaemon();
+                        return;
+                      }
+                      setCameraSwitchError("");
+                      setLiveCameraMode("HARDWARE_YOLO");
+                      setHardwareStreamPaused(false);
+                      setStreamRetryKey(Date.now());
+                      fetch(`${YOLO_API_BASE}/api/yolo/start`, { method: "POST" }).catch(() => {});
+                      if (webcamStreamRef.current) {
+                        webcamStreamRef.current.getTracks().forEach((t) => t.stop());
+                        webcamStreamRef.current = null;
+                      }
+                      if (cameraSource === "LIVE_WEBCAM") setPlaybackState("PLAYING");
+                    }}
+                    disabled={isStartingDaemon}
+                    title={localYoloActive ? `Use YOLO Edge (${gpuLabel})` : "YOLO Edge is not connected; click to try starting it"}
+                    className={`px-2.5 py-1 rounded-md font-semibold transition-all flex items-center gap-1 disabled:opacity-60 ${
+                      liveCameraMode === "HARDWARE_YOLO" && localYoloActive
+                        ? "bg-indigo-600 text-white shadow-2xs"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    <Activity className="w-3 h-3" />
+                    <span>{isStartingDaemon ? "Starting YOLO…" : localYoloActive ? "⚡ YOLO Edge" : "⚡ YOLO Edge · Offline"}</span>
+                  </button>
+              </div>
 
-                {/* Device Selector */}
-                {liveCameraMode === "BROWSER_WEBCAM" ? (
+              {/* Device selection applies only to the live webcam source. */}
+              {cameraSource === "LIVE_WEBCAM" && (liveCameraMode === "BROWSER_WEBCAM" ? (
                   <select
                     value={selectedCameraDeviceId}
                     onChange={(e) => handleSelectBrowserCamera(e.target.value)}
@@ -5794,7 +6245,7 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
                           : "text-slate-600 hover:text-slate-900"
                       }`}
                     >
-                        📱 Connected mobile
+                        💻 This computer
                     </button>
                     <button
                       type="button"
@@ -5805,12 +6256,11 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
                           : "text-slate-600 hover:text-slate-900"
                       }`}
                     >
-                        💻 This computer
+                        📱 Connected mobile
                     </button>
                   </div>
-                )}
-              </div>
-            )}
+                ))}
+            </div>
 
             {cameraSwitchError && (
               <span role="alert" className="max-w-56 text-[10px] font-medium text-rose-700">
@@ -10212,9 +10662,7 @@ const LoginModal = ({ isOpen, onClose, onLogin }) => {
       <div className="bg-white border border-slate-200 rounded-2xl p-6 max-w-md w-full shadow-2xl animate-in zoom-in-95">
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center">
-              <Activity className="w-5 h-5" />
-            </div>
+            <BrandLogo className="w-8 h-8" imgClassName="w-5 h-5" rounded="rounded-lg" withBg={true} />
             <div>
               <h3 className="text-base font-bold text-slate-900">
                 ReJivan Clinical Portal
@@ -11096,6 +11544,24 @@ const App = () => {
   const [user, setUser] = React.useState(ACCOUNT_PROFILES["asharma@demo.in"]);
   const [token, setToken] = React.useState(localStorage.getItem("rejivan_token") || "");
 
+  React.useEffect(() => {
+    if (!token) {
+      fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "asharma@demo.in", password: "demo123" }),
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          if (data && data.token) {
+            setToken(data.token);
+            try { localStorage.setItem("rejivan_token", data.token); } catch (e) {}
+          }
+        })
+        .catch(() => {});
+    }
+  }, []);
+
   // Load the bundled dictionary and apply translations to rendered UI text. The
   // observer also covers labels added later as dashboard panels refresh or change.
   React.useEffect(() => {
@@ -11480,21 +11946,50 @@ const App = () => {
                 "bed-102": "P2",
                 "bed-103": "P3",
                 "bed-104": "P4",
+                "REJ-8042": "P1",
+                "REJ-9120": "P2",
+                "P1": "P1",
+                "P2": "P2",
+                "P3": "P3",
+                "P4": "P4",
               };
-              const targetId = mapBedToId[activePatient.id] || activePatient.id || "P1";
-              const matching = vData.patients.find((p) => p.id === targetId || p.id === activePatient.id);
+              const targetId = mapBedToId[activePatient?.id] || mapBedToId[activePatient?.patientId] || activePatient?.id || "P1";
+              const matching = vData.patients.find((p) => p.id === targetId || p.id === activePatient?.id || p.id === activePatient?.patientId);
 
               if (matching && matching.vitals && vData.connectivity !== "interrupted") {
                 const sv = matching.vitals;
-                setServerOfflineDevices(matching.offlineDevices || []);
+                const offlineList = matching.offlineDevices || [];
+                setServerOfflineDevices(offlineList);
+                const offlineMap = {};
+                offlineList.forEach((dId) => { offlineMap[dId] = true; });
+                setDisconnectedDevices(offlineMap);
+
+                const metricFeeders = {
+                  hr: ["ecg", "watch"],
+                  spo2: ["watch"],
+                  bpSys: ["bp"],
+                  bpDia: ["bp"],
+                  temp: ["temp"],
+                  glucose: ["glu"],
+                };
+                const offlineSet = new Set(offlineList);
+                const isMetricOffline = (m) => metricFeeders[m] && metricFeeders[m].every((d) => offlineSet.has(d));
+
+                const effHr = isMetricOffline("hr") ? null : (bluetoothHrRef.current ?? (sv.hr !== undefined ? sv.hr : prev => prev.hr));
+                const effSpo2 = isMetricOffline("spo2") ? null : (sv.spo2 !== undefined ? sv.spo2 : null);
+                const effBpSys = isMetricOffline("bpSys") ? null : (sv.bpSys !== undefined ? sv.bpSys : null);
+                const effBpDia = isMetricOffline("bpDia") ? null : (sv.bpDia !== undefined ? sv.bpDia : null);
+                const effTemp = isMetricOffline("temp") ? null : (sv.temp !== undefined ? sv.temp : null);
+                const effGlucose = isMetricOffline("glucose") ? null : (sv.glucose !== undefined ? sv.glucose : null);
+
                 setVitals((prev) => ({
                   ...prev,
-                  hr: bluetoothHrRef.current ?? (sv.hr !== undefined ? sv.hr : prev.hr),
-                  spo2: sv.spo2 !== undefined ? sv.spo2 : prev.spo2,
-                  bpSys: sv.bpSys !== undefined ? sv.bpSys : prev.bpSys,
-                  bpDia: sv.bpDia !== undefined ? sv.bpDia : prev.bpDia,
-                  temp: sv.temp !== undefined ? sv.temp : prev.temp,
-                  glucose: sv.glucose !== undefined ? sv.glucose : prev.glucose,
+                  hr: isMetricOffline("hr") ? null : (bluetoothHrRef.current ?? (sv.hr !== undefined ? sv.hr : prev.hr)),
+                  spo2: isMetricOffline("spo2") ? null : (sv.spo2 !== undefined ? sv.spo2 : prev.spo2),
+                  bpSys: isMetricOffline("bpSys") ? null : (sv.bpSys !== undefined ? sv.bpSys : prev.bpSys),
+                  bpDia: isMetricOffline("bpDia") ? null : (sv.bpDia !== undefined ? sv.bpDia : prev.bpDia),
+                  temp: isMetricOffline("temp") ? null : (sv.temp !== undefined ? sv.temp : prev.temp),
+                  glucose: isMetricOffline("glucose") ? null : (sv.glucose !== undefined ? sv.glucose : prev.glucose),
                   sparkHr: bluetoothHrRef.current != null ? prev.sparkHr : (sv.hr != null ? pushFifo(prev.sparkHr, sv.hr) : prev.sparkHr),
                   sparkSpo2: sv.spo2 != null ? pushFifo(prev.sparkSpo2, sv.spo2) : prev.sparkSpo2,
                   sparkBp: sv.bpSys != null ? pushFifo(prev.sparkBp, sv.bpSys) : prev.sparkBp,
@@ -11751,6 +12246,68 @@ const App = () => {
   };
 
   const triage = getTriageMetrics();
+  const familyAlerts = [...demoAlerts, ...serverAlerts];
+  const unresolvedFamilyAlerts = familyAlerts.filter((alert) => alert.status !== "Resolved");
+  const familyMonitorStatus = triage.dangerCount > 0 || unresolvedFamilyAlerts.some((alert) => alert.severity === "danger")
+    ? "danger"
+    : triage.cautionCount > 0 || unresolvedFamilyAlerts.some((alert) => alert.severity === "caution")
+    ? "caution"
+    : "normal";
+
+  // Mobile / Phone View Alert Jump State
+  const [jumpAlert, setJumpAlert] = React.useState(null);
+  const [jumpDismissed, setJumpDismissed] = React.useState(false);
+  const [isScrolledDown, setIsScrolledDown] = React.useState(false);
+  const lastAlertIdRef = React.useRef(null);
+
+  // Monitor scroll position to show floating jump-to-alert pill on phone view
+  React.useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolledDown(typeof window !== "undefined" && window.scrollY > 150);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // When an alert comes in on phone/mobile, jump upwards automatically so viewer sees the issue first!
+  React.useEffect(() => {
+    const urgentAlert = unresolvedFamilyAlerts.find(
+      (a) => a.severity === "danger" || a.severity === "critical" || a.severity === "caution"
+    );
+
+    if (urgentAlert) {
+      if (lastAlertIdRef.current !== urgentAlert.id) {
+        lastAlertIdRef.current = urgentAlert.id;
+        setJumpAlert(urgentAlert);
+        setJumpDismissed(false);
+
+        // Auto jump upwards smoothly so viewer spots the issue instantly
+        const triggerJumpUpwards = () => {
+          if (typeof window !== "undefined") {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+            const anchor = document.getElementById("mobile-urgent-alert-anchor");
+            if (anchor) {
+              anchor.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+          }
+        };
+
+        triggerJumpUpwards();
+        const t1 = setTimeout(triggerJumpUpwards, 80);
+        const t2 = setTimeout(triggerJumpUpwards, 260);
+        return () => {
+          clearTimeout(t1);
+          clearTimeout(t2);
+        };
+      }
+    } else {
+      if (jumpAlert && !jumpDismissed) {
+        setJumpAlert(null);
+        setJumpDismissed(false);
+      }
+      lastAlertIdRef.current = null;
+    }
+  }, [unresolvedFamilyAlerts]);
 
   // Auth Handlers
   const handleLogin = async (email, password) => {
@@ -11854,6 +12411,9 @@ const App = () => {
     if (!isNurse && activeTab === "ward") {
       setActiveTab("dashboard");
     }
+    if (isNurse && activeTab === "family-monitor") {
+      setActiveTab("dashboard");
+    }
   }, [user, activeTab]);
 
   return (
@@ -11890,6 +12450,95 @@ const App = () => {
 
         {/* Page Content Body */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1600px] w-full mx-auto">
+          {/* Mobile Alert Jump Target Anchor */}
+          <div id="mobile-urgent-alert-anchor" />
+
+          {/* Top Priority Urgent Alert Jump Banner (Renders across mobile/all viewports when active alert fires) */}
+          {jumpAlert && !jumpDismissed && (
+            <div
+              className={`mb-6 rounded-2xl p-4 sm:p-5 text-white shadow-xl transition-all duration-300 relative overflow-hidden ${
+                jumpAlert.severity === "danger" || jumpAlert.severity === "critical"
+                  ? "bg-gradient-to-r from-rose-700 via-rose-600 to-red-700 border-2 border-rose-300 ring-4 ring-rose-400/40"
+                  : "bg-gradient-to-r from-amber-600 via-amber-500 to-orange-600 border-2 border-amber-300 ring-4 ring-amber-400/40"
+              } animate-in slide-in-from-top-6`}
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-start gap-3.5">
+                  <div className="w-11 h-11 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center shrink-0 animate-bounce mt-0.5 shadow-xs">
+                    <AlertTriangle className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-white text-rose-700 shadow-2xs">
+                        {jumpAlert.severity === "danger" || jumpAlert.severity === "critical"
+                          ? "🚨 EMERGENCY ALERT · IMMEDIATE ACTION"
+                          : "⚠️ CLINICAL WARNING"}
+                      </span>
+                      <span className="text-xs text-white/90 font-medium">
+                        {jumpAlert.time || "Just now"}
+                      </span>
+                      {jumpAlert.source && (
+                        <span className="text-xs text-white/80 font-mono">
+                          via {jumpAlert.source}
+                        </span>
+                      )}
+                    </div>
+                    <h2 className="text-base sm:text-lg font-black text-white mt-1 leading-tight">
+                      {jumpAlert.title || jumpAlert.conditionReason || "Critical Clinical Threshold Exceeded"}
+                    </h2>
+                    {jumpAlert.reading && (
+                      <div className="mt-1 flex items-center gap-2 flex-wrap">
+                        <span className="inline-block bg-black/30 backdrop-blur-xs px-2.5 py-0.5 rounded-md font-mono text-xs font-bold text-white border border-white/20">
+                          Reading: {jumpAlert.reading}
+                        </span>
+                        <span className="text-xs text-white/90">
+                          Patient: <strong>{jumpAlert.patientName || activePatient?.name || "Patient"}</strong>
+                        </span>
+                      </div>
+                    )}
+                    {jumpAlert.message && (
+                      <p className="text-xs text-white/95 mt-1.5 leading-relaxed max-w-3xl">
+                        {jumpAlert.message}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center sm:flex-col gap-2 shrink-0 self-end sm:self-center mt-2 sm:mt-0">
+                  <button
+                    onClick={() => {
+                      setActiveTab("alerts");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className="px-3.5 py-1.5 rounded-xl bg-white text-rose-800 text-xs font-bold hover:bg-rose-50 shadow-xs cursor-pointer transition-all flex items-center gap-1.5"
+                  >
+                    <span>Review Escalation</span>
+                    <span>→</span>
+                  </button>
+                  {jumpAlert.id && (
+                    <button
+                      onClick={() => {
+                        handleAcknowledgeAlert(jumpAlert.id);
+                        setJumpDismissed(true);
+                      }}
+                      className="px-3.5 py-1 rounded-xl bg-black/25 text-white text-[11px] font-semibold hover:bg-black/35 cursor-pointer transition-all"
+                    >
+                      Acknowledge
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setJumpDismissed(true)}
+                    className="px-2 py-1 rounded-lg text-white/70 hover:text-white hover:bg-white/10 text-[11px] transition-all cursor-pointer"
+                    title="Dismiss Banner"
+                  >
+                    Dismiss ✕
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {activeTab === "dashboard" && (
             <div className="animate-in fade-in duration-150">
               {/* Hospital Inpatient Bed Selector Bar (Active Census & Bed Toggle) */}
@@ -12013,20 +12662,10 @@ const App = () => {
 
                 <div className="flex items-center gap-2">
                   <span className="text-[11px] text-slate-500 font-medium bg-slate-50 border border-slate-200/80 px-2.5 py-1 rounded-md">
-                    HSC 2027 Demonstration Mode · Synthetic Telemetry
+                    Judge Demo · Admin-synced synthetic telemetry
                   </span>
                 </div>
               </div>
-
-              <SensorDemoPanel
-                disconnectedDevices={disconnectedDevices}
-                serverDisconnectedDevices={serverOfflineDevices}
-                onToggleDevice={handleToggleDevice}
-                feedOverride={feedOverride}
-                onPushReading={handlePushReading}
-                onClearFeed={handleClearFeed}
-                onBluetoothHeartRate={handleBluetoothHeartRate}
-              />
 
               {/* 4. Main Content Area (2-Column Grid: 70% Left, 30% Right) */}
               <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
@@ -12206,13 +12845,6 @@ const App = () => {
                   {/* Comprehensive Vital Signs Table */}
                   <VitalSignsTable vitalsData={vitals} />
 
-                  {/* Hardware Diagnostics & Sensor Telemetry Bar (Pinned at bottom of left area) */}
-                  <HardwareDiagnosticsBar
-                    reliabilityScore={98}
-                    currentUser={user}
-                    activePatient={activePatient}
-                    offlineDeviceIds={serverOfflineDevices}
-                  />
                 </div>
 
                 {/* Right Column (Alerts & Care Coordination Panel - 30%) */}
@@ -12240,6 +12872,18 @@ const App = () => {
                 />
               </div>
             </div>
+          )}
+
+          {activeTab === "family-monitor" && !isNurse && (
+            <FamilyMonitorView
+              patient={activePatient}
+              vitals={vitals}
+              alerts={familyAlerts}
+              connectivity={serverConnectivity}
+              secondsAgo={secondsAgo}
+              status={familyMonitorStatus}
+              onViewAlerts={() => setActiveTab("alerts")}
+            />
           )}
 
           {/* Dedicated "Camera Zones" Route */}
@@ -12346,6 +12990,26 @@ const App = () => {
             setVitals((prev) => ({ ...prev, bpSys: 178, hr: 124 }));
           }}
         />
+
+        {/* Floating Mobile Jump-to-Alert Pill (visible when scrolled down on phone view while alert is active) */}
+        {jumpAlert && !jumpDismissed && isScrolledDown && (
+          <div className="fixed bottom-6 right-4 sm:right-6 z-50 animate-bounce">
+            <button
+              onClick={() => {
+                if (typeof window !== "undefined") {
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                  const anchor = document.getElementById("mobile-urgent-alert-anchor");
+                  if (anchor) anchor.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
+              }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-rose-600 text-white font-black text-xs shadow-2xl border-2 border-white hover:bg-rose-700 transition-all cursor-pointer ring-4 ring-rose-400/50"
+              title="Jump upwards to see active alert"
+            >
+              <span className="text-base leading-none">⬆️</span>
+              <span>Jump to Urgent Alert</span>
+            </button>
+          </div>
+        )}
 
         {/* Clinical Software Compliance Footer */}
         <footer className="border-t border-slate-200/80 py-4 px-6 bg-white text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-2">

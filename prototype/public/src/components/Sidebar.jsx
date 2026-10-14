@@ -15,6 +15,7 @@ const Sidebar = ({
 
   const navItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+    ...(!isNurse ? [{ id: "family-monitor", label: "Family Monitor", icon: Activity, badge: "Remote" }] : []),
     { id: "medicines", label: "Medicines", icon: Pill },
     { id: "camera", label: "Camera Zones", icon: Video, badge: "Live CCTV" },
     ...(isNurse ? [{ id: "ward", label: "Virtual Ward", icon: Building2, badge: "Hospital" }] : []),
@@ -40,13 +41,8 @@ const Sidebar = ({
         {/* Brand Header */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-slate-200/80">
           <div className="flex items-center gap-3 min-w-0">
-            {/* ReJivan Brand Logo Mark with Heart + ECG motif */}
-            <div className="w-9 h-9 rounded-xl bg-[#103663] text-[#08A6A6] flex items-center justify-center shrink-0 shadow-xs border border-[#08A6A6]/30">
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-                <path d="M7 12h2.5l1.5-3 2 6 1.5-3H17" stroke="#08A6A6" strokeWidth="2" />
-              </svg>
-            </div>
+            {/* ReJivan Brand Logo Mark matching official identity */}
+            <BrandLogo className="w-9 h-9" imgClassName="w-5 h-5" rounded="rounded-xl" withBg={true} />
             {!collapsed && (
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
@@ -140,14 +136,14 @@ const Sidebar = ({
               <p className="text-[11px] text-slate-500 mt-1 leading-normal">
                 Simulated for demonstration purposes.
               </p>
+              <a href="/downloads/ReJivan-Demo.apk" download className="mt-2 flex items-center gap-1.5 text-[11px] font-semibold text-blue-700 hover:text-blue-900">
+                <Download className="h-3.5 w-3.5" /> Download Android demo
+              </a>
             </div>
           ) : (
-            <div
-              className="w-full flex justify-center py-2 text-amber-600"
-              title="Simulation Demo - Simulated for demonstration purposes"
-            >
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
-            </div>
+            <a href="/downloads/ReJivan-Demo.apk" download className="w-full flex justify-center py-2 text-blue-700" title="Download ReJivan Android demo APK" aria-label="Download ReJivan Android demo APK">
+              <Download className="h-4 w-4" />
+            </a>
           )}
         </div>
       </aside>

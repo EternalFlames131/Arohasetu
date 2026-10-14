@@ -6,5 +6,23 @@
   "background_color": "#0e1420",
   "theme_color": "#0e1420",
   "description": "A Personal Nurse for Every Family — remote health monitoring, on-time medicines and automatic emergency help.",
-  "icons": []
+  "icons": [
+    {
+      "src": "/assets/logo-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/logo-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
 }

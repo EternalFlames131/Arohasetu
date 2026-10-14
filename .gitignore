@@ -21,3 +21,7 @@ prototype/.env.local
 prototype/.agents/
 prototype/skills-lock.json
 
+.vercel/
+
+# Android binaries (local offline-first APKs — avoid GitHub HTTP 408 payload timeout)
+*.apk

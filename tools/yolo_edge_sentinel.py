@@ -215,25 +215,25 @@ class SentinelHub:
             software_version="2.4.0-edge"
         )
 
-        # 1A. Local Phone / Mobile Connected Camera (Index 0)
+        # 1A. Integrated Laptop HD Webcam (Index 0)
         self.webcam_source = LocalWebcamSource(
             camera_id="cam-webcam-01",
-            camera_name="Connected Phone / Mobile Camera (Index 0)",
+            camera_name="Integrated Laptop HD Webcam (Index 0)",
             device_index=0,
             zone="Home Living Room",
             resident_id="P1",
-            resolution=(640, 480),
+            resolution=(1280, 720),
             target_fps=30.0
         )
 
-        # 1B. Integrated Laptop HD Webcam (Index 1)
+        # 1B. Connected Phone / Phone Link Mobile Camera (Index 1)
         self.laptop_webcam_source = LocalWebcamSource(
             camera_id="cam-webcam-02",
-            camera_name="Integrated Laptop HD Webcam (Index 1)",
+            camera_name="Connected Phone / Phone Link Camera (Index 1)",
             device_index=1,
             zone="Home Living Room",
             resident_id="P1",
-            resolution=(1280, 720),
+            resolution=(640, 480),
             target_fps=30.0
         )
 

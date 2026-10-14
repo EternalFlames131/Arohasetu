@@ -4,11 +4,27 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Medical cross inside a rounded-heart on dark background -->
-    <path
-        android:fillColor="#2FBF8F"
-        android:pathData="M54,26 C54,26 32,42 32,62 C32,76 43,85 54,85 C65,85 76,76 76,62 C76,42 54,26 54,26 Z" />
-    <path
-        android:fillColor="#0E1420"
-        android:pathData="M46,44 h12 v8 h8 v12 h-8 v8 h-12 v-8 h-8 v-12 h8 Z" />
+    <!-- Heart outline and ECG pulse line in Navy (#103663) scaled into adaptive-icon safe zone -->
+    <group
+        android:scaleX="0.68"
+        android:scaleY="0.68"
+        android:translateX="17.28"
+        android:translateY="17.28">
+        <!-- Heart outline -->
+        <path
+            android:fillColor="#00000000"
+            android:strokeColor="#103663"
+            android:strokeWidth="7"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:pathData="M 50,78 C 34,65 20,53 20,38 C 20,25 30.5,17 41.5,17 C 46.5,17 48.8,19.5 50,22 C 51.2,19.5 53.5,17 58.5,17 C 69.5,17 80,25 80,38 C 80,53 66,65 50,78 Z" />
+        <!-- ECG pulse line -->
+        <path
+            android:fillColor="#00000000"
+            android:strokeColor="#103663"
+            android:strokeWidth="7"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:pathData="M 20,50 L 41,50 L 45,61 L 52.5,33 L 57.5,50 L 80,50" />
+    </group>
 </vector>

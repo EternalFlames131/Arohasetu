@@ -31,6 +31,42 @@ const Heart = (props) => (
   />
 );
 
+const HeartPulse = (props) => (
+  <IconBase
+    {...props}
+    d={
+      <>
+        <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+        <path d="M3.2 12h5.8l1.5 3 2.5-6 1.8 3h6" />
+      </>
+    }
+  />
+);
+
+// Official ReJivan Brand Logo Mark matching the user-provided identity
+const BrandLogo = ({ className = "w-9 h-9", imgClassName = "w-5 h-5", rounded = "rounded-xl", withBg = true }) => {
+  if (withBg) {
+    return (
+      <div className={`${className} ${rounded} bg-[#E8F6F5] border border-[#C2E8E4] flex items-center justify-center shrink-0 shadow-xs overflow-hidden`}>
+        <svg className={imgClassName} viewBox="0 0 100 100" fill="none">
+          <g fill="none" stroke="#103663" strokeWidth="7.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M 50,78 C 34,65 20,53 20,38 C 20,25 30.5,17 41.5,17 C 46.5,17 48.8,19.5 50,22 C 51.2,19.5 53.5,17 58.5,17 C 69.5,17 80,25 80,38 C 80,53 66,65 50,78 Z" />
+            <path d="M 20,50 L 41,50 L 45,61 L 52.5,33 L 57.5,50 L 80,50" />
+          </g>
+        </svg>
+      </div>
+    );
+  }
+  return (
+    <svg className={className} viewBox="0 0 100 100" fill="none">
+      <g fill="none" stroke="#103663" strokeWidth="7.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M 50,78 C 34,65 20,53 20,38 C 20,25 30.5,17 41.5,17 C 46.5,17 48.8,19.5 50,22 C 51.2,19.5 53.5,17 58.5,17 C 69.5,17 80,25 80,38 C 80,53 66,65 50,78 Z" />
+        <path d="M 20,50 L 41,50 L 45,61 L 52.5,33 L 57.5,50 L 80,50" />
+      </g>
+    </svg>
+  );
+};
+
 const Droplets = (props) => (
   <IconBase
     {...props}

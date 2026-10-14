@@ -3,8 +3,8 @@
 // Treats prerecorded hospital video as an authentic virtual camera source alongside Live Webcam and RTSP CCTV.
 // Real-Time YOLO11-Pose 17-Keypoint Inference & Client Optical Consensus with Zero Hardcoded Time Gates.
 
-const SYSTEM_CAMERA_LABEL = /integrated|built[ -]?in|laptop|internal|facetime|computer camera/i;
-const MOBILE_CAMERA_LABEL = /phone|mobile|android|iphone|droidcam|iriun|camo|ivcam|epoccam|continuity/i;
+const SYSTEM_CAMERA_LABEL = /integrated|built[ -]?in|laptop|internal|facetime|computer|user facing|front|hd user|webcam|camera/i;
+const MOBILE_CAMERA_LABEL = /phone|mobile|android|iphone|droidcam|iriun|camo|ivcam|epoccam|continuity|phone link|link to windows|cross device|virtual camera/i;
 
 const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, activePatient }) => {
   // 1. Unified Camera Source Abstraction ('LIVE_WEBCAM' | 'PRERECORDED_VIDEO' | 'RTSP_CAMERA')
@@ -309,12 +309,13 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
     // HTTPS deployments, instead of changing only the button highlight.
     try {
       const webcams = await refreshAvailableWebcams(true);
-      const preferred = newIdx === 1
+      const isComputer = newIdx === 0;
+      const preferred = isComputer
         ? webcams.find((device) => SYSTEM_CAMERA_LABEL.test(device.label) && !MOBILE_CAMERA_LABEL.test(device.label))
         : webcams.find((device) => MOBILE_CAMERA_LABEL.test(device.label));
-      const fallback = newIdx === 1
+      const fallback = isComputer
         ? webcams.find((device) => !MOBILE_CAMERA_LABEL.test(device.label))
-        : webcams.find((device) => !SYSTEM_CAMERA_LABEL.test(device.label));
+        : webcams.find((device) => MOBILE_CAMERA_LABEL.test(device.label) || device.label.toLowerCase().includes("phone"));
       const device = preferred || fallback || webcams[newIdx] || webcams[0];
       if (!device?.deviceId) throw new Error("No camera was found. Connect the camera and allow browser access, then try again.");
       setHardwareCameraIndex(newIdx);
@@ -378,6 +379,16 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
           const data = await res.json();
           setLocalYoloActive(true);
           setLocalYoloInfo(data);
+          setLiveCameraMode("HARDWARE_YOLO");
+          setHardwareStreamPaused(false);
+          setStreamRetryKey(Date.now());
+          setCameraSwitchError("");
+          fetch(`${YOLO_API_BASE}/api/yolo/start`, { method: "POST" }).catch(() => {});
+          if (webcamStreamRef.current) {
+            webcamStreamRef.current.getTracks().forEach((track) => track.stop());
+            webcamStreamRef.current = null;
+          }
+          if (cameraSource === "LIVE_WEBCAM") setPlaybackState("PLAYING");
           setIsStartingDaemon(false);
           clearInterval(pollTimer);
           return;
@@ -385,6 +396,7 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
       } catch (e) {}
       if (attempts >= 12) {
         setIsStartingDaemon(false);
+        setCameraSwitchError("YOLO Edge is offline on this computer. In-Browser analysis is still available.");
         clearInterval(pollTimer);
       }
     }, 1000);
@@ -671,7 +683,7 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
         // built-in system camera over a connected phone when the user has not
         // explicitly chosen a device.
         const webcams = await refreshAvailableWebcams(false);
-        const preferredSystemCamera = webcams.find((device) => SYSTEM_CAMERA_LABEL.test(device.label) && !MOBILE_CAMERA_LABEL.test(device.label));
+        const preferredSystemCamera = webcams.find((device) => !MOBILE_CAMERA_LABEL.test(device.label) && SYSTEM_CAMERA_LABEL.test(device.label)) || webcams.find((device) => !MOBILE_CAMERA_LABEL.test(device.label));
         const openedDeviceId = stream.getVideoTracks()[0]?.getSettings?.().deviceId || "";
         if (!selectedCameraDeviceId && preferredSystemCamera?.deviceId && preferredSystemCamera.deviceId !== openedDeviceId) {
           try {
@@ -847,9 +859,12 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
     let frameCount = 0;
     let lastFpsCheck = Date.now();
+    let lastAnalysisAt = 0;
     let currentFps = 25;
     let calibrationFrames = 0;
-    const CALIBRATION_TOTAL = 30; // 30 frames (~1.2s) startup baseline calibration
+    const ANALYSIS_INTERVAL_MS = 100; // Analyze at 10 FPS; native video playback stays smooth.
+    const MAX_ANALYSIS_WIDTH = 640;
+    const CALIBRATION_TOTAL = 10; // About one second at the analysis rate.
 
     // YOLO inference bridge state
     let latestKeypoints = null;
@@ -884,6 +899,10 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
       }
 
       try {
+        const frameTime = performance.now();
+        if (frameTime - lastAnalysisAt < ANALYSIS_INTERVAL_MS) return;
+        lastAnalysisAt = frameTime;
+
         // Check for video ended
       if (video.ended || (cameraSource !== "LIVE_WEBCAM" && video.currentTime >= (video.duration - 0.05))) {
         setPlaybackState("VIDEO_ENDED");
@@ -904,9 +923,12 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
       }
 
       if (video.videoWidth > 0 && video.videoHeight > 0) {
-        if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
+        const analysisScale = Math.min(1, MAX_ANALYSIS_WIDTH / video.videoWidth);
+        const analysisWidth = Math.max(1, Math.round(video.videoWidth * analysisScale));
+        const analysisHeight = Math.max(1, Math.round(video.videoHeight * analysisScale));
+        if (canvas.width !== analysisWidth || canvas.height !== analysisHeight) {
+          canvas.width = analysisWidth;
+          canvas.height = analysisHeight;
         }
 
         const width = canvas.width;
@@ -1706,10 +1728,9 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
 
           {/* Right: Controls, Device Selector & Quick Actions */}
           <div className="flex flex-wrap items-center gap-2.5 shrink-0 self-start md:self-center">
-            {cameraSource === "LIVE_WEBCAM" && (
-              <div className="flex items-center gap-2">
-                {/* Engine Toggle: Browser vs Hardware YOLO */}
-                <div className="flex items-center bg-white p-0.5 rounded-lg border border-slate-200 shadow-2xs text-[11px]">
+            <div className="flex items-center gap-2">
+              {/* Keep both engine choices visible while switching camera sources or modes. */}
+              <div className="flex items-center bg-white p-0.5 rounded-lg border border-slate-200 shadow-2xs text-[11px]">
                   <button
                     type="button"
                     onClick={() => {
@@ -1730,33 +1751,39 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
                     <span>🌐 In-Browser</span>
                   </button>
 
-                  {localYoloActive && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setLiveCameraMode("HARDWARE_YOLO");
-                        setHardwareStreamPaused(false);
-                        setStreamRetryKey(Date.now());
-                        fetch(`${YOLO_API_BASE}/api/yolo/start`, { method: "POST" }).catch(() => {});
-                        if (webcamStreamRef.current) {
-                          webcamStreamRef.current.getTracks().forEach((t) => t.stop());
-                          webcamStreamRef.current = null;
-                        }
-                      }}
-                      className={`px-2.5 py-1 rounded-md font-semibold transition-all flex items-center gap-1 ${
-                        liveCameraMode === "HARDWARE_YOLO"
-                          ? "bg-indigo-600 text-white shadow-2xs"
-                          : "text-slate-600 hover:text-slate-900"
-                      }`}
-                    >
-                      <Activity className="w-3 h-3" />
-                      <span>⚡ YOLO CUDA</span>
-                    </button>
-                  )}
-                </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!localYoloActive) {
+                        handleStartDaemon();
+                        return;
+                      }
+                      setCameraSwitchError("");
+                      setLiveCameraMode("HARDWARE_YOLO");
+                      setHardwareStreamPaused(false);
+                      setStreamRetryKey(Date.now());
+                      fetch(`${YOLO_API_BASE}/api/yolo/start`, { method: "POST" }).catch(() => {});
+                      if (webcamStreamRef.current) {
+                        webcamStreamRef.current.getTracks().forEach((t) => t.stop());
+                        webcamStreamRef.current = null;
+                      }
+                      if (cameraSource === "LIVE_WEBCAM") setPlaybackState("PLAYING");
+                    }}
+                    disabled={isStartingDaemon}
+                    title={localYoloActive ? `Use YOLO Edge (${gpuLabel})` : "YOLO Edge is not connected; click to try starting it"}
+                    className={`px-2.5 py-1 rounded-md font-semibold transition-all flex items-center gap-1 disabled:opacity-60 ${
+                      liveCameraMode === "HARDWARE_YOLO" && localYoloActive
+                        ? "bg-indigo-600 text-white shadow-2xs"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    <Activity className="w-3 h-3" />
+                    <span>{isStartingDaemon ? "Starting YOLO…" : localYoloActive ? "⚡ YOLO Edge" : "⚡ YOLO Edge · Offline"}</span>
+                  </button>
+              </div>
 
-                {/* Device Selector */}
-                {liveCameraMode === "BROWSER_WEBCAM" ? (
+              {/* Device selection applies only to the live webcam source. */}
+              {cameraSource === "LIVE_WEBCAM" && (liveCameraMode === "BROWSER_WEBCAM" ? (
                   <select
                     value={selectedCameraDeviceId}
                     onChange={(e) => handleSelectBrowserCamera(e.target.value)}
@@ -1783,7 +1810,7 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
                           : "text-slate-600 hover:text-slate-900"
                       }`}
                     >
-                        📱 Connected mobile
+                        💻 This computer
                     </button>
                     <button
                       type="button"
@@ -1794,12 +1821,11 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
                           : "text-slate-600 hover:text-slate-900"
                       }`}
                     >
-                        💻 This computer
+                        📱 Connected mobile
                     </button>
                   </div>
-                )}
-              </div>
-            )}
+                ))}
+            </div>
 
             {cameraSwitchError && (
               <span role="alert" className="max-w-56 text-[10px] font-medium text-rose-700">

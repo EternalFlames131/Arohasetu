@@ -4,7 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ReJivan — Administrator Simulation Controller | HSC 2027</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20rx='14'%20fill='%23103663'/%3E%3Cpath%20d='M14%2036h10l5-13%207%2028%206-15h8'%20fill='none'%20stroke='%2308A6A6'%20stroke-width='5'%20stroke-linecap='round'%20stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="alternate icon" type="image/png" href="/favicon.png" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -69,8 +70,13 @@
   <header class="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur sticky top-0 z-30 px-4 py-3">
     <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-xl bg-brand-navy border border-teal-500/30 flex items-center justify-center text-teal-400 font-black text-lg">
-          R
+        <div class="w-9 h-9 rounded-xl bg-[#E8F6F5] border border-[#C2E8E4] flex items-center justify-center shrink-0 shadow-xs overflow-hidden">
+          <svg class="w-5 h-5" viewBox="0 0 100 100" fill="none">
+            <g fill="none" stroke="#103663" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M 50,78 C 34,65 20,53 20,38 C 20,25 30.5,17 41.5,17 C 46.5,17 48.8,19.5 50,22 C 51.2,19.5 53.5,17 58.5,17 C 69.5,17 80,25 80,38 C 80,53 66,65 50,78 Z" />
+              <path d="M 20,50 L 41,50 L 45,61 L 52.5,33 L 57.5,50 L 80,50" />
+            </g>
+          </svg>
         </div>
         <div>
           <div class="flex items-center gap-2">
@@ -135,7 +141,7 @@
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
         <div>
           <h3 class="text-sm font-bold text-white">Demo video: check for fall-like movement</h3>
-          <p class="text-xs text-slate-400 mt-1">Choose a clip from this device or load the included sample. The clip stays in this browser; only sampled frames are sent to the local YOLO service when it is available.</p>
+           <p class="text-xs text-slate-400 mt-1">Choose a clip from this device or load the included sample. It stays in this browser. Local YOLO is used only on localhost; the hosted site analyzes frames in this browser and does not upload them.</p>
         </div>
         <div class="flex flex-wrap gap-2">
           <label class="px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-xs font-bold cursor-pointer hover:bg-slate-700">
@@ -709,25 +715,32 @@
           try {
             const frameBlob = await new Promise((resolve) => videoCanvas.toBlob(resolve, "image/jpeg", 0.72));
             if (!frameBlob) continue;
-            const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 4200);
-            const response = await fetch("/api/yolo/process_frame", {
-              method: "POST", headers: { "Content-Type": "image/jpeg", "X-Video-Timestamp": String(sampleTimes[index]), "X-Source": "PRERECORDED_VIDEO" },
-              body: frameBlob, signal: controller.signal,
-            });
-            clearTimeout(timeout);
-            if (!response.ok) continue;
-            const result = await response.json();
-            if (result?.ok) {
-              yoloFrames++;
-              const confidence = Number(result.confidence ?? result.severity_confidence ?? 0);
-              bestConfidence = Math.max(bestConfidence, confidence);
-              if (result.risk_level === "HIGH_RISK" || /FALL|FLOOR|LONG_LIE/.test(String(result.canonical_event?.probableMechanism || ""))) {
-                yoloHighRisk++;
-                yoloFindings.push(result.posture || result.consensus_summary || "High-risk pose");
+            const localYoloUrl = ["localhost", "127.0.0.1", "[::1]"].includes(window.location.hostname)
+              ? "http://127.0.0.1:5050/api/yolo/process_frame" : "";
+            if (localYoloUrl) {
+              const controller = new AbortController();
+              const timeout = setTimeout(() => controller.abort(), 4200);
+              try {
+                const response = await fetch(localYoloUrl, {
+                  method: "POST", headers: { "Content-Type": "image/jpeg", "X-Video-Timestamp": String(sampleTimes[index]), "X-Source": "PRERECORDED_VIDEO" },
+                  body: frameBlob, signal: controller.signal,
+                });
+                if (!response.ok) continue;
+                const result = await response.json();
+                if (result?.ok) {
+                  yoloFrames++;
+                  const confidence = Number(result.confidence ?? result.severity_confidence ?? 0);
+                  bestConfidence = Math.max(bestConfidence, confidence);
+                  if (result.risk_level === "HIGH_RISK" || /FALL|FLOOR|LONG_LIE/.test(String(result.canonical_event?.probableMechanism || ""))) {
+                    yoloHighRisk++;
+                    yoloFindings.push(result.posture || result.consensus_summary || "High-risk pose");
+                  }
+                }
+              } finally {
+                clearTimeout(timeout);
               }
             }
-          } catch (_) { /* local YOLO may not exist on the live hosted site */ }
+          } catch (_) { /* local YOLO may not be running */ }
           videoStatus.textContent = `Analyzed frame ${index + 1} of ${frameCount}…`;
         }
 
@@ -755,7 +768,7 @@
 
         if (eventType) {
           const result = await apiCall("/api/admin/simulator/camera-event", "POST", {
-            patientId: selectedPatientId, eventType, confidence, source: `${engine}: ${selectedVideoName}`, summary,
+            patientId: selectedPatientId, eventType, confidence, source: `${engine} · uploaded demo clip`, summary,
           });
           await fetchState();
           videoStatus.innerHTML = `<strong class="text-rose-300">${engine}: possible event · ${confidence}%</strong><br/><span>${summary}</span><br/><span class="text-teal-300">Demo alert added for ${result.alert.patientName}; visible on the dashboard.</span>`;
@@ -888,6 +901,9 @@
       alerts.forEach((a) => {
         const el = document.createElement("div");
         const isDanger = a.severity === "danger";
+        const safe = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({
+          "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+        }[char]));
         el.className = `p-3 rounded-xl border text-xs space-y-2 ${
           isDanger ? "bg-rose-950/20 border-rose-500/30" : "bg-amber-950/20 border-amber-500/30"
         }`;
@@ -900,14 +916,14 @@
 
         el.innerHTML = `
           <div class="flex items-center justify-between">
-            <span class="font-bold text-white">${a.patientName}</span>
+            <span class="font-bold text-white">${safe(a.patientName)}</span>
             <span class="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border uppercase ${statusBadgeClass}">
-              ${a.status}
+              ${safe(a.status)}
             </span>
           </div>
-          <p class="text-[11px] text-slate-300 leading-snug">${a.conditionReason || a.message}</p>
+          <p class="text-[11px] text-slate-300 leading-snug">${safe(a.conditionReason || a.message)}</p>
           <div class="flex items-center justify-between text-[10px] text-slate-500 font-mono pt-1 border-t border-slate-900">
-            <span>Threshold: ${a.threshold || 'Configured Limit'}</span>
+            <span>Threshold: ${safe(a.threshold || 'Configured Limit')}</span>
             <span>${new Date(a.createdAt).toLocaleTimeString()}</span>
           </div>
         `;

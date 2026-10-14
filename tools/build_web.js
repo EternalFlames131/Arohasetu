@@ -15,6 +15,7 @@ const files = [
   path.join(compDir, "Sparkline.jsx"),
   path.join(compDir, "Sidebar.jsx"),
   path.join(compDir, "TopBar.jsx"),
+  path.join(compDir, "FamilyMonitorView.jsx"),
   path.join(compDir, "TriageMetricStrip.jsx"),
   path.join(compDir, "PatientOverviewCard.jsx"),
   path.join(compDir, "VitalSignsTable.jsx"),
@@ -85,7 +86,9 @@ const indexHtmlContent = `<!DOCTYPE html>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#0F172A" />
   <title>ReJivan — Enterprise Clinical Monitoring Portal</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20rx='14'%20fill='%230F172A'/%3E%3Cpath%20d='M14%2036h10l5-13%207%2028%206-15h8'%20fill='none'%20stroke='%232563EB'%20stroke-width='5'%20stroke-linecap='round'%20stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="alternate icon" type="image/png" href="/favicon.png" />
+  <link rel="apple-touch-icon" href="/assets/logo-192.png" />
   <link rel="manifest" href="/manifest.json" />
 
   <!-- Typography: Inter, Plus Jakarta Sans, JetBrains Mono -->

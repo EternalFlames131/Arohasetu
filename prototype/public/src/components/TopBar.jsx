@@ -17,6 +17,7 @@ const TopBar = ({
 
   const tabTitles = {
     dashboard: "Patient Telemetry Dashboard",
+    "family-monitor": "Family Remote Monitor & Care Assistant",
     medicines: "Medication Administration Record",
     camera: "Live Camera Zones & CCTV",
     ward: "Virtual Ward Telemetry Center",
