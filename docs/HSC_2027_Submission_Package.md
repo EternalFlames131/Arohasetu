@@ -5,7 +5,7 @@
 **Target Region:** Andaman & Nicobar Islands (UT) & Pan-India Rural/Semi-Urban Communities  
 **Theme:** Healthcare, Wellbeing & Service Delivery · Elderly Care & Healthy Ageing  
 **Public Repository:** `https://github.com/EternalFlames131/ReJivan-FS` (Mirror: `https://github.com/splinemotions/ReJivan-FS`)  
-**Live Prototype URL:** `https://rejivan2.vercel.app`  
+**Live Prototype URL:** `https://arohasetu.vercel.app`  
 
 ---
 
@@ -53,7 +53,7 @@
   * **Team Member 2:** `[Name / Role / MY Bharat ID]`
   * **Team Member 3:** `[Name / Role / MY Bharat ID]`
 * **Institution:** `[College Name]`, Port Blair, Andaman & Nicobar Islands | **AISHE Code:** `[User to insert]`
-* **Live Deployment:** `https://rejivan2.vercel.app` | **Open-Source Code:** `github.com/EternalFlames131/ReJivan-FS`
+* **Live Deployment:** `https://arohasetu.vercel.app` | **Open-Source Code:** `github.com/EternalFlames131/ReJivan-FS`
 
 ### Slide 2: Problem Definition & Regional Grounding
 * **The "Silent Gap" in Vulnerable Healthcare:**
@@ -140,8 +140,8 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Hackathon: HSC 2027](https://img.shields.io/badge/HSC%202027-IIT%20Bombay%20%7C%20MoYAS-blue.svg)](https://mybharat.gov.in)
-[![Live Prototype](https://img.shields.io/badge/Live%20Demo-rejivan2.vercel.app-emerald.svg)](https://rejivan2.vercel.app)
-[![Android APK](https://img.shields.io/badge/Android-APK%20v1.0-green.svg)](https://rejivan2.vercel.app/download/ReJivan_v1.0.apk)
+[![Live Prototype](https://img.shields.io/badge/Live%20Demo-arohasetu.vercel.app-emerald.svg)](https://arohasetu.vercel.app)
+[![Android APK](https://img.shields.io/badge/Android-APK%20v1.0-green.svg)](https://arohasetu.vercel.app/download/ReJivan_v1.0.apk)
 
 > Developed for **Hack for Social Cause (HSC) 2027** under the Viksit Bharat Young Leaders Dialogue (VBYLD 2027).  
 > **Knowledge Partner:** IIT Bombay | **Organized by:** Ministry of Youth Affairs & Sports (MoYAS), Govt. of India.  
@@ -160,7 +160,7 @@ ReJivan is an affordable, privacy-first remote patient monitoring platform that 
 
 ## 🚀 Live Demo & Accounts
 
-* **Production URL:** [https://rejivan2.vercel.app](https://rejivan2.vercel.app)
+* **Production URL:** [https://arohasetu.vercel.app](https://arohasetu.vercel.app)
 * **Demo Logins:**
   * **Family Caregiver (Home Mode):** `asharma@demo.in` | Password: `demo123`
   * **Ward Nurse (Hospital Virtual Ward):** `wardnurse@demo.in` | Password: `demo123`
@@ -245,7 +245,7 @@ This project is open-sourced under the **MIT License**.
 * [x] **Open-Source License:** Valid `LICENSE` file (MIT License) present in root directory.
 * [x] **Secrets Hygiene:** Ensure zero personal passwords, private API tokens, or `.env` credential files are committed.
 * [x] **Active Branch:** Branch `main` contains the latest working, verified code.
-* [x] **Live Links Tested:** `https://rejivan2.vercel.app` resolves with HTTP 200 and loads demo accounts.
+* [x] **Live Links Tested:** `https://arohasetu.vercel.app` resolves with HTTP 200 and loads demo accounts.
 * [x] **Android APK Link:** Direct link to `ReJivan_v1.0.apk` functional and verified.
 
 ---
@@ -259,7 +259,7 @@ This project is open-sourced under the **MIT License**.
 | Timestamp | Visual Screen Action | Voiceover Narration Script (Spoken by Samrat / Team) |
 | :--- | :--- | :--- |
 | **0:00 – 0:30** | **Camera on Team Lead / Title Slide**<br>Samrat speaks clearly to camera with title slide overlay: "ReJivan — A Personal Nurse for Every Family". | "Namaste. I am Samrat, a teacher trainee from the Andaman and Nicobar Islands, presenting ReJivan for Hack for Social Cause 2027. Millions of elderly citizens live alone, and in government hospitals, a single nurse often watches over 40 beds at night. When an elderly person suffers a fall, a nocturnal drop in oxygen, or a heart crisis, hours can pass in silence before anyone notices. In remote island archipelagos like Andaman, where specialist hospitals are sea ferries away, that delay is fatal. ReJivan solves this with a two-layer safety shield." |
-| **0:30 – 1:15** | **Screen Capture: Live Family Dashboard (`rejivan2.vercel.app`)**<br>Log in as `asharma@demo.in`. Show Anita Sharma's dashboard: clean live vitals, green status indicators, medication administration schedule, and 5-language switcher (switch to Hindi then Bengali). | "Here is our live platform. In Family Care mode, ReJivan connects to wearable sensors monitoring Heart Rate, SpO2, Blood Pressure, and Blood Glucose. Every reading is clinically scored using the National Early Warning Score 2 (NEWS2). The dashboard is accessible in five Indian languages, and families can track medication schedules in real time, receiving immediate alerts for missed doses." |
+| **0:30 – 1:15** | **Screen Capture: Live Family Dashboard (`arohasetu.vercel.app`)**<br>Log in as `asharma@demo.in`. Show Anita Sharma's dashboard: clean live vitals, green status indicators, medication administration schedule, and 5-language switcher (switch to Hindi then Bengali). | "Here is our live platform. In Family Care mode, ReJivan connects to wearable sensors monitoring Heart Rate, SpO2, Blood Pressure, and Blood Glucose. Every reading is clinically scored using the National Early Warning Score 2 (NEWS2). The dashboard is accessible in five Indian languages, and families can track medication schedules in real time, receiving immediate alerts for missed doses." |
 | **1:15 – 2:00** | **Screen Capture: Camera Zones & Fall Sentinel**<br>Navigate to Camera Zones. Show the optical pose tracking skeleton. Highlight DPDP Act 2023 compliance badge. Play the Hospital Bed-Fall demo or connect webcam. | "Our second layer is the Visual Optical Sentinel. Traditional CCTV cameras invade privacy and violate India's Digital Personal Data Protection Act. ReJivan uses on-device computer vision: it extracts 17 body joint keypoints right in the room, analyzes fall velocity and posture, and permanently erases the video in milliseconds. No video is ever stored or transmitted to the cloud." |
 | **2:00 – 2:45** | **Screen Capture: Dual-Window Admin Simulator & Emergency Escalation**<br>Open split screen: Left window shows Judge Dashboard; Right window shows `/admin/simulator`. In Admin window, trigger "Low SpO2 (88%)". Watch Left window turn RED in 1.8 seconds. Show the 3-Tier Call Ladder. | "To demonstrate how ReJivan responds to emergencies, we have an Admin Cockpit syncing live with the dashboard. If an elderly resident experiences severe hypoxemia or a sudden fall, the clinical rules engine immediately triggers an autonomous 3-tier emergency ladder: first calling the primary family caregiver; if unanswered within 15 seconds, escalating to a backup neighbor; and after 45 seconds, automatically alerting emergency dispatch 108 and marine ambulances with patient vitals." |
 | **2:45 – 3:15** | **Screen Capture: Hospital Virtual Ward (`wardnurse@demo.in`)**<br>Log out and log in as `wardnurse@demo.in`. Show Multi-Bed Ward Grid (Bed 101 to 104). Click on Bed 101. Show 4-stage alert lifecycle: click `Acknowledge` $\rightarrow$ type clinical note $\rightarrow$ click `Resolve`. | "For healthcare facilities, ReJivan transforms ordinary wards into smart Virtual Wards. The nurse station view continuously ranks inpatient beds by clinical acuity. Nurses manage a formal 4-stage alert lifecycle—New, Acknowledged, Follow-up Recorded, and Resolved—creating an immutable digital audit trail compliant with Ayushman Bharat standards." |
@@ -282,7 +282,7 @@ This project is open-sourced under the **MIT License**.
    - Institution Name: [User to insert College/Institute Name]
    - Institutional AISHE Code: [User to insert AISHE Code]
    - Public Repository URL: https://github.com/EternalFlames131/ReJivan-FS
-   - Live Prototype URL: https://rejivan2.vercel.app
+   - Live Prototype URL: https://arohasetu.vercel.app
 
 2. TEAM COMPOSITION:
 

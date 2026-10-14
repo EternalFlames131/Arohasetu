@@ -9,7 +9,8 @@
   } else if (typeof module === "object" && module.exports) {
     module.exports = factory();
   } else {
-    root.ArohaMovementEngine = factory();
+    root.ArohasetuMovementEngine = factory();
+    root.ArohaMovementEngine = root.ArohasetuMovementEngine;
     root.ReJivanMovementEngine = root.ArohaMovementEngine;
   }
 })(typeof window !== "undefined" ? window : (typeof self !== "undefined" ? self : this), function () {

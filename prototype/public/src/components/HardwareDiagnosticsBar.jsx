@@ -80,7 +80,7 @@ const HardwareDiagnosticsBar = ({
       hubText: "BLE Mesh Hub Active (Port Blair Gateway)",
       devices: [
         {
-          model: "Aroha Smartwatch",
+          model: "Arohasetu Smartwatch",
           type: "Heart Rate + SpO₂ Wearable",
           status: "Connected",
           battery: 91,

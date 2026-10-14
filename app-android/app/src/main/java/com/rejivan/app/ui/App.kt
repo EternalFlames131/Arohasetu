@@ -172,7 +172,7 @@ private fun LoginScreen(state: AppState) {
                     BrandLogoMark(size = 44.dp)
                     Spacer(Modifier.width(12.dp))
                     Column {
-                        Text("Aroha FS", color = AppColors.accent, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                        Text("Arohasetu FS", color = AppColors.accent, fontSize = 24.sp, fontWeight = FontWeight.Bold)
                         Text("Notice sooner, care better", color = AppColors.muted, fontSize = 12.sp)
                     }
                 }
@@ -279,7 +279,7 @@ fun MainShell(state: AppState) {
                 BrandLogoMark(size = 32.dp)
                 Spacer(Modifier.width(10.dp))
                 Column {
-                    Text("Aroha FS", color = AppColors.txt, fontSize = 19.sp, fontWeight = FontWeight.Bold, lineHeight = 20.sp)
+                    Text("Arohasetu FS", color = AppColors.txt, fontSize = 19.sp, fontWeight = FontWeight.Bold, lineHeight = 20.sp)
                     Text("Notice sooner, care better", color = AppColors.muted, fontSize = 9.5.sp, lineHeight = 11.sp)
                 }
                 Spacer(Modifier.weight(1f))
@@ -372,7 +372,7 @@ fun Dashboard(state: AppState) {
             Text("Live Vitals Dashboard", color = AppColors.txt, fontSize = 18.sp, fontWeight = FontWeight.Bold)
             Text("Region: ${DemoData.REGION}", color = AppColors.warn, fontSize = 12.sp)
             val srcNote = if (state.dataSource == Repository.Source.SERVER)
-                "Data fetched from aroha.vercel.app" else "OFFLINE: local engine"
+                "Data fetched from arohasetu.vercel.app" else "OFFLINE: local engine"
             Text(srcNote, color = if (state.dataSource == Repository.Source.SERVER) AppColors.ok else AppColors.muted, fontSize = 11.sp)
             Text("SIMULATED vital data • REAL monitoring logic", color = AppColors.muted, fontSize = 11.sp)
         }
@@ -528,7 +528,7 @@ private fun CareAssistantCard(
         val prompt = raw.trim()
         if (prompt.isBlank()) return
         val lower = prompt.lowercase()
-        val feed = if (serverConnected) "The app is receiving updates from the Aroha server." else "The app is offline and showing its local demo data."
+        val feed = if (serverConnected) "The app is receiving updates from the Arohasetu server." else "The app is offline and showing its local demo data."
         val snapshot = "Current readings for ${patient.name}: heart rate $hr bpm; oxygen $oxygen%; blood pressure $sbp/$dbp mmHg; temperature $temperature °C; glucose $glucose mg/dL."
         val reply = when {
             listOf("alert", "fall", "event", "warning").any { it in lower } -> if (latestAlerts.isEmpty()) {
@@ -544,7 +544,7 @@ private fun CareAssistantCard(
         } + if (condition) {
             " A danger-level reading or alert is present. Contact the care team promptly; for an immediate emergency, contact local emergency services. This demo does not diagnose."
         } else " These summaries are not a diagnosis or treatment plan."
-        conversation = (conversation + ("You" to prompt) + ("Aroha assistant" to reply)).takeLast(6)
+        conversation = (conversation + ("You" to prompt) + ("Arohasetu assistant" to reply)).takeLast(6)
         question = ""
     }
 
@@ -554,7 +554,7 @@ private fun CareAssistantCard(
         modifier = Modifier.fillMaxWidth().border(1.dp, AppColors.line, RoundedCornerShape(14.dp))
     ) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
-            Text("AROHA CARE ASSISTANT · DEMO", color = AppColors.accent, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+            Text("AROHASETU CARE ASSISTANT · DEMO", color = AppColors.accent, fontSize = 10.sp, fontWeight = FontWeight.Bold)
             Text("Ask about ${patient.name}'s situation", color = AppColors.txt, fontSize = 16.sp, fontWeight = FontWeight.Bold)
             Text("Summarizes this account's displayed readings and alerts in the app. No external AI service is used; this is not a diagnosis.", color = AppColors.muted, fontSize = 11.sp)
             if (conversation.isNotEmpty()) {
@@ -826,7 +826,7 @@ fun Medicines(state: AppState) {
                 TextButton(onClick = { showAdd = true }) { Text("+ Add", color = AppColors.accent) }
             }
             val medNote = if (state.dataSource == Repository.Source.SERVER)
-                "Live from aroha.vercel.app • changes sync two ways"
+                "Live from arohasetu.vercel.app • changes sync two ways"
             else "Offline: saved on this device only"
             Text(medNote, color = if (state.dataSource == Repository.Source.SERVER) AppColors.ok else AppColors.muted, fontSize = 11.sp)
         }
@@ -1008,7 +1008,7 @@ fun Camera(state: AppState) {
         }
         item {
             val note = if (state.dataSource == Repository.Source.SERVER)
-                "Live data from aroha.vercel.app — falls back to on-device engine when offline."
+                "Live data from arohasetu.vercel.app — falls back to on-device engine when offline."
             else "OFFLINE: local on-device engine (no internet needed)."
             Text(note, color = if (state.dataSource == Repository.Source.SERVER) AppColors.ok else AppColors.warn, fontSize = 11.sp)
         }
@@ -1063,7 +1063,7 @@ fun Devices(state: AppState) {
         item {
             Section("Medical Devices")
             val srcNote = if (state.dataSource == Repository.Source.SERVER)
-                "Live from aroha.vercel.app" else "OFFLINE: local catalogue (FDA/CDSCO approved)"
+                "Live from arohasetu.vercel.app" else "OFFLINE: local catalogue (FDA/CDSCO approved)"
             Text(srcNote, color = if (state.dataSource == Repository.Source.SERVER) AppColors.ok else AppColors.muted, fontSize = 11.sp)
             Text("SIMULATED connectivity • REAL device profiles & approvals", color = AppColors.muted, fontSize = 11.sp)
         }

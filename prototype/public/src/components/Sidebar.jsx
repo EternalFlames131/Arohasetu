@@ -47,7 +47,7 @@ const Sidebar = ({
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
                   <span className="font-bold text-base text-[#103663] tracking-tight">
-                    Aroha
+                    Arohasetu
                   </span>
                   <span className="text-[10px] uppercase font-bold tracking-wider text-[#08A6A6] bg-[#08A6A6]/10 border border-[#08A6A6]/30 px-1 py-0.2 rounded">
                     Care
@@ -141,7 +141,7 @@ const Sidebar = ({
               </a>
             </div>
           ) : (
-            <a href="/downloads/ReJivan-Demo.apk" download className="w-full flex justify-center py-2 text-blue-700" title="Download Aroha Android demo APK" aria-label="Download Aroha Android demo APK">
+            <a href="/downloads/ReJivan-Demo.apk" download className="w-full flex justify-center py-2 text-blue-700" title="Download Arohasetu Android demo APK" aria-label="Download Arohasetu Android demo APK">
               <Download className="h-4 w-4" />
             </a>
           )}

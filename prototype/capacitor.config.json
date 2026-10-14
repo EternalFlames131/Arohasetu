@@ -1,10 +1,11 @@
 {
   "appId": "com.rejivan.app",
-  "appName": "Aroha",
+  "appName": "Arohasetu",
   "webDir": "dist",
   "server": {
     "androidScheme": "https",
     "allowNavigation": [
+      "arohasetu.vercel.app",
       "aroha.vercel.app",
       "aroha2.vercel.app",
       "aroha-care.vercel.app",

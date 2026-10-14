@@ -3,7 +3,7 @@
 
 const REJIVAN_DEMO_DEVICES = [
   { id: "ecg", name: "SanketLife 12-Lead ECG", role: "Heart Rhythm + HR Telemetry", feeds: ["hr"], icon: Heart },
-  { id: "watch", name: "Aroha Smartwatch", role: "HR + SpO2 (PPG) Wearable", feeds: ["hr", "spo2"], icon: Smartphone },
+  { id: "watch", name: "Arohasetu Smartwatch", role: "HR + SpO2 (PPG) Wearable", feeds: ["hr", "spo2"], icon: Smartphone },
   { id: "bp", name: "Omron HEM-7156T", role: "Blood Pressure (NIBP Cuff)", feeds: ["bpSys", "bpDia"], icon: Activity },
   { id: "temp", name: "TempTraq Patch", role: "Continuous Core Temperature", feeds: ["temp"], icon: Thermometer },
   { id: "glu", name: "Accu-Chek Instant", role: "Capillary Blood Glucose", feeds: ["glucose"], icon: Droplets },
@@ -238,7 +238,7 @@ const SensorDemoPanel = ({ disconnectedDevices = {}, serverDisconnectedDevices =
                 <Smartphone className="w-4 h-4" />
               </div>
               <div>
-                <div className="text-xs font-bold text-slate-900">Aroha Smartwatch (PPG · BLE)</div>
+                <div className="text-xs font-bold text-slate-900">Arohasetu Smartwatch (PPG · BLE)</div>
                 <div className="text-[10px] text-slate-500">
                   {feedActive
                     ? "Streaming manually-pushed readings — triage re-run per packet"

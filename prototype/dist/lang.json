@@ -1,6 +1,6 @@
 {
   "en": {
-    "appName": "Aroha",
+    "appName": "Arohasetu",
     "tagline": "Notice sooner, care better",
     "patientNames": {
       "P1": "Anita Sharma",
@@ -46,7 +46,7 @@
     "ward_view": "Virtual Ward — Nurse Station",
     "bed": "Bed",
     "priority": "Priority",
-    "disclaimer": "Prototype only. Aroha is not a certified medical device. A human caregiver or doctor always makes the final decision.",
+    "disclaimer": "Prototype only. Arohasetu is not a certified medical device. A human caregiver or doctor always makes the final decision.",
     "sim_banner": "Simulation demo — vitals, camera and message delivery are simulated; dashboard, medicines, rules and alerts are real.",
     "region_note": "Demo anchored in Andaman & Nicobar Islands (South Andaman + Little Andaman; ward at GB Pant Hospital, Port Blair) — data is simulated.",
     "nav_logout": "Log out",
@@ -102,14 +102,14 @@
     "device_online": "online",
     "no_devices": "No devices registered",
     "connected_devices": "Connected Medical Devices",
-    "device_banner": "Aroha integrates with FDA/CDSCO-approved medical-grade wearables. Each device is validated for clinical accuracy. When medical devices are connected, confidence scores increase and data is more reliable.",
+    "device_banner": "Arohasetu integrates with FDA/CDSCO-approved medical-grade wearables. Each device is validated for clinical accuracy. When medical devices are connected, confidence scores increase and data is more reliable.",
     "device_catalogue_title": "Supported Medical Devices",
     "device_catalogue_sub": "All devices are medically approved (FDA 510(k) / CDSCO / CE). Prices in INR. Indian-made devices marked with 🇮🇳.",
     "loading": "Loading…",
-    "home_ctx": "Home care · Aroha"
+    "home_ctx": "Home care · Arohasetu"
   },
   "hi": {
-    "appName": "आरोहा",
+    "appName": "आरोहासेतु",
     "tagline": "जल्दी पहचानें, बेहतर देखभाल करें",
     "patientNames": {
       "P1": "अनीता शर्मा",
@@ -155,7 +155,7 @@
     "ward_view": "वर्चुअल वार्ड — नर्स स्टेशन",
     "bed": "बिस्तर",
     "priority": "प्राथमिकता",
-    "disclaimer": "केवल प्रोटोटाइप। आरोहा प्रमाणित चिकित्सा उपकरण नहीं है। अंतिम निर्णय हमेशा मानव देखभालकर्ता या डॉक्टर लेता है।",
+    "disclaimer": "केवल प्रोटोटाइप। आरोहासेतु प्रमाणित चिकित्सा उपकरण नहीं है। अंतिम निर्णय हमेशा मानव देखभालकर्ता या डॉक्टर लेता है।",
     "sim_banner": "सिमुलेशन डेमो — वाइटल, कैमरा और संदेश वितरण सिम्युलेटेड हैं; डैशबोर्ड, दवाइयाँ, नियम और अलर्ट वास्तविक हैं।",
     "region_note": "डेमो अंडमान और निकोबार द्वीप समूह पर आधारित है (दक्षिण अंडमान + लिटिल अंडमान; गुड़ियाने: जीबी पंत अस्पताल, पोर्ट ब्लेयर) — डेटा सिम्युलेटेड है।",
     "nav_logout": "लॉग आउट",
@@ -273,7 +273,7 @@
     "reg_note": "वही खाता वेबसाइट और Android ऐप दोनों पर काम करता है।"
   },
   "bn": {
-    "appName": "আরোহা",
+    "appName": "আরোহাসেতু",
     "tagline": "আগে শনাক্ত করুন, আরও ভালো যত্ন নিন",
     "patientNames": {
       "P1": "অনিতা শর্মা",
@@ -437,7 +437,7 @@
     "reg_note": "একই অ্যাকাউন্ট ওয়েবসাইট ও Android অ্যাপ - দুটিতেই কাজ করে।"
   },
   "ta": {
-    "appName": "ஆரோஹா",
+    "appName": "ஆரோஹாசேது",
     "tagline": "முன்கூட்டியே கவனியுங்கள், சிறந்த பராமரிப்பு வழங்குங்கள்",
     "patientNames": {
       "P1": "அனிதா ஷர்மா",
@@ -483,7 +483,7 @@
     "ward_view": "மெய்நிகர் வார்டு — செவிலியர் நிலையம்",
     "bed": "படுக்கை",
     "priority": "முன்னுரிமை",
-    "disclaimer": "முன்மாதிரி மட்டுமே. ஆரோஹா சான்றளிக்கப்பட்ட மருத்துவ சாதனம் அல்ல. இறுதி முடிவை எப்போதும் மனித பராமரிப்பாளர் அல்லது மருத்துவர் எடுக்கிறார்.",
+    "disclaimer": "முன்மாதிரி மட்டுமே. ஆரோஹாசேது சான்றளிக்கப்பட்ட மருத்துவ சாதனம் அல்ல. இறுதி முடிவை எப்போதும் மனித பராமரிப்பாளர் அல்லது மருத்துவர் எடுக்கிறார்.",
     "sim_banner": "உருவகப்படுத்துதல் டெமோ — வைட்டல்கள், கேமரா மற்றும் செய்தி விநியோகம் உருவகப்படுத்தப்பட்டவை; டாஷ்போர்டு, மருந்துகள், விதிகள் மற்றும் எச்சரிக்கைகள் உண்மையானவை.",
     "region_note": "டெமோ ஆந்தமான் & நிக்கோபார் தீவுகளில் நங்கூரமிடப்பட்டுள்ளது (தெற்கு ஆந்தமான் + லிட்டில் ஆந்தமான்; வார்டு: ஜிபி பான்ட் மருத்துவமனை, போர்ட் பிளேர்) — தரவு உருவகப்படுத்தப்பட்டது.",
     "nav_logout": "வெளியேறு",
@@ -601,7 +601,7 @@
     "reg_note": "அதே கணக்கு இணையதளத்திலும் Android செயலியிலும் செயல்படும்."
   },
   "te": {
-    "appName": "ఆరోహా",
+    "appName": "ఆరోహాసేతు",
     "tagline": "ముందే గుర్తించండి, మెరుగైన సంరక్షణ అందించండి",
     "patientNames": {
       "P1": "అనితా శర్మ",
@@ -647,7 +647,7 @@
     "ward_view": "వర్చువల్ వార్డ్ — నర్స్ స్టేషన్",
     "bed": "మంచం",
     "priority": "ప్రాధాన్యత",
-    "disclaimer": "ప్రోటోటైప్ మాత్రమే. ఆరోహా ధృవీకరించబడిన వైద్య పరికరం కాదు. తుది నిర్ణయం ఎల్లప్పుడూ మానవ సంరక్షకుడు లేదా వైద్యుడు తీసుకుంటారు.",
+    "disclaimer": "ప్రోటోటైప్ మాత్రమే. ఆరోహాసేతు ధృవీకరించబడిన వైద్య పరికరం కాదు. తుది నిర్ణయం ఎల్లప్పుడూ మానవ సంరక్షకుడు లేదా వైద్యుడు తీసుకుంటారు.",
     "sim_banner": "సిమ్యులేషన్ డెమో — వైటల్స్, కెమెరా మరియు సందేశ డెలివరీ సిమ్యులేటెడ్; డాష్‌బోర్డ్, మందులు, నియమాలు మరియు హెచ్చరికలు నిజమైనవి.",
     "region_note": "డెమో ఆండమాన్ & నికోబార్ దీవుల్లో యాంకర్ చేయబడింది (దక్షిణ ఆండమాన్ + లిటిల్ ఆండమాన్; వార్డ్: జిబి పాంట్ హాస్పిటల్, పోర్ట్ బ్లెయిర్) — డేటా సిమ్యులేటెడ్.",
     "nav_logout": "లాగ్ అవుట్",

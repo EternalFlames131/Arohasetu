@@ -811,7 +811,7 @@ const App = () => {
       .then((dictionary) => {
         if (!cancelled && dictionary?.en) setTranslationDictionary(dictionary);
       })
-      .catch((error) => console.warn("Aroha translations could not be loaded:", error.message));
+      .catch((error) => console.warn("Arohasetu translations could not be loaded:", error.message));
     return () => { cancelled = true; };
   }, []);
 
@@ -1065,7 +1065,7 @@ const App = () => {
       temp: reading.temp,
       glucose: reading.glucose,
       lastSync: "Just now",
-      hardwareSource: `Aroha Smartwatch · ${sourceLabel}`,
+      hardwareSource: `Arohasetu Smartwatch · ${sourceLabel}`,
       sparkHr: pushFifo(prev.sparkHr, reading.hr),
       sparkSpo2: pushFifo(prev.sparkSpo2, reading.spo2),
       sparkBp: pushFifo(prev.sparkBp, reading.bpSys),
@@ -1088,7 +1088,7 @@ const App = () => {
                : severity === "caution"
                ? `${label}. The prototype schedules a demonstration re-check; external notifications are simulated.`
                : "Simulated manual demo feed accepted. The prototype triage rules found no alert threshold crossed.",
-          source: `Aroha Smartwatch (${sourceLabel})`,
+          source: `Arohasetu Smartwatch (${sourceLabel})`,
         },
         ...a,
       ].slice(0, 6)
@@ -1103,7 +1103,7 @@ const App = () => {
     if (!Number.isFinite(heartRate)) {
       setVitals((prev) => ({
         ...prev,
-        hardwareSource: feedOverride ? "Aroha Smartwatch · Manual Demo Feed" : (activePatient?.hardwareSource || ACCOUNT_PROFILES["asharma@demo.in"].hardwareSource),
+        hardwareSource: feedOverride ? "Arohasetu Smartwatch · Manual Demo Feed" : (activePatient?.hardwareSource || ACCOUNT_PROFILES["asharma@demo.in"].hardwareSource),
       }));
       return;
     }
@@ -1402,7 +1402,7 @@ const App = () => {
           lastSync: "Just now",
           hardwareSource: bluetoothHrRef.current != null
             ? "Bluetooth Heart Rate · REAL"
-            : feedOverride ? "Aroha Smartwatch · Manual Demo Feed" : prev.hardwareSource,
+            : feedOverride ? "Arohasetu Smartwatch · Manual Demo Feed" : prev.hardwareSource,
           sparkHr: hrOff ? prev.sparkHr : pushFifo(prev.sparkHr, nextHr),
           sparkSpo2: spo2Off ? prev.sparkSpo2 : pushFifo(prev.sparkSpo2, nextSpo2),
           sparkBp: bpOff ? prev.sparkBp : pushFifo(prev.sparkBp, nextBpSys),
@@ -2345,7 +2345,7 @@ const App = () => {
         {/* Clinical Software Compliance Footer */}
         <footer className="border-t border-slate-200/80 py-4 px-6 bg-white text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-slate-700">Aroha Clinical Suite</span>
+            <span className="font-semibold text-slate-700">Arohasetu Clinical Suite</span>
             <span>•</span>
             <span>Enterprise Telehealth &amp; Remote Patient Monitoring (RPM)</span>
           </div>

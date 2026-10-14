@@ -1,7 +1,7 @@
 {
-  "name": "aroha-prototype",
+  "name": "arohasetu-prototype",
   "version": "1.0.0",
-  "description": "Aroha \u2014 Notice sooner, care better (Prototype)",
+  "description": "Arohasetu \u2014 Notice sooner, care better (Prototype)",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

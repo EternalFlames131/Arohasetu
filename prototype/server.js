@@ -69,7 +69,7 @@ app.use(express.json());
 // Local development keeps using the existing JSON-backed SimulationService.
 const sharedStoreUrl = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
 const sharedStoreToken = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
-const SIMULATION_STORE_KEY = "aroha:simulation:v1";
+const SIMULATION_STORE_KEY = "arohasetu:simulation:v1";
 const LEGACY_SIMULATION_STORE_KEY = "rejivan:simulation:v1";
 const sharedStateRoutes = /^\/api\/(?:patients|vitals|alerts|escalations|calls|admin\/simulator)(?:\/|$)/;
 
@@ -279,10 +279,10 @@ function snapshotFor(p, now) {
     if (devOverrides.vitals.dbp !== undefined) g.vitals.bpDia = devOverrides.vitals.dbp;
   }
   if (devOverrides.disconnectedDevices && devOverrides.disconnectedDevices.length > 0) {
-    if (devOverrides.disconnectedDevices.includes("SanketLife 12-Lead ECG") || devOverrides.disconnectedDevices.includes("Aroha Smartwatch") || devOverrides.disconnectedDevices.includes("ReJivan Smartwatch")) {
+    if (devOverrides.disconnectedDevices.includes("SanketLife 12-Lead ECG") || devOverrides.disconnectedDevices.includes("Arohasetu Smartwatch") || devOverrides.disconnectedDevices.includes("Aroha Smartwatch") || devOverrides.disconnectedDevices.includes("ReJivan Smartwatch")) {
       g.vitals.hr = null;
     }
-    if (devOverrides.disconnectedDevices.includes("Aroha Smartwatch") || devOverrides.disconnectedDevices.includes("ReJivan Smartwatch")) {
+    if (devOverrides.disconnectedDevices.includes("Arohasetu Smartwatch") || devOverrides.disconnectedDevices.includes("Aroha Smartwatch") || devOverrides.disconnectedDevices.includes("ReJivan Smartwatch")) {
       g.vitals.spo2 = null;
     }
     if (devOverrides.disconnectedDevices.includes("Omron HEM-7156T")) {
@@ -866,7 +866,7 @@ app.get("/api/simulation/status", (req, res) => {
     region: REGION,
     simulated: ["vitals-data", "camera-events", "live-preview", "billing", "SMS/WhatsApp delivery", "emergency phone calls"],
     real: ["authentication", "data isolation per user", "dashboard", "medications", "rules engine", "alerts", "escalation", "emergency auto-call chain (priority + retry + escalation)", "multilingual UI", "reliability safeguards (validation, confidence, consecutive verification, rate limiting, audit trail)", "medical device integration (CDSCO/FDA-approved device profiles, BLE connectivity simulation, per-patient device registry)"],
-    disclaimer: "Prototype: Aroha is not a certified medical device. Always involve a human caregiver/doctor for decisions.",
+    disclaimer: "Prototype: Arohasetu is not a certified medical device. Always involve a human caregiver/doctor for decisions.",
     medicalDevices: {
       supported: DEVICE_CATALOGUE.length,
       indianMade: DEVICE_CATALOGUE.filter((d) => d.madeInIndia).length,
@@ -1112,7 +1112,7 @@ function validateRtspUrl(url) {
 let activeCameraId = "cam-prerecorded-demo";
 let latestEdgeHeartbeat = {
   edgeId: "edge-node-an-01",
-  name: "Aroha GB Pant Hospital Edge Sentinel",
+  name: "Arohasetu GB Pant Hospital Edge Sentinel",
   timestamp: Date.now(),
   processStatus: "ONLINE",
   status: "ONLINE",
@@ -1222,7 +1222,7 @@ app.post("/api/edge/heartbeat", (req, res) => {
 });
 
 // ---- Local YOLO Edge Sentinel Process Manager & Reverse Proxy -------------
-const EDGE_DAEMON_BASE = process.env.AROHA_EDGE_BASE || process.env.REJIVAN_EDGE_BASE || "http://127.0.0.1:5050";
+const EDGE_DAEMON_BASE = process.env.AROHASETU_EDGE_BASE || process.env.AROHA_EDGE_BASE || process.env.REJIVAN_EDGE_BASE || "http://127.0.0.1:5050";
 let yoloChildProcess = null;
 let isStartingYolo = false;
 
@@ -1242,7 +1242,7 @@ async function startEdgeDaemon() {
     return { ok: false, error: "Cloud Vercel serverless environment does not support local edge Python daemon." };
   }
   if (await isEdgeDaemonAlive()) {
-    console.log("[Aroha] YOLO Edge Sentinel is already online and responding on port 5050.");
+    console.log("[Arohasetu] YOLO Edge Sentinel is already online and responding on port 5050.");
     return { ok: true, status: "ALREADY_RUNNING" };
   }
   if (isStartingYolo) {
@@ -1270,14 +1270,14 @@ async function startEdgeDaemon() {
           const parts = line.trim().split(/\s+/);
           const pid = parts[parts.length - 1];
           if (pid && /^\d+$/.test(pid) && pid !== "0") {
-            console.log(`[Aroha] Freeing stale port 5050 (terminating zombie PID ${pid})...`);
+            console.log(`[Arohasetu] Freeing stale port 5050 (terminating zombie PID ${pid})...`);
             execSync(`taskkill /F /PID ${pid}`, { stdio: "ignore" });
           }
         }
       } catch (e) {}
     }
 
-    console.log(`[Aroha] Auto-launching YOLO Edge Sentinel using ${pyExe}...`);
+    console.log(`[Arohasetu] Auto-launching YOLO Edge Sentinel using ${pyExe}...`);
     yoloChildProcess = spawn(pyExe, ["-u", sentinelScript], {
       cwd: rootDir,
       stdio: ["ignore", "pipe", "pipe"],
@@ -1310,7 +1310,7 @@ async function startEdgeDaemon() {
     for (let i = 0; i < 20; i++) {
       await new Promise((r) => setTimeout(r, 500));
       if (await isEdgeDaemonAlive(500)) {
-        console.log("[Aroha] YOLO Edge Sentinel is now ONLINE and ready on port 5050!");
+        console.log("[Arohasetu] YOLO Edge Sentinel is now ONLINE and ready on port 5050!");
         isStartingYolo = false;
         return { ok: true, status: "ONLINE", port: 5050 };
       }
@@ -1576,7 +1576,7 @@ app.get(["/api/system/health", "/api/system-health"], async (req, res) => {
   });
 });
 
-app.get("/api/health", (req, res) => res.json({ ok: true, service: "Aroha", time: Date.now() }));
+app.get("/api/health", (req, res) => res.json({ ok: true, service: "Arohasetu", time: Date.now() }));
 
 // ---- Export for Vercel; direct listen only when run locally -----------------
 app.alertsFor = alertsFor;
@@ -1586,15 +1586,15 @@ module.exports = app;
 if (require.main === module) {
   const PORT = process.env.PORT || 8080;
   app.listen(PORT, async () => {
-    console.log(`Aroha prototype running at http://localhost:${PORT}`);
+    console.log(`Arohasetu prototype running at http://localhost:${PORT}`);
     console.log(`Demo accounts: asharma@demo.in / rprakash@demo.in / wardnurse@demo.in  (password: demo123)`);
 
     // On local machine (non-serverless), automatically launch YOLO Edge Sentinel if not already active
-    if (!process.env.VERCEL && !process.env.REJIVAN_NO_YOLO && !process.env.AROHA_NO_YOLO) {
+    if (!process.env.VERCEL && !process.env.REJIVAN_NO_YOLO && !process.env.AROHASETU_NO_YOLO || process.env.AROHA_NO_YOLO) {
       try {
         await startEdgeDaemon();
       } catch (err) {
-        console.warn(`[Aroha] YOLO auto-start notice: ${err.message}`);
+        console.warn(`[Arohasetu] YOLO auto-start notice: ${err.message}`);
       }
     }
   });

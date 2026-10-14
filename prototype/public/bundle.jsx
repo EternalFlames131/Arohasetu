@@ -1,4 +1,4 @@
-// ReJivan Clinical Suite - Enterprise Telemetry React Dashboard
+// Arohasetu Clinical Suite - Enterprise Telemetry React Dashboard
 // Production-grade bundle generated from modular components in prototype/public/src/
 
 // --- START: prototype\movement-engine.js ---
@@ -13,7 +13,8 @@
   } else if (typeof module === "object" && module.exports) {
     module.exports = factory();
   } else {
-    root.ArohaMovementEngine = factory();
+    root.ArohasetuMovementEngine = factory();
+    root.ArohaMovementEngine = root.ArohasetuMovementEngine;
     root.ReJivanMovementEngine = root.ArohaMovementEngine;
   }
 })(typeof window !== "undefined" ? window : (typeof self !== "undefined" ? self : this), function () {
@@ -1389,7 +1390,7 @@ const Sidebar = ({
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
                   <span className="font-bold text-base text-[#103663] tracking-tight">
-                    Aroha
+                    Arohasetu
                   </span>
                   <span className="text-[10px] uppercase font-bold tracking-wider text-[#08A6A6] bg-[#08A6A6]/10 border border-[#08A6A6]/30 px-1 py-0.2 rounded">
                     Care
@@ -1483,7 +1484,7 @@ const Sidebar = ({
               </a>
             </div>
           ) : (
-            <a href="/downloads/ReJivan-Demo.apk" download className="w-full flex justify-center py-2 text-blue-700" title="Download Aroha Android demo APK" aria-label="Download Aroha Android demo APK">
+            <a href="/downloads/ReJivan-Demo.apk" download className="w-full flex justify-center py-2 text-blue-700" title="Download Arohasetu Android demo APK" aria-label="Download Arohasetu Android demo APK">
               <Download className="h-4 w-4" />
             </a>
           )}
@@ -1579,7 +1580,7 @@ const TopBar = ({
 
         <div>
           <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
-            <span className="hover:text-slate-600 transition-colors">Aroha</span>
+            <span className="hover:text-slate-600 transition-colors">Arohasetu</span>
             <span className="text-slate-300">/</span>
             <span className="text-slate-700 font-semibold capitalize">
               {activeTab}
@@ -2759,7 +2760,7 @@ const HardwareDiagnosticsBar = ({
       hubText: "BLE Mesh Hub Active (Port Blair Gateway)",
       devices: [
         {
-          model: "Aroha Smartwatch",
+          model: "Arohasetu Smartwatch",
           type: "Heart Rate + SpO₂ Wearable",
           status: "Connected",
           battery: 91,
@@ -9690,7 +9691,7 @@ const MedicalDevicesView = ({ currentUser, activePatient }) => {
 
 const REJIVAN_DEMO_DEVICES = [
   { id: "ecg", name: "SanketLife 12-Lead ECG", role: "Heart Rhythm + HR Telemetry", feeds: ["hr"], icon: Heart },
-  { id: "watch", name: "Aroha Smartwatch", role: "HR + SpO2 (PPG) Wearable", feeds: ["hr", "spo2"], icon: Smartphone },
+  { id: "watch", name: "Arohasetu Smartwatch", role: "HR + SpO2 (PPG) Wearable", feeds: ["hr", "spo2"], icon: Smartphone },
   { id: "bp", name: "Omron HEM-7156T", role: "Blood Pressure (NIBP Cuff)", feeds: ["bpSys", "bpDia"], icon: Activity },
   { id: "temp", name: "TempTraq Patch", role: "Continuous Core Temperature", feeds: ["temp"], icon: Thermometer },
   { id: "glu", name: "Accu-Chek Instant", role: "Capillary Blood Glucose", feeds: ["glucose"], icon: Droplets },
@@ -9925,7 +9926,7 @@ const SensorDemoPanel = ({ disconnectedDevices = {}, serverDisconnectedDevices =
                 <Smartphone className="w-4 h-4" />
               </div>
               <div>
-                <div className="text-xs font-bold text-slate-900">Aroha Smartwatch (PPG · BLE)</div>
+                <div className="text-xs font-bold text-slate-900">Arohasetu Smartwatch (PPG · BLE)</div>
                 <div className="text-[10px] text-slate-500">
                   {feedActive
                     ? "Streaming manually-pushed readings — triage re-run per packet"
@@ -10666,7 +10667,7 @@ const LoginModal = ({ isOpen, onClose, onLogin }) => {
             <BrandLogo className="w-8 h-8" imgClassName="w-5 h-5" rounded="rounded-lg" withBg={true} />
             <div>
               <h3 className="text-base font-bold text-slate-900">
-                Aroha Clinical Portal
+                Arohasetu Clinical Portal
               </h3>
               <p className="text-[11px] text-slate-500">
                 Enterprise Telehealth &amp; Continuous Monitoring
@@ -11575,7 +11576,7 @@ const App = () => {
       .then((dictionary) => {
         if (!cancelled && dictionary?.en) setTranslationDictionary(dictionary);
       })
-      .catch((error) => console.warn("Aroha translations could not be loaded:", error.message));
+      .catch((error) => console.warn("Arohasetu translations could not be loaded:", error.message));
     return () => { cancelled = true; };
   }, []);
 
@@ -11829,7 +11830,7 @@ const App = () => {
       temp: reading.temp,
       glucose: reading.glucose,
       lastSync: "Just now",
-      hardwareSource: `Aroha Smartwatch · ${sourceLabel}`,
+      hardwareSource: `Arohasetu Smartwatch · ${sourceLabel}`,
       sparkHr: pushFifo(prev.sparkHr, reading.hr),
       sparkSpo2: pushFifo(prev.sparkSpo2, reading.spo2),
       sparkBp: pushFifo(prev.sparkBp, reading.bpSys),
@@ -11852,7 +11853,7 @@ const App = () => {
                : severity === "caution"
                ? `${label}. The prototype schedules a demonstration re-check; external notifications are simulated.`
                : "Simulated manual demo feed accepted. The prototype triage rules found no alert threshold crossed.",
-          source: `Aroha Smartwatch (${sourceLabel})`,
+          source: `Arohasetu Smartwatch (${sourceLabel})`,
         },
         ...a,
       ].slice(0, 6)
@@ -11867,7 +11868,7 @@ const App = () => {
     if (!Number.isFinite(heartRate)) {
       setVitals((prev) => ({
         ...prev,
-        hardwareSource: feedOverride ? "Aroha Smartwatch · Manual Demo Feed" : (activePatient?.hardwareSource || ACCOUNT_PROFILES["asharma@demo.in"].hardwareSource),
+        hardwareSource: feedOverride ? "Arohasetu Smartwatch · Manual Demo Feed" : (activePatient?.hardwareSource || ACCOUNT_PROFILES["asharma@demo.in"].hardwareSource),
       }));
       return;
     }
@@ -12166,7 +12167,7 @@ const App = () => {
           lastSync: "Just now",
           hardwareSource: bluetoothHrRef.current != null
             ? "Bluetooth Heart Rate · REAL"
-            : feedOverride ? "Aroha Smartwatch · Manual Demo Feed" : prev.hardwareSource,
+            : feedOverride ? "Arohasetu Smartwatch · Manual Demo Feed" : prev.hardwareSource,
           sparkHr: hrOff ? prev.sparkHr : pushFifo(prev.sparkHr, nextHr),
           sparkSpo2: spo2Off ? prev.sparkSpo2 : pushFifo(prev.sparkSpo2, nextSpo2),
           sparkBp: bpOff ? prev.sparkBp : pushFifo(prev.sparkBp, nextBpSys),
@@ -13109,7 +13110,7 @@ const App = () => {
         {/* Clinical Software Compliance Footer */}
         <footer className="border-t border-slate-200/80 py-4 px-6 bg-white text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-slate-700">Aroha Clinical Suite</span>
+            <span className="font-semibold text-slate-700">Arohasetu Clinical Suite</span>
             <span>•</span>
             <span>Enterprise Telehealth &amp; Remote Patient Monitoring (RPM)</span>
           </div>

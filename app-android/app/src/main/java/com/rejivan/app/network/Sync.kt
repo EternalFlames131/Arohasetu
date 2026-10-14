@@ -9,12 +9,12 @@ import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 /**
- * REST client for the Aroha server (https://aroha2.vercel.app).
+ * REST client for the Arohasetu server (https://arohasetu.vercel.app).
  * All methods block — call from a background thread / coroutine.
  * Returns null on any failure (network down, server error, parse error).
  */
 object Sync {
-    private const val BASE = "https://aroha2.vercel.app"
+    private const val BASE = "https://arohasetu.vercel.app"
 
     private val JSON_TYPE = "application/json; charset=utf-8".toMediaType()
 
