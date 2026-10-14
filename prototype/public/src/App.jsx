@@ -6,7 +6,7 @@ const ACCOUNT_PROFILES = {
     name: "Anita Sharma",
     role: "caregiver",
     email: "asharma@demo.in",
-    patientId: "REJ-8042",
+    patientId: "ARO-8042",
     age: 67,
     gender: "Female",
     location: "Home → Living Room, Junglighat, Port Blair",
@@ -811,7 +811,7 @@ const App = () => {
       .then((dictionary) => {
         if (!cancelled && dictionary?.en) setTranslationDictionary(dictionary);
       })
-      .catch((error) => console.warn("ReJivan translations could not be loaded:", error.message));
+      .catch((error) => console.warn("Aroha translations could not be loaded:", error.message));
     return () => { cancelled = true; };
   }, []);
 
@@ -1065,7 +1065,7 @@ const App = () => {
       temp: reading.temp,
       glucose: reading.glucose,
       lastSync: "Just now",
-      hardwareSource: `ReJivan Smartwatch · ${sourceLabel}`,
+      hardwareSource: `Aroha Smartwatch · ${sourceLabel}`,
       sparkHr: pushFifo(prev.sparkHr, reading.hr),
       sparkSpo2: pushFifo(prev.sparkSpo2, reading.spo2),
       sparkBp: pushFifo(prev.sparkBp, reading.bpSys),
@@ -1084,11 +1084,11 @@ const App = () => {
           severity,
           message:
             severity === "danger"
-              ? `${label}. The prototype escalation flow is shown for demonstration; no real caregiver or emergency-service message is sent.`
-              : severity === "caution"
-              ? `${label}. The prototype schedules a demonstration re-check; external notifications are simulated.`
-              : "Simulated manual demo feed accepted. The prototype triage rules found no alert threshold crossed.",
-          source: `ReJivan Smartwatch (${sourceLabel})`,
+               ? `${label}. The prototype escalation flow is shown for demonstration; no real caregiver or emergency-service message is sent.`
+               : severity === "caution"
+               ? `${label}. The prototype schedules a demonstration re-check; external notifications are simulated.`
+               : "Simulated manual demo feed accepted. The prototype triage rules found no alert threshold crossed.",
+          source: `Aroha Smartwatch (${sourceLabel})`,
         },
         ...a,
       ].slice(0, 6)
@@ -1103,7 +1103,7 @@ const App = () => {
     if (!Number.isFinite(heartRate)) {
       setVitals((prev) => ({
         ...prev,
-        hardwareSource: feedOverride ? "ReJivan Smartwatch · Manual Demo Feed" : (activePatient?.hardwareSource || ACCOUNT_PROFILES["asharma@demo.in"].hardwareSource),
+        hardwareSource: feedOverride ? "Aroha Smartwatch · Manual Demo Feed" : (activePatient?.hardwareSource || ACCOUNT_PROFILES["asharma@demo.in"].hardwareSource),
       }));
       return;
     }
@@ -1402,7 +1402,7 @@ const App = () => {
           lastSync: "Just now",
           hardwareSource: bluetoothHrRef.current != null
             ? "Bluetooth Heart Rate · REAL"
-            : feedOverride ? "ReJivan Smartwatch · Manual Demo Feed" : prev.hardwareSource,
+            : feedOverride ? "Aroha Smartwatch · Manual Demo Feed" : prev.hardwareSource,
           sparkHr: hrOff ? prev.sparkHr : pushFifo(prev.sparkHr, nextHr),
           sparkSpo2: spo2Off ? prev.sparkSpo2 : pushFifo(prev.sparkSpo2, nextSpo2),
           sparkBp: bpOff ? prev.sparkBp : pushFifo(prev.sparkBp, nextBpSys),
@@ -1419,6 +1419,65 @@ const App = () => {
 
     return () => clearInterval(streamInterval);
   }, [isStreaming, simMode, activePatient, feedOverride, disconnectedDevices, token]);
+
+  // Evaluates live patient vitals against clinical thresholds with zero fake alerts
+  const evaluateVitalsStatus = (v) => {
+    if (!v) return { severity: "normal", text: "Vitals within normal limits", abnormalMetrics: [] };
+    const abnormal = [];
+
+    // Danger / Critical checks
+    if (v.hr != null && v.hr >= 120) abnormal.push({ metric: "hr", severity: "danger", text: `Critical Tachycardia: HR ${v.hr} bpm` });
+    else if (v.hr != null && v.hr <= 50) abnormal.push({ metric: "hr", severity: "danger", text: `Severe Bradycardia: HR ${v.hr} bpm` });
+
+    if (v.spo2 != null && v.spo2 <= 90) abnormal.push({ metric: "spo2", severity: "danger", text: `Acute Hypoxemia: SpO2 ${v.spo2}%` });
+
+    if (v.bpSys != null && v.bpSys >= 160) abnormal.push({ metric: "bpSys", severity: "danger", text: `Severe Hypertension: BP ${v.bpSys}/${v.bpDia || "--"} mmHg` });
+    else if (v.bpSys != null && v.bpSys <= 85) abnormal.push({ metric: "bpSys", severity: "danger", text: `Hypotensive Shock: BP ${v.bpSys}/${v.bpDia || "--"} mmHg` });
+
+    if (v.bpDia != null && v.bpDia >= 100) abnormal.push({ metric: "bpDia", severity: "danger", text: `Critical Diastolic BP: ${v.bpDia} mmHg` });
+
+    if (v.temp != null && v.temp >= 38.3) abnormal.push({ metric: "temp", severity: "danger", text: `High Pyrexia: Temp ${v.temp}°C` });
+    else if (v.temp != null && v.temp <= 35.0) abnormal.push({ metric: "temp", severity: "danger", text: `Hypothermia: Temp ${v.temp}°C` });
+
+    if (v.rr != null && v.rr >= 25) abnormal.push({ metric: "rr", severity: "danger", text: `Severe Tachypnea: RR ${v.rr} breaths/min` });
+    else if (v.rr != null && v.rr <= 10) abnormal.push({ metric: "rr", severity: "danger", text: `Respiratory Depression: RR ${v.rr} breaths/min` });
+
+    if (v.glucose != null && v.glucose >= 180) abnormal.push({ metric: "glucose", severity: "danger", text: `Critical Hyperglycemia: ${v.glucose} mg/dL` });
+    else if (v.glucose != null && v.glucose <= 60) abnormal.push({ metric: "glucose", severity: "danger", text: `Critical Hypoglycemia: ${v.glucose} mg/dL` });
+
+    // Caution checks (only if no danger for that metric)
+    if (v.hr != null && v.hr > 100 && v.hr < 120) abnormal.push({ metric: "hr", severity: "caution", text: `Elevated Heart Rate: ${v.hr} bpm` });
+    else if (v.hr != null && v.hr >= 51 && v.hr <= 59) abnormal.push({ metric: "hr", severity: "caution", text: `Low Heart Rate: ${v.hr} bpm` });
+
+    if (v.spo2 != null && v.spo2 > 90 && v.spo2 < 95) abnormal.push({ metric: "spo2", severity: "caution", text: `Borderline SpO2: ${v.spo2}%` });
+
+    if (v.bpSys != null && v.bpSys >= 136 && v.bpSys < 160) abnormal.push({ metric: "bpSys", severity: "caution", text: `Elevated Blood Pressure: ${v.bpSys}/${v.bpDia || "--"} mmHg` });
+    if (v.bpDia != null && v.bpDia >= 86 && v.bpDia < 100) abnormal.push({ metric: "bpDia", severity: "caution", text: `Elevated Diastolic BP: ${v.bpDia} mmHg` });
+
+    if (v.temp != null && v.temp >= 37.5 && v.temp < 38.3) abnormal.push({ metric: "temp", severity: "caution", text: `Low-grade Fever: ${v.temp}°C` });
+    if (v.rr != null && v.rr >= 21 && v.rr < 25) abnormal.push({ metric: "rr", severity: "caution", text: `Elevated RR: ${v.rr} breaths/min` });
+    if (v.glucose != null && v.glucose >= 141 && v.glucose < 180) abnormal.push({ metric: "glucose", severity: "caution", text: `Elevated Glucose: ${v.glucose} mg/dL` });
+
+    const dangerList = abnormal.filter((a) => a.severity === "danger");
+    if (dangerList.length > 0) {
+      return {
+        severity: "danger",
+        text: dangerList.map((a) => a.text).join(" • "),
+        primary: dangerList[0],
+        abnormalMetrics: abnormal,
+      };
+    }
+    const cautionList = abnormal.filter((a) => a.severity === "caution");
+    if (cautionList.length > 0) {
+      return {
+        severity: "caution",
+        text: cautionList.map((a) => a.text).join(" • "),
+        primary: cautionList[0],
+        abnormalMetrics: abnormal,
+      };
+    }
+    return { severity: "normal", text: "Vitals within normal limits", abnormalMetrics: [] };
+  };
 
   // Dynamic Triage Metrics Calculator
   const getTriageMetrics = () => {
@@ -1444,31 +1503,25 @@ const App = () => {
         dangerText: `Wearable telemetry degraded (${offlineCount} device(s) offline) — YOLO falls/activity watch continues`,
       };
     }
-    if (vitals.bpSys >= 160 || vitals.spo2 < 92 || vitals.hr < 60 || vitals.hr > 100) {
-      let dangerText = "Stage 2 Crisis Escalation";
-      if (vitals.spo2 < 92) dangerText = `Acute Hypoxemia: SpO2 ${vitals.spo2}%`;
-      else if (vitals.hr < 60) dangerText = `Bradycardia: HR ${vitals.hr} bpm`;
-      else if (vitals.hr > 100) dangerText = `Tachycardia: HR ${vitals.hr} bpm`;
-      else if (vitals.bpSys >= 160) dangerText = `Severe Hypertension: ${vitals.bpSys}/${vitals.bpDia}`;
+
+    const vStatus = evaluateVitalsStatus(vitals);
+    if (vStatus.severity === "danger") {
       return {
         patientsCount: 1,
         normalCount: 0,
         cautionCount: 0,
         dangerCount: 1,
         cautionText: "Prior check nominal",
-        dangerText,
+        dangerText: vStatus.text,
       };
     }
-    if (vitals.bpSys >= 140 || vitals.bpDia >= 90 || vitals.spo2 < 95 || vitals.glucose > 160) {
-      const reason = vitals.glucose > 160
-        ? `Elevated Glucose: ${vitals.glucose} mg/dL`
-        : `Elevated BP: ${vitals.bpSys}/${vitals.bpDia} mmHg`;
+    if (vStatus.severity === "caution") {
       return {
         patientsCount: 1,
         normalCount: 0,
         cautionCount: 1,
         dangerCount: 0,
-        cautionText: reason,
+        cautionText: vStatus.text,
         dangerText: "Zero active emergencies",
       };
     }
@@ -1507,10 +1560,51 @@ const App = () => {
   }, []);
 
   // When an alert comes in on phone/mobile, jump upwards automatically so viewer sees the issue first!
+  // When vitals revert back to normal, automatically clear and dismiss the alert!
   React.useEffect(() => {
-    const urgentAlert = unresolvedFamilyAlerts.find(
-      (a) => a.severity === "danger" || a.severity === "critical" || a.severity === "caution"
-    );
+    // 1. Filter out resolved alerts or alerts belonging to other patients
+    const activeAlerts = unresolvedFamilyAlerts.filter((a) => {
+      if (a.status === "Resolved") return false;
+      if (a.patientId && activePatient?.id && a.patientId !== activePatient.id && !isNurse) return false;
+
+      // Clinical validity check: if this alert is for a vital that is currently in normal safe range, auto-dismiss it!
+      if (a.vitalType === "hr" && vitals.hr != null && vitals.hr >= 60 && vitals.hr <= 100) return false;
+      if ((a.vitalType === "bpSys" || a.vitalType === "bpDia" || a.vitalType === "bp") && vitals.bpSys != null && vitals.bpSys < 136 && vitals.bpDia < 86) return false;
+      if (a.vitalType === "spo2" && vitals.spo2 != null && vitals.spo2 >= 95) return false;
+      if (a.vitalType === "temp" && vitals.temp != null && vitals.temp >= 36.3 && vitals.temp <= 37.4) return false;
+      if (a.vitalType === "rr" && vitals.rr != null && vitals.rr >= 12 && vitals.rr <= 20) return false;
+      if (a.vitalType === "glucose" && vitals.glucose != null && vitals.glucose >= 70 && vitals.glucose <= 140) return false;
+      return true;
+    });
+
+    let urgentAlert = activeAlerts.find((a) => a.severity === "danger" || a.severity === "critical");
+    if (!urgentAlert) {
+      urgentAlert = activeAlerts.find((a) => a.severity === "caution");
+    }
+
+    // 2. Also check real-time live vitals directly for immediate zero-lag responsiveness
+    if (!urgentAlert && Object.values(disconnectedDevices).filter(Boolean).length === 0) {
+      const vStatus = evaluateVitalsStatus(vitals);
+      if (vStatus.severity === "danger" || vStatus.severity === "caution") {
+        const prim = vStatus.primary;
+        const readingVal = prim.metric === "hr" ? `${vitals.hr} bpm`
+          : (prim.metric === "spo2" ? `${vitals.spo2}%`
+          : (prim.metric === "bpSys" || prim.metric === "bpDia" ? `${vitals.bpSys}/${vitals.bpDia} mmHg`
+          : (prim.metric === "temp" ? `${vitals.temp} °C`
+          : (prim.metric === "rr" ? `${vitals.rr} breaths/min` : `${vitals.glucose} mg/dL`))));
+        urgentAlert = {
+          id: `live-${prim.metric}-${Math.floor(Date.now() / 15000)}`,
+          patientName: activePatient?.name || "Patient",
+          title: `CRITICAL ALERT: ${prim.text}`,
+          reading: readingVal,
+          source: "Continuous Bio-Telemetry",
+          conditionReason: `${prim.text} detected. Immediate clinical assessment advised.`,
+          message: `${prim.text} detected during continuous bio-telemetry streaming.`,
+          severity: vStatus.severity,
+          time: "Live telemetry",
+        };
+      }
+    }
 
     if (urgentAlert) {
       if (lastAlertIdRef.current !== urgentAlert.id) {
@@ -1538,13 +1632,13 @@ const App = () => {
         };
       }
     } else {
-      if (jumpAlert && !jumpDismissed) {
+      if (jumpAlert) {
         setJumpAlert(null);
         setJumpDismissed(false);
       }
       lastAlertIdRef.current = null;
     }
-  }, [unresolvedFamilyAlerts]);
+  }, [unresolvedFamilyAlerts, vitals, disconnectedDevices]);
 
   // Auth Handlers
   const handleLogin = async (email, password) => {
@@ -2251,7 +2345,7 @@ const App = () => {
         {/* Clinical Software Compliance Footer */}
         <footer className="border-t border-slate-200/80 py-4 px-6 bg-white text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-slate-700">ReJivan Clinical Suite</span>
+            <span className="font-semibold text-slate-700">Aroha Clinical Suite</span>
             <span>•</span>
             <span>Enterprise Telehealth &amp; Remote Patient Monitoring (RPM)</span>
           </div>

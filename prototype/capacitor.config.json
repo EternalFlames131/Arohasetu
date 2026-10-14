@@ -1,10 +1,15 @@
 {
   "appId": "com.rejivan.app",
-  "appName": "ReJivan",
+  "appName": "Aroha",
   "webDir": "dist",
   "server": {
     "androidScheme": "https",
-    "allowNavigation": ["rejivan2.vercel.app"]
+    "allowNavigation": [
+      "aroha.vercel.app",
+      "aroha2.vercel.app",
+      "aroha-care.vercel.app",
+      "rejivan2.vercel.app"
+    ]
   },
   "plugins": {
     "SplashScreen": {

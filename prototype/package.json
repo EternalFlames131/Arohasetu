@@ -1,7 +1,7 @@
 {
-  "name": "rejivan-prototype",
+  "name": "aroha-prototype",
   "version": "1.0.0",
-  "description": "ReJivan — A Personal Nurse for Every Family (Prototype)",
+  "description": "Aroha \u2014 Notice sooner, care better (Prototype)",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

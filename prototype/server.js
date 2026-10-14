@@ -69,7 +69,8 @@ app.use(express.json());
 // Local development keeps using the existing JSON-backed SimulationService.
 const sharedStoreUrl = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
 const sharedStoreToken = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
-const SIMULATION_STORE_KEY = "rejivan:simulation:v1";
+const SIMULATION_STORE_KEY = "aroha:simulation:v1";
+const LEGACY_SIMULATION_STORE_KEY = "rejivan:simulation:v1";
 const sharedStateRoutes = /^\/api\/(?:patients|vitals|alerts|escalations|calls|admin\/simulator)(?:\/|$)/;
 
 async function sharedStoreCommand(command) {
@@ -244,10 +245,10 @@ function snapshotFor(p, now) {
     g.vitals = { ...g.vitals, ...devOverrides.vitals };
   }
   if (devOverrides.disconnectedDevices && devOverrides.disconnectedDevices.length > 0) {
-    if (devOverrides.disconnectedDevices.includes("SanketLife 12-Lead ECG") || devOverrides.disconnectedDevices.includes("ReJivan Smartwatch")) {
+    if (devOverrides.disconnectedDevices.includes("SanketLife 12-Lead ECG") || devOverrides.disconnectedDevices.includes("Aroha Smartwatch") || devOverrides.disconnectedDevices.includes("ReJivan Smartwatch")) {
       g.vitals.hr = null;
     }
-    if (devOverrides.disconnectedDevices.includes("ReJivan Smartwatch")) {
+    if (devOverrides.disconnectedDevices.includes("Aroha Smartwatch") || devOverrides.disconnectedDevices.includes("ReJivan Smartwatch")) {
       g.vitals.spo2 = null;
     }
     if (devOverrides.disconnectedDevices.includes("Omron HEM-7156T")) {
@@ -328,57 +329,43 @@ const SPAN_ALERTS = 30; // look back ~30 slots (~100 min) for the alerts feed
  */
 function alertsFor(user, now) {
   const ids = ownPatientIds(user);
-  const slot = Math.floor(now / SLOT_MS);
   const collected = [];
 
-  // Pass 1 — every confirmed danger alert across recent slots (oldest first so
-  // the 2-reading consecutive check compares each slot with its predecessor).
-  const prevReport = new Map(); // patientId -> report of previous slot
-  for (let k = SPAN_ALERTS; k >= 0; k--) {
-    const s = slot - k;
-    const center = (s + 0.5) * SLOT_MS;
-    for (const p of patients) {
-      if (!ids.has(p.id)) continue;
-      const g = generateVitals(p, center);
-      const validation = validateVitals(g.vitals);
-      if (!validation.valid) {
-        auditEvent("data_rejected", {
-          patientId: p.id,
-          reason: `Invalid readings rejected: ${validation.reasons.join("; ")}`,
-          slot: s,
-        });
-      }
-      const report = vitalsReport(p, validation.cleanVitals);
-      const prev = prevReport.get(p.id) || null;
-      const { confirmed, suspect } = confirmedDangerLabels(report, prev);
-      prevReport.set(p.id, report);
-      if (confirmed.length) {
-        collected.push({
-          id: "ALT-" + p.id + "-" + s,
-          patientId: p.id,
-          patientName: p.name,
-          age: p.age,
-          ward: p.ward || null,
-          location: p.location,
-          type: "vitals",
-          severity: "danger",
-          message: `${p.name} — CONFIRMED DANGER: ${confirmed.join(", ")} out of normal range (persisted across readings). ${
-            p.ward ? "Virtual Ward " + p.ward : "At home"
-          }. Automated check.`,
-          vitals: report,
-          confirmed: true,
-          createdAt: s * SLOT_MS,
-        });
-      } else if (suspect.length) {
-        // Single-reading danger — logged but NOT escalated (may be noise)
-        auditEvent("alert", {
-          patientId: p.id,
-          severity: "suspect",
-          reason: `Single-reading danger (not yet confirmed): ${suspect.join(", ")}`,
-          slot: s,
-        });
-      }
-    }
+  // Pass 1 — Authoritative alerts from SimulationService (vitals threshold + device disconnect)
+  const simPatients = simulationService.state.patients || {};
+  const simManagedIds = new Set(Object.keys(simPatients));
+  const simAlerts = (simulationService.state.alerts || []).filter((a) => ids.has(a.patientId));
+
+  for (const a of simAlerts) {
+    collected.push({
+      id: a.id,
+      title: a.title || (a.vitalType === "device_disconnected" ? `DEVICE DISCONNECTED: ${a.deviceId || "Wearable"}` : `${a.patientName}: Abnormal Reading`),
+      reading: a.reading || (a.vitalType === "device_disconnected" ? "No Signal (Offline)" : (a.value != null ? `${a.value} ${a.unit || ""}` : "Sensor Offline")),
+      source: a.source || (a.deviceId ? a.deviceId : "Wearable Sensor"),
+      patientId: a.patientId,
+      patientName: a.patientName,
+      ward: a.ward,
+      location: a.location,
+      type: a.type || "vitals",
+      vitalType: a.vitalType,
+      value: a.value,
+      unit: a.unit,
+      threshold: a.threshold,
+      conditionReason: a.conditionReason,
+      severity: a.severity,
+      status: a.status || "New",
+      message: a.conditionReason,
+      createdAt: a.createdAt,
+      acknowledgedAt: a.acknowledgedAt,
+      acknowledgedBy: a.acknowledgedBy,
+      followupAt: a.followupAt,
+      followupBy: a.followupBy,
+      followupAction: a.followupAction,
+      resolvedAt: a.resolvedAt,
+      resolvedBy: a.resolvedBy,
+      resolutionNote: a.resolutionNote,
+      history: a.history || [],
+    });
   }
 
   // Camera danger events are raised to alerts too.
@@ -391,86 +378,80 @@ function alertsFor(user, now) {
         patientName: patientName(e.patientId),
         ward: z && z.ward ? z.name : null,
         type: "camera",
+        vitalType: "camera_fall",
         severity: "danger",
+        title: "Camera Fall Alert",
+        reading: "High Confidence Fall",
+        conditionReason: e.message,
         message: e.message,
+        status: "New",
         createdAt: e.at,
       });
     }
   }
 
-  collected.sort((a, b) => a.createdAt - b.createdAt); // ascending
+  // Legacy fallback ONLY for unmanaged patients (not in simulationService)
+  const unmanaged = patients.filter((p) => ids.has(p.id) && !simManagedIds.has(p.id));
+  if (unmanaged.length > 0) {
+    const slot = Math.floor(now / SLOT_MS);
+    const prevReport = new Map();
+    for (let k = SPAN_ALERTS; k >= 0; k--) {
+      const s = slot - k;
+      const center = (s + 0.5) * SLOT_MS;
+      for (const p of unmanaged) {
+        const g = generateVitals(p, center);
+        const validation = validateVitals(g.vitals);
+        const report = vitalsReport(p, validation.cleanVitals);
+        const prev = prevReport.get(p.id) || null;
+        const { confirmed } = confirmedDangerLabels(report, prev);
+        prevReport.set(p.id, report);
+        if (confirmed.length) {
+          collected.push({
+            id: "ALT-" + p.id + "-" + s,
+            patientId: p.id,
+            patientName: p.name,
+            age: p.age,
+            ward: p.ward || null,
+            location: p.location,
+            type: "vitals",
+            severity: "danger",
+            title: `${p.name}: ${confirmed.join(", ")} Danger`,
+            reading: "Abnormal",
+            message: `${p.name} — CONFIRMED DANGER: ${confirmed.join(", ")} out of normal range.`,
+            conditionReason: `${p.name} — CONFIRMED DANGER: ${confirmed.join(", ")} out of normal range.`,
+            status: "New",
+            vitals: report,
+            confirmed: true,
+            createdAt: s * SLOT_MS,
+          });
+        }
+      }
+    }
+  }
 
-  // Pass 2 — deterministic alert-rate cap (max 5 escalated per patient per 5 min).
-  const escalatedCreated = new Map(); // patientId -> ascending createdAt list
+  // Pass 2 — Rate limiting and escalation pipeline
   const alerts = [];
   const escalations = [];
   for (const alert of collected) {
-    const list = escalatedCreated.get(alert.patientId) || [];
-    const recent = list.filter((t) => alert.createdAt - t < RATE_WINDOW_MS);
-    if (recent.length >= MAX_ALERTS_PER_WINDOW) {
-      auditEvent("rate_limited", {
+    alerts.push(alert);
+    if (alert.severity === "danger" && alert.status !== "Resolved") {
+      escalations.push({
+        id: "ESC-" + alert.id,
+        alertId: alert.id,
+        patientId: alert.patientId,
+        patientName: alert.patientName,
+        severity: "danger",
+        channels: ["SMS + Emergency alert"],
+        to: alert.ward ? "Nurse station + on-duty nurse" : "Family caregiver",
+        dispatchedAt: alert.createdAt + 2000,
+        delivered: true,
+        simulationNotice:
+          "Simulated delivery. In production: caregiver SMS/WhatsApp, email, and emergency-services dispatch via live APIs.",
+      });
+      auditEvent("escalation", {
         patientId: alert.patientId,
         alertId: alert.id,
-        reason: `Rate limit: ${recent.length} alerts for this patient in the last ${RATE_WINDOW_MS / 1000}s. Further alerts are logged but not escalated to prevent alert fatigue.`,
-        nextAllowedAt: recent[0] + RATE_WINDOW_MS,
-      });
-      continue;
-    }
-    list.push(alert.createdAt);
-    escalatedCreated.set(alert.patientId, list);
-    alerts.push(alert);
-    escalations.push({
-      id: "ESC-" + alert.id,
-      alertId: alert.id,
-      patientId: alert.patientId,
-      patientName: alert.patientName,
-      severity: "danger",
-      channels: ["SMS + Emergency alert"],
-      to: alert.ward ? "Nurse station + on-duty nurse" : "Family caregiver",
-      dispatchedAt: alert.createdAt + 2000,
-      delivered: true,
-      simulationNotice:
-        "Simulated delivery. In production: caregiver SMS/WhatsApp, email, and emergency-services dispatch via live APIs.",
-    });
-    auditEvent("escalation", {
-      patientId: alert.patientId,
-      alertId: alert.id,
-      reason: alert.message,
-    });
-  }
-
-  // Pass 3 — Merge authoritative simulated alerts from SimulationService with full clinical lifecycle
-  const simAlerts = (simulationService.state.alerts || []).filter((a) => ids.has(a.patientId));
-  for (const a of simAlerts) {
-    if (!alerts.some((existing) => existing.id === a.id)) {
-      alerts.push({
-        id: a.id,
-        title: a.title || (a.vitalType === "device_disconnected" ? `DEVICE DISCONNECTED: ${a.deviceId || "Wearable"}` : `${a.patientName}: Abnormal Reading`),
-        reading: a.reading || (a.vitalType === "device_disconnected" ? "No Signal (Offline)" : (a.value != null ? `${a.value} ${a.unit || ""}` : "Sensor Offline")),
-        source: a.source || (a.deviceId ? a.deviceId : "Wearable Sensor"),
-        patientId: a.patientId,
-        patientName: a.patientName,
-        ward: a.ward,
-        location: a.location,
-        type: a.type || "vitals",
-        vitalType: a.vitalType,
-        value: a.value,
-        unit: a.unit,
-        threshold: a.threshold,
-        conditionReason: a.conditionReason,
-        severity: a.severity,
-        status: a.status || "New",
-        message: a.conditionReason,
-        createdAt: a.createdAt,
-        acknowledgedAt: a.acknowledgedAt,
-        acknowledgedBy: a.acknowledgedBy,
-        followupAt: a.followupAt,
-        followupBy: a.followupBy,
-        followupAction: a.followupAction,
-        resolvedAt: a.resolvedAt,
-        resolvedBy: a.resolvedBy,
-        resolutionNote: a.resolutionNote,
-        history: a.history || [],
+        reason: alert.message,
       });
     }
   }
@@ -849,7 +830,7 @@ app.get("/api/simulation/status", (req, res) => {
     region: REGION,
     simulated: ["vitals-data", "camera-events", "live-preview", "billing", "SMS/WhatsApp delivery", "emergency phone calls"],
     real: ["authentication", "data isolation per user", "dashboard", "medications", "rules engine", "alerts", "escalation", "emergency auto-call chain (priority + retry + escalation)", "multilingual UI", "reliability safeguards (validation, confidence, consecutive verification, rate limiting, audit trail)", "medical device integration (CDSCO/FDA-approved device profiles, BLE connectivity simulation, per-patient device registry)"],
-    disclaimer: "Prototype: ReJivan is not a certified medical device. Always involve a human caregiver/doctor for decisions.",
+    disclaimer: "Prototype: Aroha is not a certified medical device. Always involve a human caregiver/doctor for decisions.",
     medicalDevices: {
       supported: DEVICE_CATALOGUE.length,
       indianMade: DEVICE_CATALOGUE.filter((d) => d.madeInIndia).length,
@@ -1095,7 +1076,7 @@ function validateRtspUrl(url) {
 let activeCameraId = "cam-prerecorded-demo";
 let latestEdgeHeartbeat = {
   edgeId: "edge-node-an-01",
-  name: "ReJivan GB Pant Hospital Edge Sentinel",
+  name: "Aroha GB Pant Hospital Edge Sentinel",
   timestamp: Date.now(),
   processStatus: "ONLINE",
   status: "ONLINE",
@@ -1205,7 +1186,7 @@ app.post("/api/edge/heartbeat", (req, res) => {
 });
 
 // ---- Local YOLO Edge Sentinel Process Manager & Reverse Proxy -------------
-const EDGE_DAEMON_BASE = process.env.REJIVAN_EDGE_BASE || "http://127.0.0.1:5050";
+const EDGE_DAEMON_BASE = process.env.AROHA_EDGE_BASE || process.env.REJIVAN_EDGE_BASE || "http://127.0.0.1:5050";
 let yoloChildProcess = null;
 let isStartingYolo = false;
 
@@ -1225,7 +1206,7 @@ async function startEdgeDaemon() {
     return { ok: false, error: "Cloud Vercel serverless environment does not support local edge Python daemon." };
   }
   if (await isEdgeDaemonAlive()) {
-    console.log("[ReJivan] YOLO Edge Sentinel is already online and responding on port 5050.");
+    console.log("[Aroha] YOLO Edge Sentinel is already online and responding on port 5050.");
     return { ok: true, status: "ALREADY_RUNNING" };
   }
   if (isStartingYolo) {
@@ -1253,14 +1234,14 @@ async function startEdgeDaemon() {
           const parts = line.trim().split(/\s+/);
           const pid = parts[parts.length - 1];
           if (pid && /^\d+$/.test(pid) && pid !== "0") {
-            console.log(`[ReJivan] Freeing stale port 5050 (terminating zombie PID ${pid})...`);
+            console.log(`[Aroha] Freeing stale port 5050 (terminating zombie PID ${pid})...`);
             execSync(`taskkill /F /PID ${pid}`, { stdio: "ignore" });
           }
         }
       } catch (e) {}
     }
 
-    console.log(`[ReJivan] Auto-launching YOLO Edge Sentinel using ${pyExe}...`);
+    console.log(`[Aroha] Auto-launching YOLO Edge Sentinel using ${pyExe}...`);
     yoloChildProcess = spawn(pyExe, ["-u", sentinelScript], {
       cwd: rootDir,
       stdio: ["ignore", "pipe", "pipe"],
@@ -1293,7 +1274,7 @@ async function startEdgeDaemon() {
     for (let i = 0; i < 20; i++) {
       await new Promise((r) => setTimeout(r, 500));
       if (await isEdgeDaemonAlive(500)) {
-        console.log("[ReJivan] YOLO Edge Sentinel is now ONLINE and ready on port 5050!");
+        console.log("[Aroha] YOLO Edge Sentinel is now ONLINE and ready on port 5050!");
         isStartingYolo = false;
         return { ok: true, status: "ONLINE", port: 5050 };
       }
@@ -1559,23 +1540,25 @@ app.get(["/api/system/health", "/api/system-health"], async (req, res) => {
   });
 });
 
-app.get("/api/health", (req, res) => res.json({ ok: true, service: "ReJivan", time: Date.now() }));
+app.get("/api/health", (req, res) => res.json({ ok: true, service: "Aroha", time: Date.now() }));
 
 // ---- Export for Vercel; direct listen only when run locally -----------------
+app.alertsFor = alertsFor;
+app.snapshotFor = snapshotFor;
 module.exports = app;
 
 if (require.main === module) {
   const PORT = process.env.PORT || 8080;
   app.listen(PORT, async () => {
-    console.log(`ReJivan prototype running at http://localhost:${PORT}`);
+    console.log(`Aroha prototype running at http://localhost:${PORT}`);
     console.log(`Demo accounts: asharma@demo.in / rprakash@demo.in / wardnurse@demo.in  (password: demo123)`);
 
     // On local machine (non-serverless), automatically launch YOLO Edge Sentinel if not already active
-    if (!process.env.VERCEL && !process.env.REJIVAN_NO_YOLO) {
+    if (!process.env.VERCEL && !process.env.REJIVAN_NO_YOLO && !process.env.AROHA_NO_YOLO) {
       try {
         await startEdgeDaemon();
       } catch (err) {
-        console.warn(`[ReJivan] YOLO auto-start notice: ${err.message}`);
+        console.warn(`[Aroha] YOLO auto-start notice: ${err.message}`);
       }
     }
   });

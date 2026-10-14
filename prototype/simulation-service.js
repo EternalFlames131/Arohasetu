@@ -221,12 +221,58 @@ class SimulationService {
     return output;
   }
 
+  // Generates physiological dynamic motion + jitter around set target vitals
+  // Reflects a living patient: HR pulsates, breathing waves, micro-variations
+  getDynamicVitals(patientId, targetVitals, now = Date.now()) {
+    if (!targetVitals) return this.getNormalLiveVitals(patientId, now);
+    const t = now / 1000;
+    // 2-second bucket for realistic jitter that updates regularly
+    const bucket = Math.floor(now / 2000);
+    const motion = {
+      hr: { amplitude: 2.6, period: 16 },
+      spo2: { amplitude: 0.3, period: 24 },
+      bpSys: { amplitude: 3.0, period: 32 },
+      bpDia: { amplitude: 2.0, period: 32 },
+      temp: { amplitude: 0.08, period: 40 },
+      rr: { amplitude: 1.0, period: 20 },
+      glucose: { amplitude: 2.5, period: 48 },
+    };
+    const output = {};
+    for (const [key, baseVal] of Object.entries(targetVitals)) {
+      if (baseVal == null) {
+        output[key] = null;
+        continue;
+      }
+      const m = motion[key];
+      if (!m) {
+        output[key] = baseVal;
+        continue;
+      }
+      const phase = hash01(`${patientId}:dynamic:${key}:phase`) * Math.PI * 2;
+      const wave = m.amplitude * Math.sin((t / m.period) * Math.PI * 2 + phase);
+      const jitter = (hash01(`${patientId}:dynamic:${key}:${bucket}`) - 0.5) * m.amplitude * 0.4;
+      let value = baseVal + wave + jitter;
+
+      if (key === "spo2") value = Math.max(50, Math.min(100, value));
+      else if (key === "hr") value = Math.max(30, Math.min(220, value));
+      else if (key === "bpSys") value = Math.max(50, Math.min(250, value));
+      else if (key === "bpDia") value = Math.max(30, Math.min(150, value));
+      else if (key === "temp") value = Math.max(30.0, Math.min(43.0, value));
+      else if (key === "rr") value = Math.max(6, Math.min(60, value));
+      else if (key === "glucose") value = Math.max(30, Math.min(500, value));
+
+      output[key] = (key === "spo2" || key === "temp") ? Math.round(value * 10) / 10 : Math.round(value);
+    }
+    return output;
+  }
+
   resetAllToBaseline() {
     const patients = {};
     const now = Date.now();
     for (const [id, base] of Object.entries(BASELINE_PATIENTS)) {
       patients[id] = {
         ...base,
+        targetVitals: { ...base.vitals },
         currentVitals: this.getNormalLiveVitals(id, now),
         lastUpdated: now,
         scenarioId: "baseline",
@@ -256,6 +302,7 @@ class SimulationService {
     const now = Date.now();
     const patient = {
       ...base,
+      targetVitals: { ...base.vitals },
       currentVitals: this.getNormalLiveVitals(patientId, now),
       lastUpdated: now,
       scenarioId: "baseline",
@@ -409,9 +456,10 @@ class SimulationService {
       temp: ["temp"], glucose: ["glu"],
     };
     const patients = Object.fromEntries(Object.entries(this.state.patients).map(([id, patient]) => {
-      const currentVitals = patient.vitalMode === "normal_live"
-        ? this.getNormalLiveVitals(id, now)
-        : { ...patient.currentVitals };
+      const baseVitals = patient.vitalMode === "normal_live"
+        ? (BASELINE_PATIENTS[id]?.vitals || patient.currentVitals)
+        : (patient.targetVitals || patient.currentVitals);
+      const currentVitals = this.getDynamicVitals(id, baseVitals, now);
       const offline = new Set(patient.offlineDevices || []);
       for (const [metric, deviceIds] of Object.entries(providers)) {
         if (deviceIds.every((deviceId) => offline.has(deviceId))) currentVitals[metric] = null;
@@ -479,15 +527,16 @@ class SimulationService {
       this.state.readingHistory = this.state.readingHistory.slice(0, 200);
     }
 
-    // Merge vitals
-    p.currentVitals = { ...p.currentVitals, ...validated };
+    // Update target vitals and immediate current vitals
+    p.targetVitals = { ...(p.targetVitals || p.currentVitals), ...validated };
+    p.currentVitals = { ...p.targetVitals };
     p.vitalMode = "manual";
     p.lastUpdated = now;
     p.scenarioId = scenarioId;
     this.state.lastUpdated = now;
 
-    // Evaluate threshold alerts
-    const generatedAlerts = this.evaluateThresholds(p, validated, now);
+    // Evaluate threshold alerts and auto-resolve normalized metrics
+    const generatedAlerts = this.evaluateThresholds(p, p.targetVitals, now);
 
     this.save();
     return {
@@ -532,16 +581,23 @@ class SimulationService {
       }
 
       if (severity) {
-        // Prevent duplicate alerts: check if active unresolved/unacknowledged alert already exists for same patient & metric within last 3 minutes
-        const isDuplicate = this.state.alerts.some(
+        // Prevent duplicate alerts: check if active unresolved alert already exists for same patient & metric
+        const existingAlert = this.state.alerts.find(
           (a) =>
             a.patientId === patientId &&
             a.vitalType === vitalKey &&
-            a.status !== "Resolved" &&
-            now - a.createdAt < 180000
+            a.status !== "Resolved"
         );
 
-        if (!isDuplicate) {
+        if (existingAlert) {
+          existingAlert.value = value;
+          existingAlert.reading = `${value} ${th.unit}`;
+          existingAlert.severity = severity;
+          existingAlert.threshold = thresholdSpec;
+          existingAlert.conditionReason = reason;
+          existingAlert.message = reason;
+          existingAlert.lastUpdated = now;
+        } else {
           const alertObj = {
             id: `ALT-${patientId}-${vitalKey}-${now}`,
             patientId,
@@ -552,7 +608,9 @@ class SimulationService {
             vitalType: vitalKey,
             value,
             unit: th.unit,
+            reading: `${value} ${th.unit}`,
             threshold: thresholdSpec,
+            title: `${th.name}: ${severity === "danger" ? "Critically Abnormal" : "Elevated / Warning"}`,
             conditionReason: reason,
             severity,
             status: "New", // Lifecycle: New -> Acknowledged -> Follow-up recorded -> Resolved
@@ -578,22 +636,53 @@ class SimulationService {
           this.state.alerts.unshift(alertObj);
           newAlerts.push(alertObj);
         }
+      } else {
+        // Normal safe range! Auto-resolve and vanish any active alerts for this vital
+        for (const a of this.state.alerts) {
+          if (a.patientId === patientId && a.vitalType === vitalKey && a.status !== "Resolved") {
+            a.status = "Resolved";
+            a.resolvedAt = now;
+            a.resolvedBy = "System Auto-Resolution (Vitals Normalized)";
+            a.resolutionNote = `${th.name} returned to safe normal range (${value} ${th.unit}). Alert cleared.`;
+            a.history = a.history || [];
+            a.history.push({
+              time: now,
+              action: "AUTO_RESOLVED",
+              user: "System Rules Engine",
+              note: `${th.name} normalized to ${value} ${th.unit}. Alert cleared.`,
+            });
+          }
+        }
+      }
+    }
+
+    // Special check for Blood Pressure: if both bpSys and bpDia are normal, clear any general BP alerts
+    const bpSysNormal = vitals.bpSys == null || (vitals.bpSys >= THRESHOLDS.bpSys.normalMin && vitals.bpSys <= THRESHOLDS.bpSys.normalMax);
+    const bpDiaNormal = vitals.bpDia == null || (vitals.bpDia >= THRESHOLDS.bpDia.normalMin && vitals.bpDia <= THRESHOLDS.bpDia.normalMax);
+    if (bpSysNormal && bpDiaNormal) {
+      for (const a of this.state.alerts) {
+        if (a.patientId === patientId && (a.vitalType === "bpSys" || a.vitalType === "bpDia" || a.vitalType === "bp") && a.status !== "Resolved") {
+          a.status = "Resolved";
+          a.resolvedAt = now;
+          a.resolvedBy = "System Auto-Resolution (Vitals Normalized)";
+          a.resolutionNote = "Blood pressure returned to normal limits. Alert cleared.";
+        }
       }
     }
 
     // Update overall patient clinical triage status
-    let highestSeverity = "normal";
-    for (const a of this.state.alerts) {
-      if (a.patientId === patientId && a.status !== "Resolved") {
-        if (a.severity === "danger") {
-          highestSeverity = "danger";
-          break;
-        } else if (a.severity === "caution" && highestSeverity !== "danger") {
-          highestSeverity = "caution";
-        }
-      }
+    const activeAlerts = this.state.alerts.filter((a) => a.patientId === patientId && a.status !== "Resolved");
+    const offline = patient.offlineDevices || [];
+    if (offline.length > 0 || activeAlerts.some((a) => a.severity === "danger")) {
+      patient.status = "danger";
+    } else if (activeAlerts.some((a) => a.severity === "caution")) {
+      patient.status = "caution";
+    } else {
+      patient.status = "normal";
     }
-    patient.status = highestSeverity;
+    patient.status = (offline.length > 0 || activeAlerts.some((a) => a.severity === "danger"))
+      ? "danger"
+      : (activeAlerts.some((a) => a.severity === "caution") ? "caution" : "normal");
 
     // Keep maximum 50 alerts in history
     if (this.state.alerts.length > 50) {

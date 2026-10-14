@@ -1,11 +1,11 @@
 {
-  "name": "ReJivan",
-  "short_name": "ReJivan",
+  "name": "Aroha",
+  "short_name": "Aroha",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0e1420",
   "theme_color": "#0e1420",
-  "description": "A Personal Nurse for Every Family — remote health monitoring, on-time medicines and automatic emergency help.",
+  "description": "Notice sooner, care better \u2014 remote health monitoring, on-time medicines and automatic emergency help.",
   "icons": [
     {
       "src": "/assets/logo-192.png",

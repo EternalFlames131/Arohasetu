@@ -57,7 +57,7 @@ const LoginModal = ({ isOpen, onClose, onLogin }) => {
             <BrandLogo className="w-8 h-8" imgClassName="w-5 h-5" rounded="rounded-lg" withBg={true} />
             <div>
               <h3 className="text-base font-bold text-slate-900">
-                ReJivan Clinical Portal
+                Aroha Clinical Portal
               </h3>
               <p className="text-[11px] text-slate-500">
                 Enterprise Telehealth &amp; Continuous Monitoring
