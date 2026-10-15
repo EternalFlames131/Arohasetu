@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 tools/test_false_positive_lab.py
-ReJivan Multimodal Elderly-Safety Engine — 23-Scenario False-Positive Validation Lab
+Arohasetu Multimodal Elderly-Safety Engine — 23-Scenario False-Positive Validation Lab
 
 Runs 23 deterministic scenarios verifying:
   OBSERVE → RECONSTRUCT → CORROBORATE → REASON → VERIFY → RESPOND
@@ -16,7 +16,7 @@ import time
 
 def evaluate_scenario(scenario_id, name, evidence, system_state=None):
     """
-    Evaluates evidence through the ReJivan Multimodal Hypothesis Engine & Safeguards.
+    Evaluates evidence through the Arohasetu Multimodal Hypothesis Engine & Safeguards.
     Returns: (is_patient_emergency, classified_mechanism, severity, rationale)
     """
     sys_state = system_state or {"edge_online": True, "camera_calibrated": True, "light_level": "normal"}
@@ -289,7 +289,7 @@ def run_all_23_scenarios():
     ]
 
     print("=" * 80)
-    print("ReJivan Multimodal Elderly-Safety Engine: 23-Scenario Validation Lab")
+    print("Arohasetu Multimodal Elderly-Safety Engine: 23-Scenario Validation Lab")
     print("Evaluating: OBSERVE -> RECONSTRUCT -> CORROBORATE -> REASON -> VERIFY -> RESPOND")
     print("=" * 80)
 

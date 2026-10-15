@@ -1,6 +1,6 @@
 "use strict";
 /**
- * ReJivan — Prajñā AI Clinical Care Assistant
+ * Arohasetu — Prajñā AI Clinical Care Assistant
  * HSC 2027 | Remote Health Monitoring Platform
  *
  * Supports:
@@ -60,7 +60,7 @@ function generateNaturalClinicalResponse({
   // Question Category 3: Heart Rate / Pulse / Cardiac
   if (/heart|pulse|hr|bpm|tachycardia|bradycardia|cardiac/.test(q)) {
     if (!vitals || vitals.hr == null) {
-      return `Heart rate telemetry is currently offline for ${patientName}. Verify that the ReJivan Smartwatch or SanketLife ECG sensor is paired and fitted comfortably.`;
+      return `Heart rate telemetry is currently offline for ${patientName}. Verify that the Arohasetu Smartwatch or SanketLife ECG sensor is paired and fitted comfortably.`;
     }
     const hr = Number(vitals.hr);
     if (hr > 110) {
@@ -113,7 +113,7 @@ function generateNaturalClinicalResponse({
 
   // Question Category 7: Connection / Sensors / Technical
   if (/connect|online|wifi|bluetooth|offline|sync|hardware|device/.test(q)) {
-    return `The ReJivan monitoring link for ${patientName} is currently ${connectivity}. ${freshnessText}. Telemetry packets are streamed securely using AES encryption under DPDP Act 2023 compliance.`;
+    return `The Arohasetu monitoring link for ${patientName} is currently ${connectivity}. ${freshnessText}. Telemetry packets are streamed securely using AES encryption under DPDP Act 2023 compliance.`;
   }
 
   // Fallback: Holistic Intelligent Response
@@ -175,7 +175,7 @@ async function handleAssistantChat(payload = {}) {
 
   if (geminiKey) {
     try {
-      const systemPrompt = `You are Prajñā, the clinical remote care assistant for ReJivan (HSC 2027 healthcare innovation platform, Andaman & Nicobar Islands).
+      const systemPrompt = `You are Prajñā, the clinical remote care assistant for Arohasetu (HSC 2027 healthcare innovation platform, Andaman & Nicobar Islands).
 You are speaking to a family caregiver or clinician caring for ${patientName} (${condition}, located at ${pLoc}).
 Current Live Physiological Context:
 - Vitals: ${vitalsSummary}

@@ -1,5 +1,5 @@
 """
-Continuous stream verification script for ReJivan YOLO Sentinel.
+Continuous stream verification script for Arohasetu YOLO Sentinel.
 Connects to http://127.0.0.1:5050/api/yolo/video_feed and reads frames for 20 seconds,
 while concurrently polling /api/yolo/telemetry every 350ms in a separate thread.
 Ensures zero freezes, zero dropped connections, and sub-10ms telemetry response times.

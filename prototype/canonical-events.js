@@ -1,5 +1,5 @@
 // prototype/canonical-events.js
-// ReJivan Canonical Event Schema, State Machine Definitions & System Health Contract
+// Arohasetu Canonical Event Schema, State Machine Definitions & System Health Contract
 // Universal contract across Node.js backend, Edge YOLO, Web React frontend, and Android app.
 
 (function (root, factory) {
@@ -8,7 +8,7 @@
   } else if (typeof module === "object" && module.exports) {
     module.exports = factory();
   } else {
-    root.ReJivanCanonical = factory();
+    root.ArohasetuCanonical = factory();
   }
 })(typeof window !== "undefined" ? window : (typeof self !== "undefined" ? self : this), function () {
   "use strict";

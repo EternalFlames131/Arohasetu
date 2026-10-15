@@ -1,5 +1,5 @@
 // prototype/movement-engine.js
-// ReJivan Unified Motion Kinematics, Hypothesis Scoring, Counterfactual Reasoning & Sensor Fusion Engine
+// Arohasetu Unified Motion Kinematics, Hypothesis Scoring, Counterfactual Reasoning & Sensor Fusion Engine
 // Compatible with both browser (MediaPipe / Optical Flow) and edge hardware (YOLO11-Pose via local CUDA GPU)
 // Architectural flow: OBSERVE -> RECONSTRUCT -> CORROBORATE -> REASON -> VERIFY -> RESPOND
 
@@ -10,8 +10,8 @@
     module.exports = factory();
   } else {
     root.ArohasetuMovementEngine = factory();
-    root.ArohaMovementEngine = root.ArohasetuMovementEngine;
-    root.ReJivanMovementEngine = root.ArohaMovementEngine;
+    root.ArohasetuMovementEngine = root.ArohasetuMovementEngine;
+    root.ArohasetuMovementEngine = root.ArohasetuMovementEngine;
   }
 })(typeof window !== "undefined" ? window : (typeof self !== "undefined" ? self : this), function () {
   "use strict";

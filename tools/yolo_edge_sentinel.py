@@ -1,5 +1,5 @@
 # tools/yolo_edge_sentinel.py
-# ReJivan Real Edge Sentinel Daemon
+# Arohasetu Real Edge Sentinel Daemon
 # Powered by Ultralytics YOLO-Pose on System Hardware (NVIDIA CUDA GPU when available, else CPU Pipeline)
 # Unified Camera-Ingestion Architecture: LOCAL_WEBCAM, RTSP_CCTV, and PRERECORDED_VIDEO
 # All sources feed the exact same downstream pose inference, temporal kinematics, and event reconstruction.
@@ -55,7 +55,7 @@ from camera_providers import (
 )
 
 print("=" * 76)
-print("   ReJivan Real Edge Sentinel Daemon - Ultralytics YOLO-Pose")
+print("   Arohasetu Real Edge Sentinel Daemon - Ultralytics YOLO-Pose")
 print("   Unified Camera Ingestion Architecture: WEBCAM | RTSP CCTV | VIRTUAL VIDEO")
 print("   Hardware Platform: Auto-detected NVIDIA CUDA GPU (or Optimized CPU Pipeline)")
 print("=" * 76)
@@ -64,7 +64,7 @@ print("=" * 76)
 # Checked BEFORE the ~20s model load so a duplicate launch fails fast.
 # Two sentinels sharing port 5050 break the live camera stream on Windows
 # (see SingleInstanceHTTPServer below for the full explanation).
-EDGE_PORT = int(os.environ.get("REJIVAN_EDGE_PORT", "5050"))
+EDGE_PORT = int(os.environ.get("AROHASETU_EDGE_PORT", "5050"))
 
 
 def _edge_port_in_use(port):
@@ -80,7 +80,7 @@ def _edge_port_in_use(port):
 if __name__ == "__main__" and _edge_port_in_use(EDGE_PORT):
     print("")
     print(f"[!] Port {EDGE_PORT} is ALREADY IN USE.")
-    print("[!] Another ReJivan Edge Sentinel is most likely still running.")
+    print("[!] Another Arohasetu Edge Sentinel is most likely still running.")
     print("[!] Refusing to start a second instance - two daemons on one port")
     print("[!] split the camera stream and make it freeze after the first frame.")
     print("")
@@ -210,7 +210,7 @@ class SentinelHub:
         # ---------------------------------------------------------------------
         self.edge_node = EdgeNode(
             edge_id="edge-node-an-01",
-            name="ReJivan GB Pant Hospital Edge Sentinel",
+            name="Arohasetu GB Pant Hospital Edge Sentinel",
             host_identifier=socket.gethostname(),
             software_version="2.4.0-edge"
         )
@@ -237,8 +237,8 @@ class SentinelHub:
             target_fps=30.0
         )
 
-        # 2. Production RTSP CCTV Source (Configurable via REJIVAN_RTSP_URL env var)
-        default_rtsp = os.environ.get("REJIVAN_RTSP_URL", "rtsp://admin:ward123@192.168.1.120:554/stream1")
+        # 2. Production RTSP CCTV Source (Configurable via AROHASETU_RTSP_URL env var)
+        default_rtsp = os.environ.get("AROHASETU_RTSP_URL", "rtsp://admin:ward123@192.168.1.120:554/stream1")
         self.rtsp_source = RtspCctvSource(
             camera_id="cam-rtsp-ward-01",
             camera_name="GB Pant Virtual Ward · Bed 1 CCTV",
@@ -2012,7 +2012,7 @@ def run_server(port=EDGE_PORT):
         print("[!] Another process is using it. Run tools\\stop_yolo.bat and retry.\n")
         sys.exit(1)
 
-    print(f"\n[+] ReJivan Edge Sentinel REST API & MJPEG Server listening on 0.0.0.0:{port}")
+    print(f"\n[+] Arohasetu Edge Sentinel REST API & MJPEG Server listening on 0.0.0.0:{port}")
     print(f"[*] Discovery URL: http://127.0.0.1:{port}/api/yolo/status")
     print(f"[*] Heartbeat URL: http://127.0.0.1:{port}/api/yolo/heartbeat")
     print(f"[*] Camera Registry URL: http://127.0.0.1:{port}/api/yolo/cameras")
@@ -2025,11 +2025,11 @@ def run_server(port=EDGE_PORT):
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
-        print("\n[*] Shutting down ReJivan Edge Sentinel...")
+        print("\n[*] Shutting down Arohasetu Edge Sentinel...")
         hub.running = False
         httpd.shutdown()
         cam_thread.join(timeout=2.0)
-        print("[+] ReJivan Edge Sentinel daemon terminated cleanly.")
+        print("[+] Arohasetu Edge Sentinel daemon terminated cleanly.")
     except Exception as srv_err:
         import traceback
         print(f"\n[!] Unexpected server error: {srv_err}")

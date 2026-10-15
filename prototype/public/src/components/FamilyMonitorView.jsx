@@ -5,7 +5,7 @@ const FamilyMonitorView = ({ patient, vitals, alerts = [], connectivity, seconds
   const [isThinking, setIsThinking] = React.useState(false);
   const [geminiKey, setGeminiKey] = React.useState(() => {
     try {
-      return localStorage.getItem("rejivan_gemini_key") || "";
+      return localStorage.getItem("arohasetu_gemini_key") || "";
     } catch (e) {
       return "";
     }
@@ -33,8 +33,8 @@ const FamilyMonitorView = ({ patient, vitals, alerts = [], connectivity, seconds
     const trimmed = newKey.trim();
     setGeminiKey(trimmed);
     try {
-      if (trimmed) localStorage.setItem("rejivan_gemini_key", trimmed);
-      else localStorage.removeItem("rejivan_gemini_key");
+      if (trimmed) localStorage.setItem("arohasetu_gemini_key", trimmed);
+      else localStorage.removeItem("arohasetu_gemini_key");
     } catch (e) {}
     setShowKeyInput(false);
   };

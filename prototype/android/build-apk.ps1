@@ -3,7 +3,7 @@ Set-Location -LiteralPath (Split-Path -Parent $MyInvocation.MyCommand.Path)
 
 Write-Host ""
 Write-Host "===============================" -ForegroundColor Cyan
-Write-Host "  ReJivan - Android APK build" -ForegroundColor Cyan
+Write-Host "  Arohasetu - Android APK build" -ForegroundColor Cyan
 Write-Host "===============================" -ForegroundColor Cyan
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
 
@@ -23,7 +23,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 $src = "app\build\outputs\apk\debug\app-debug.apk"
-$dest = Join-Path ([Environment]::GetFolderPath("UserProfile")) ("Downloads\ReJivan-Android-" + (Get-Date -Format "yyyyMMdd-HHmm") + ".apk")
+$dest = Join-Path ([Environment]::GetFolderPath("UserProfile")) ("Downloads\Arohasetu-Android-" + (Get-Date -Format "yyyyMMdd-HHmm") + ".apk")
 Copy-Item -LiteralPath $src -Destination $dest -Force
 
 Write-Host ""

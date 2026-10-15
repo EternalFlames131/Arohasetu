@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Online sync with the ReJivan server (rejivan.vercel.app) -->
+    <!-- Online sync with the Arohasetu server (arohasetu.vercel.app) -->
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
@@ -10,7 +10,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/Theme.ReJivan">
+        android:theme="@style/Theme.Arohasetu">
 
         <activity
             android:name=".MainActivity"

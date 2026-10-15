@@ -2,8 +2,8 @@
 $ErrorActionPreference = "Stop"
 
 $root = Split-Path -Parent $PSScriptRoot
-$src = Join-Path $root "docs\source\ReJivan_HSC_2027_Winning_Proposal_And_Project_Explanation.html"
-$out = Join-Path $root "docs\ReJivan_HSC_2027_Winning_Proposal_And_Project_Explanation.pdf"
+$src = Join-Path $root "docs\source\Arohasetu_HSC_2027_Winning_Proposal_And_Project_Explanation.html"
+$out = Join-Path $root "docs\Arohasetu_HSC_2027_Winning_Proposal_And_Project_Explanation.pdf"
 
 $edge = "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
 if (-not (Test-Path -LiteralPath $edge)) {

@@ -1,11 +1,11 @@
 @echo off
-title ReJivan YOLO-Pose Edge Sentinel Daemon
+title Arohasetu YOLO-Pose Edge Sentinel Daemon
 echo ======================================================================
-echo   Starting ReJivan Edge Sentinel (Ultralytics YOLO11-Pose)
+echo   Starting Arohasetu Edge Sentinel (Ultralytics YOLO11-Pose)
 echo   Hardware Acceleration: Auto-detected NVIDIA CUDA GPU / System CPU
 echo   Edge API Port: 5050
 echo   Web Portal:    http://localhost:8080 (for local hardware AI acceleration)
-echo   Cloud Portal:  https://rejivan2.vercel.app (runs Universal in-browser AI)
+echo   Cloud Portal:  https://arohasetu.vercel.app (runs Universal in-browser AI)
 echo ======================================================================
 cd /d "%~dp0\.."
 

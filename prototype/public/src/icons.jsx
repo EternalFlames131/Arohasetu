@@ -43,7 +43,7 @@ const HeartPulse = (props) => (
   />
 );
 
-// Official ReJivan Brand Logo Mark matching the user-provided identity
+// Official Arohasetu Brand Logo Mark matching the user-provided identity
 const BrandLogo = ({ className = "w-9 h-9", imgClassName = "w-5 h-5", rounded = "rounded-xl", withBg = true }) => {
   if (withBg) {
     return (

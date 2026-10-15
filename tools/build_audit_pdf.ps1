@@ -2,8 +2,8 @@
 $ErrorActionPreference = "Stop"
 
 $root = Split-Path -Parent $PSScriptRoot
-$src = Join-Path $root "docs\source\ReJivan_System_Audit_And_ChatGPT_Consultation.html"
-$out = Join-Path $root "docs\ReJivan_Implementation_Audit_And_ChatGPT_Consultation.pdf"
+$src = Join-Path $root "docs\source\Arohasetu_System_Audit_And_ChatGPT_Consultation.html"
+$out = Join-Path $root "docs\Arohasetu_Implementation_Audit_And_ChatGPT_Consultation.pdf"
 
 $edge = "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
 if (-not (Test-Path -LiteralPath $edge)) {

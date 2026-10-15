@@ -1,6 +1,6 @@
 """
 tools/test_prerecorded_monitoring.py
-Comprehensive Verification Suite for ReJivan Pre-Recorded Video Monitoring Mode.
+Comprehensive Verification Suite for Arohasetu Pre-Recorded Video Monitoring Mode.
 Validates:
 1. Camera-Source Abstraction (PRERECORDED_VIDEO alongside LIVE_WEBCAM and RTSP_CAMERA).
 2. Physical Timestamp Integrity (t_video = frame_idx / fps invariant across 0.5x, 1x, 2x speeds).
@@ -30,7 +30,7 @@ from yolo_edge_sentinel import compute_kinematics, hub
 
 def run_tests():
     print("================================================================================")
-    print(" ReJivan Prerecorded Video Monitoring Mode: End-to-End Verification Suite")
+    print(" Arohasetu Prerecorded Video Monitoring Mode: End-to-End Verification Suite")
     print(" Validating Authentic Camera Pipeline & Kinematic Multi-Hypothesis Engine")
     print("================================================================================")
 

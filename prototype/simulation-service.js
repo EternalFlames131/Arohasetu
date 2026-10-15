@@ -1,6 +1,6 @@
 "use strict";
 /**
- * ReJivan — Authoritative Simulation & Clinical Follow-up Engine
+ * Arohasetu — Authoritative Simulation & Clinical Follow-up Engine
  * HSC 2027 | Remote Patient Monitoring & Synthetic Telemetry Controller
  *
  * Provides shared backend truth for both:
@@ -341,7 +341,7 @@ class SimulationService {
     const patient = this.state.patients[patientId];
     const devices = {
       ecg: { name: "SanketLife 12-Lead ECG", metrics: ["hr"] },
-      watch: { name: "ReJivan Smartwatch", metrics: ["hr", "spo2"] },
+      watch: { name: "Arohasetu Smartwatch", metrics: ["hr", "spo2"] },
       bp: { name: "Omron HEM-7156T", metrics: ["sbp", "dbp"] },
       temp: { name: "TempTraq Patch", metrics: ["temp"] },
       glu: { name: "Accu-Chek Instant", metrics: ["glucose"] },

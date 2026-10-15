@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace 'com.rejivan.app'
+    namespace 'com.arohasetu.app'
     compileSdk 36
 
     defaultConfig {
-        applicationId "com.rejivan.app"
+        applicationId "com.arohasetu.app"
         minSdk 24
         targetSdk 36
         versionCode 2

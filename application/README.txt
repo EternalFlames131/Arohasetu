@@ -1,6 +1,6 @@
-ReJivan Android demo
+Arohasetu Android demo
 
-Install ReJivan-Demo.apk on an Android phone. When online, the app connects to the same ReJivan demo service as the website.
+Install Arohasetu-Demo.apk on an Android phone. When online, the app connects to the same Arohasetu demo service as the website.
 
 Family demo logins:
 - Anita Sharma: asharma@demo.in

@@ -41,7 +41,7 @@ const Sidebar = ({
         {/* Brand Header */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-slate-200/80">
           <div className="flex items-center gap-3 min-w-0">
-            {/* ReJivan Brand Logo Mark matching official identity */}
+            {/* Arohasetu Brand Logo Mark matching official identity */}
             <BrandLogo className="w-9 h-9" imgClassName="w-5 h-5" rounded="rounded-xl" withBg={true} />
             {!collapsed && (
               <div className="min-w-0">
@@ -136,12 +136,12 @@ const Sidebar = ({
               <p className="text-[11px] text-slate-500 mt-1 leading-normal">
                 Simulated for demonstration purposes.
               </p>
-              <a href="/downloads/ReJivan-Demo.apk" download className="mt-2 flex items-center gap-1.5 text-[11px] font-semibold text-blue-700 hover:text-blue-900">
+              <a href="/downloads/Arohasetu-Demo.apk" download className="mt-2 flex items-center gap-1.5 text-[11px] font-semibold text-blue-700 hover:text-blue-900">
                 <Download className="h-3.5 w-3.5" /> Download Android demo
               </a>
             </div>
           ) : (
-            <a href="/downloads/ReJivan-Demo.apk" download className="w-full flex justify-center py-2 text-blue-700" title="Download Arohasetu Android demo APK" aria-label="Download Arohasetu Android demo APK">
+            <a href="/downloads/Arohasetu-Demo.apk" download className="w-full flex justify-center py-2 text-blue-700" title="Download Arohasetu Android demo APK" aria-label="Download Arohasetu Android demo APK">
               <Download className="h-4 w-4" />
             </a>
           )}

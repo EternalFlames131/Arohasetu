@@ -1,4 +1,4 @@
-' ReJivan - Start YOLO Sentinel and Web Server silently in background (Zero Windows)
+' Arohasetu - Start YOLO Sentinel and Web Server silently in background (Zero Windows)
 Set WshShell = CreateObject("WScript.Shell")
 Set fso = CreateObject("Scripting.FileSystemObject")
 scriptDir = fso.GetParentFolderName(WScript.ScriptFullName)
@@ -22,6 +22,6 @@ End If
 ' 1. Start YOLO Edge Sentinel Daemon (Port 5050)
 WshShell.Run pythonExe & " """ & rootDir & "\tools\yolo_edge_sentinel.py""", 0, False
 
-' 2. Wait 1 second then start ReJivan Web Server (Port 8080)
+' 2. Wait 1 second then start Arohasetu Web Server (Port 8080)
 WScript.Sleep 1000
 WshShell.Run nodeExe & " """ & rootDir & "\prototype\server.js""", 0, False

@@ -1,5 +1,5 @@
 // prototype/public/src/components/CameraZonesView.jsx
-// ReJivan Unified Camera Monitoring & Prerecorded Demonstration Sentinel
+// Arohasetu Unified Camera Monitoring & Prerecorded Demonstration Sentinel
 // Treats prerecorded hospital video as an authentic virtual camera source alongside Live Webcam and RTSP CCTV.
 // Real-Time YOLO11-Pose 17-Keypoint Inference & Client Optical Consensus with Zero Hardcoded Time Gates.
 
@@ -233,7 +233,7 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
   const userSwitchedModeRef = React.useRef(false);
   const [availableWebcams, setAvailableWebcams] = React.useState([]);
   const [selectedCameraDeviceId, setSelectedCameraDeviceId] = React.useState(() => {
-    try { return window.localStorage.getItem("rejivan_camera_device_id") || ""; } catch (e) { return ""; }
+    try { return window.localStorage.getItem("arohasetu_camera_device_id") || ""; } catch (e) { return ""; }
   });
   const [hardwareCameraIndex, setHardwareCameraIndex] = React.useState(0);
   const [cameraSwitchError, setCameraSwitchError] = React.useState("");
@@ -257,7 +257,7 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
         const preferred = webcams.find((device) => SYSTEM_CAMERA_LABEL.test(device.label) && !MOBILE_CAMERA_LABEL.test(device.label));
         const nextId = (preferred || webcams[0])?.deviceId || "";
         try {
-          if (nextId) window.localStorage.setItem("rejivan_camera_device_id", nextId);
+          if (nextId) window.localStorage.setItem("arohasetu_camera_device_id", nextId);
         } catch (e) {}
         return nextId;
       });
@@ -322,7 +322,7 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
       setLiveCameraMode("BROWSER_WEBCAM");
       setHardwareStreamPaused(true);
       setSelectedCameraDeviceId(device.deviceId);
-      try { window.localStorage.setItem("rejivan_camera_device_id", device.deviceId); } catch (e) {}
+      try { window.localStorage.setItem("arohasetu_camera_device_id", device.deviceId); } catch (e) {}
       if (playbackState === "PLAYING" && cameraSource === "LIVE_WEBCAM") {
         await handleSelectBrowserCamera(device.deviceId, true);
       }
@@ -334,7 +334,7 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
   const handleSelectBrowserCamera = async (deviceId, switchWhilePlaying = false) => {
     setSelectedCameraDeviceId(deviceId);
     setCameraSwitchError("");
-    try { window.localStorage.setItem("rejivan_camera_device_id", deviceId); } catch (e) {}
+    try { window.localStorage.setItem("arohasetu_camera_device_id", deviceId); } catch (e) {}
     if (playbackState === "PLAYING" && cameraSource === "LIVE_WEBCAM" && (liveCameraMode === "BROWSER_WEBCAM" || switchWhilePlaying)) {
       if (webcamStreamRef.current) {
         webcamStreamRef.current.getTracks().forEach((t) => t.stop());
@@ -701,7 +701,7 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
         const actualDeviceId = stream.getVideoTracks()[0]?.getSettings?.().deviceId || selectedCameraDeviceId;
         if (actualDeviceId) {
           setSelectedCameraDeviceId(actualDeviceId);
-          try { window.localStorage.setItem("rejivan_camera_device_id", actualDeviceId); } catch (e) {}
+          try { window.localStorage.setItem("arohasetu_camera_device_id", actualDeviceId); } catch (e) {}
         }
         if (videoElementRef.current) {
           videoElementRef.current.srcObject = stream;
@@ -1267,10 +1267,10 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
             ctx.fillText(`OPTICAL MOTION: ${motionPercent}% | VEL: ${downwardVelocity.toFixed(1)}m/s`, bX + 6, Math.max(24, bY - 10));
           }
 
-          // Evaluate using ReJivan Movement Engine
+          // Evaluate using Arohasetu Movement Engine
           let clientStage = { id: "STAGE_RESTING", label: "Normal In-Bed Resting", state: "NORMAL" };
-          if (window.ReJivanMovementEngine && window.ReJivanMovementEngine.determineStageFromEvidence) {
-            clientStage = window.ReJivanMovementEngine.determineStageFromEvidence({
+          if (window.ArohasetuMovementEngine && window.ArohasetuMovementEngine.determineStageFromEvidence) {
+            clientStage = window.ArohasetuMovementEngine.determineStageFromEvidence({
               downwardVelocity: downwardVelocity,
               torsoAngle: isFloorLevel ? 75 : (isBedLevel ? 25 : 15),
               isFloorLevel: isFloorLevel,

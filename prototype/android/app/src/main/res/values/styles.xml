@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.ReJivan" parent="android:Theme.Material.NoActionBar">
+    <style name="Theme.Arohasetu" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">#0e1420</item>
         <item name="android:colorAccent">#2fbf8f</item>
         <item name="android:statusBarColor">#0e1420</item>

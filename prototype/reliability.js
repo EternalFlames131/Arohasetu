@@ -1,6 +1,6 @@
 "use strict";
 /**
- * ReJivan Reliability Layer — safeguards against false data, sensor
+ * Arohasetu Reliability Layer — safeguards against false data, sensor
  * failures, and alert storms. This module makes the system TRUSTWORTHY,
  * not just functional.
  *

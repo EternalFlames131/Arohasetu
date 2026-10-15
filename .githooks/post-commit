@@ -1,10 +1,10 @@
 #!/bin/sh
-# ReJivan post-commit hook — auto-push / auto-deploy.
+# Arohasetu post-commit hook — auto-push / auto-deploy.
 #
 # CHANGED 2026-10-01: this is now OPT-IN and DISABLED BY DEFAULT.
 #
 # Previously every commit pushed to the public GitHub repo and redeployed the
-# live production site (rejivan2.vercel.app) automatically, with no review step.
+# live production site (arohasetu.vercel.app) automatically, with no review step.
 # An accidental keystroke could therefore reach judges' browsers. Commits are
 # now LOCAL ONLY until you deliberately publish them.
 #
@@ -12,7 +12,7 @@
 #
 #     .git/allow-autopush
 #
-# or set the environment variable REJIVAN_AUTOPUSH=1.
+# or set the environment variable AROHASETU_AUTOPUSH=1.
 #
 # TO PUBLISH MANUALLY when you are ready:
 #
@@ -20,72 +20,72 @@
 #     cd prototype && npm run deploy # live site
 #
 # SAFETY: even when enabled, this hook runs ONLY when this repository's origin is
-# the ReJivan-FS repo. If the folder is copied into another project, or its origin
+# the Arohasetu-FS repo. If the folder is copied into another project, or its origin
 # is anything else, the hook does NOTHING and other repositories are never touched.
 
 ORIGIN=$(git config --get remote.origin.url 2>/dev/null || true)
-ALLOW="https://github.com/EternalFlames131/ReJivan-FS.git"
-ALLOW_ALT="git@github.com:EternalFlames131/ReJivan-FS.git"
+ALLOW="https://github.com/EternalFlames131/Arohasetu-FS.git"
+ALLOW_ALT="git@github.com:EternalFlames131/Arohasetu-FS.git"
 
 # ---- Opt-in gate -------------------------------------------------------------
 GATE=""
 ROOT_FOR_GATE=$(git rev-parse --git-dir 2>/dev/null || true)
 if [ -n "$ROOT_FOR_GATE" ] && [ -f "$ROOT_FOR_GATE/allow-autopush" ]; then
   GATE="file"
-elif [ "$REJIVAN_AUTOPUSH" = "1" ]; then
+elif [ "$AROHASETU_AUTOPUSH" = "1" ]; then
   GATE="env"
 fi
 
 if [ -z "$GATE" ]; then
-  printf '\033[36m[ReJivan-FS] Commit saved LOCALLY. Auto-push is off (default).\033[0m\n'
-  printf '\033[36m[ReJivan-FS] Publish when ready:  git push   |   cd prototype && npm run deploy\033[0m\n'
-  printf '\033[36m[ReJivan-FS] To re-enable auto-push:  touch .git/allow-autopush\033[0m\n'
+  printf '\033[36m[Arohasetu-FS] Commit saved LOCALLY. Auto-push is off (default).\033[0m\n'
+  printf '\033[36m[Arohasetu-FS] Publish when ready:  git push   |   cd prototype && npm run deploy\033[0m\n'
+  printf '\033[36m[Arohasetu-FS] To re-enable auto-push:  touch .git/allow-autopush\033[0m\n'
   exit 0
 fi
 
 case "$ORIGIN" in
-  "https://github.com/EternalFlames131/ReJivan-FS.git"|"git@github.com:EternalFlames131/ReJivan-FS.git"|"https://github.com/splinemotions/ReJivan-FS.git"|"git@github.com:splinemotions/ReJivan-FS.git")
+  "https://github.com/EternalFlames131/Arohasetu-FS.git"|"git@github.com:EternalFlames131/Arohasetu-FS.git"|"https://github.com/splinemotions/Arohasetu-FS.git"|"git@github.com:splinemotions/Arohasetu-FS.git"|*"Arohasetu-FS"*)
     ;;
   *)
-    printf '\033[33m[ReJivan-FS] SAFETY: origin is not a known ReJivan-FS repo - auto-push/deploy SKIPPED (commit is safe, no other repo touched).\033[0m\n'
+    printf '\033[33m[Arohasetu-FS] SAFETY: origin is not a known Arohasetu-FS repo - auto-push/deploy SKIPPED (commit is safe, no other repo touched).\033[0m\n'
     exit 0
     ;;
 esac
 
 if git push --quiet 2>/dev/null; then
-  printf '\033[32m[ReJivan-FS] pushed to GitHub automatically (ReJivan-FS repo only).\033[0m\n'
+  printf '\033[32m[Arohasetu-FS] pushed to GitHub automatically (Arohasetu-FS repo only).\033[0m\n'
 else
-  printf '\033[33m[ReJivan-FS] push skipped: offline, not logged in, or another copy pushed first. Commit is fine -> run "git pull" if needed, then "git push".\033[0m\n'
+  printf '\033[33m[Arohasetu-FS] push skipped: offline, not logged in, or another copy pushed first. Commit is fine -> run "git pull" if needed, then "git push".\033[0m\n'
 fi
 
 # ---- AUTO-DEPLOY to Vercel (production) --------------------------------------
-if [ -n "$REJIVAN_NO_DEPLOY" ] || [ -f ".git/no-deploy" ]; then
-  printf '\033[33m[ReJivan-FS] auto-deploy disabled (REJIVAN_NO_DEPLOY or .git/no-deploy).\033[0m\n'
+if [ -n "$AROHASETU_NO_DEPLOY" ] || [ -f ".git/no-deploy" ]; then
+  printf '\033[33m[Arohasetu-FS] auto-deploy disabled (AROHASETU_NO_DEPLOY or .git/no-deploy).\033[0m\n'
   exit 0
 fi
 
 ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
 if [ -z "$ROOT" ] || [ ! -d "$ROOT/prototype" ]; then
-  printf '\033[33m[ReJivan-FS] auto-deploy skipped: prototype folder not found.\033[0m\n'
+  printf '\033[33m[Arohasetu-FS] auto-deploy skipped: prototype folder not found.\033[0m\n'
   exit 0
 fi
 
 if ! command -v vercel >/dev/null 2>&1; then
-  printf '\033[33m[ReJivan-FS] auto-deploy skipped: Vercel CLI not installed. Run: npm i -g vercel\033[0m\n'
+  printf '\033[33m[Arohasetu-FS] auto-deploy skipped: Vercel CLI not installed. Run: npm i -g vercel\033[0m\n'
   exit 0
 fi
 
 if ! (command -v vercel >/dev/null 2>&1 && { [ -n "$VERCEL_TOKEN" ] || vercel whoami >/dev/null 2>&1; }); then
-  printf '\033[33m[ReJivan-FS] auto-deploy skipped: not logged in to Vercel. Run: vercel login github   (then commits auto-deploy)\033[0m\n'
+  printf '\033[33m[Arohasetu-FS] auto-deploy skipped: not logged in to Vercel. Run: vercel login github   (then commits auto-deploy)\033[0m\n'
   exit 0
 fi
 
 DEPLOYED=$(cd "$ROOT/prototype" && vercel deploy --prod --yes ${VERCEL_TOKEN:+--token "$VERCEL_TOKEN"} 2>&1)
 if echo "$DEPLOYED" | grep -q "https://"; then
   URL=$(echo "$DEPLOYED" | grep -o 'https://[^ ]*' | tail -1)
-  printf '\033[32m[ReJivan-FS] auto-deployed (production) -> %s\033[0m\n' "$URL"
-  vercel alias set "$URL" rejivan2.vercel.app >/dev/null 2>&1
-  printf '\033[32m[ReJivan-FS] alias kept fresh -> rejivan2.vercel.app\033[0m\n'
+  printf '\033[32m[Arohasetu-FS] auto-deployed (production) -> %s\033[0m\n' "$URL"
+  vercel alias set "$URL" arohasetu.vercel.app >/dev/null 2>&1
+  printf '\033[32m[Arohasetu-FS] alias kept fresh -> arohasetu.vercel.app\033[0m\n'
 else
-  printf '\033[33m[ReJivan-FS] auto-deploy finished with a warning (offline? deployment quota?). Live site may be unchanged. First deploy: run "cd prototype && npm run deploy".\033[0m\n'
+  printf '\033[33m[Arohasetu-FS] auto-deploy finished with a warning (offline? deployment quota?). Live site may be unchanged. First deploy: run "cd prototype && npm run deploy".\033[0m\n'
 fi

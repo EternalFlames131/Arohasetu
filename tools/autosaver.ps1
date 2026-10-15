@@ -1,12 +1,12 @@
-# autosaver.ps1 — ReJivan AutoSave watcher
+# autosaver.ps1 — Arohasetu AutoSave watcher
 # Watches the project folder. As soon as you change any file, waits until the
 # change-set stays identical for a short quiet period, then runs:
 #   git add -A  &&  git commit
 # The .githooks/post-commit hook then AUTOMATICALLY pushes to GitHub and
-# redeploys rejivan2.vercel.app — so you never have to run any command again.
+# redeploys arohasetu.vercel.app — so you never have to run any command again.
 #
 # Start (background):   pwsh -File "tools\autosaver.ps1"
-# Keep it always on:    the "ReJivan AutoSave" scheduled task starts it at
+# Keep it always on:    the "Arohasetu AutoSave" scheduled task starts it at
 #                       Windows logon (registered during setup).
 # Stop temporarily:     put a file named 'no-autosave' inside the .git folder.
 # Log:                  tools\autosaver.log  (never committed — see .gitignore)
@@ -37,10 +37,10 @@ function Get-Signature {
 }
 
 Log "AutoSave started for $root"
-Write-Host "[ReJivan AutoSave] watching '$root'" -ForegroundColor Cyan
+Write-Host "[Arohasetu AutoSave] watching '$root'" -ForegroundColor Cyan
 if (Test-Path -LiteralPath $pause) {
   Log "      suspended: .git\no-autosave exists (remove it to resume)"
-  Write-Host "[ReJivan AutoSave] SUSPENDED (.git\no-autosave exists)." -ForegroundColor Yellow
+  Write-Host "[Arohasetu AutoSave] SUSPENDED (.git\no-autosave exists)." -ForegroundColor Yellow
 }
 
 $lastCommit = Get-Date

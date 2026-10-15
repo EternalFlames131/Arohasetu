@@ -1,5 +1,5 @@
 """
-Unit test for ReJivan YOLO Kinematics, Calibration & Recovery Engine.
+Unit test for Arohasetu YOLO Kinematics, Calibration & Recovery Engine.
 Tests:
 1. Upright posture (Nominal, SAFE)
 2. Upper-body webcam framing (No hips, upright head/shoulders -> SAFE)

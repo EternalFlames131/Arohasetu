@@ -1,6 +1,6 @@
 "use strict";
 /**
- * ReJivan — prototype server (serverless-ready).
+ * Arohasetu — prototype server (serverless-ready).
  * Express + lightweight JSON storage. Serves the SPA from /public and exposes
  * a REST API. Runs the same on a laptop (`npm start`) and on Vercel.
  *
@@ -70,7 +70,7 @@ app.use(express.json());
 const sharedStoreUrl = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
 const sharedStoreToken = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
 const SIMULATION_STORE_KEY = "arohasetu:simulation:v1";
-const LEGACY_SIMULATION_STORE_KEY = "rejivan:simulation:v1";
+const LEGACY_SIMULATION_STORE_KEY = "arohasetu:simulation:v1";
 const sharedStateRoutes = /^\/api\/(?:patients|vitals|alerts|escalations|calls|admin\/simulator)(?:\/|$)/;
 
 async function sharedStoreCommand(command) {
@@ -279,10 +279,10 @@ function snapshotFor(p, now) {
     if (devOverrides.vitals.dbp !== undefined) g.vitals.bpDia = devOverrides.vitals.dbp;
   }
   if (devOverrides.disconnectedDevices && devOverrides.disconnectedDevices.length > 0) {
-    if (devOverrides.disconnectedDevices.includes("SanketLife 12-Lead ECG") || devOverrides.disconnectedDevices.includes("Arohasetu Smartwatch") || devOverrides.disconnectedDevices.includes("Aroha Smartwatch") || devOverrides.disconnectedDevices.includes("ReJivan Smartwatch")) {
+    if (devOverrides.disconnectedDevices.includes("SanketLife 12-Lead ECG") || devOverrides.disconnectedDevices.includes("Arohasetu Smartwatch") || devOverrides.disconnectedDevices.includes("Arohasetu Smartwatch") || devOverrides.disconnectedDevices.includes("Arohasetu Smartwatch")) {
       g.vitals.hr = null;
     }
-    if (devOverrides.disconnectedDevices.includes("Arohasetu Smartwatch") || devOverrides.disconnectedDevices.includes("Aroha Smartwatch") || devOverrides.disconnectedDevices.includes("ReJivan Smartwatch")) {
+    if (devOverrides.disconnectedDevices.includes("Arohasetu Smartwatch") || devOverrides.disconnectedDevices.includes("Arohasetu Smartwatch") || devOverrides.disconnectedDevices.includes("Arohasetu Smartwatch")) {
       g.vitals.spo2 = null;
     }
     if (devOverrides.disconnectedDevices.includes("Omron HEM-7156T")) {
@@ -1222,7 +1222,7 @@ app.post("/api/edge/heartbeat", (req, res) => {
 });
 
 // ---- Local YOLO Edge Sentinel Process Manager & Reverse Proxy -------------
-const EDGE_DAEMON_BASE = process.env.AROHASETU_EDGE_BASE || process.env.AROHA_EDGE_BASE || process.env.REJIVAN_EDGE_BASE || "http://127.0.0.1:5050";
+const EDGE_DAEMON_BASE = process.env.AROHASETU_EDGE_BASE || process.env.AROHA_EDGE_BASE || process.env.AROHASETU_EDGE_BASE || "http://127.0.0.1:5050";
 let yoloChildProcess = null;
 let isStartingYolo = false;
 
@@ -1500,7 +1500,7 @@ app.get(["/api/system/health", "/api/system-health"], async (req, res) => {
     statusHierarchy: {
       edgeNode: {
         id: latestEdgeHeartbeat.edgeId || "edge-node-an-01",
-        name: latestEdgeHeartbeat.name || "ReJivan GB Pant Hospital Edge Sentinel",
+        name: latestEdgeHeartbeat.name || "Arohasetu GB Pant Hospital Edge Sentinel",
         status: edgeStatus,
         lastHeartbeatAgeMs: timeSinceHeartbeat,
         host: edgeDeviceLabel
@@ -1590,7 +1590,7 @@ if (require.main === module) {
     console.log(`Demo accounts: asharma@demo.in / rprakash@demo.in / wardnurse@demo.in  (password: demo123)`);
 
     // On local machine (non-serverless), automatically launch YOLO Edge Sentinel if not already active
-    if (!process.env.VERCEL && !process.env.REJIVAN_NO_YOLO && !process.env.AROHASETU_NO_YOLO || process.env.AROHA_NO_YOLO) {
+    if (!process.env.VERCEL && !process.env.AROHASETU_NO_YOLO && !process.env.AROHASETU_NO_YOLO || process.env.AROHA_NO_YOLO) {
       try {
         await startEdgeDaemon();
       } catch (err) {

@@ -1,10 +1,10 @@
-# Hack for Social Cause 2027 (VBYLD 2027) — ReJivan Master Submission Package
+# Hack for Social Cause 2027 (VBYLD 2027) — Arohasetu Master Submission Package
 **Knowledge Partner:** IIT Bombay | **Organized by:** Ministry of Youth Affairs & Sports (MoYAS), Govt. of India  
 **Official Portal:** [MY Bharat (mybharat.gov.in)](https://mybharat.gov.in)  
-**Project Name:** ReJivan — A Personal Nurse for Every Family & Hospital Bed  
+**Project Name:** Arohasetu — A Personal Nurse for Every Family & Hospital Bed  
 **Target Region:** Andaman & Nicobar Islands (UT) & Pan-India Rural/Semi-Urban Communities  
 **Theme:** Healthcare, Wellbeing & Service Delivery · Elderly Care & Healthy Ageing  
-**Public Repository:** `https://github.com/EternalFlames131/ReJivan-FS` (Mirror: `https://github.com/splinemotions/ReJivan-FS`)  
+**Public Repository:** `https://github.com/EternalFlames131/Arohasetu-FS` (Mirror: `https://github.com/splinemotions/Arohasetu-FS`)  
 **Live Prototype URL:** `https://arohasetu.vercel.app`  
 
 ---
@@ -34,16 +34,16 @@
 4. **Demonstration Video:** 3 to 5 minutes duration, MP4/MOV format, $\ge$ 720p resolution, $\le$ 80 MB file size.
 5. **Team Declaration & Annexure 1:** Signed self-certification form with institutional verification and attached student ID cards.
 6. **File Naming Protocol:**  
-   `AndamanNicobar_ReJivan_ProblemStatement.pdf`  
-   `AndamanNicobar_ReJivan_PresentationDeck.pdf`  
-   `AndamanNicobar_ReJivan_Annexure1.pdf`  
+   `AndamanNicobar_Arohasetu_ProblemStatement.pdf`  
+   `AndamanNicobar_Arohasetu_PresentationDeck.pdf`  
+   `AndamanNicobar_Arohasetu_Annexure1.pdf`  
 
 ---
 
 ## 2. 6–7 Slide Submission Deck Content (Official IIT Bombay Template)
 
 ### Slide 1: Title, Team & Institutional Identification
-* **Project Title:** ReJivan — "A Personal Nurse for Every Family and Every Hospital Bed"
+* **Project Title:** Arohasetu — "A Personal Nurse for Every Family and Every Hospital Bed"
 * **Tagline:** Affordable, privacy-first continuous health monitoring, on-time medications, and autonomous emergency escalation for home and hospital care.
 * **Competition Track:** Hack for Social Cause 2027 | VBYLD 2027 (MoYAS & IIT Bombay)
 * **Primary Themes:** Healthcare, Wellbeing & Service Delivery | Elderly Care & Healthy Ageing
@@ -53,7 +53,7 @@
   * **Team Member 2:** `[Name / Role / MY Bharat ID]`
   * **Team Member 3:** `[Name / Role / MY Bharat ID]`
 * **Institution:** `[College Name]`, Port Blair, Andaman & Nicobar Islands | **AISHE Code:** `[User to insert]`
-* **Live Deployment:** `https://arohasetu.vercel.app` | **Open-Source Code:** `github.com/EternalFlames131/ReJivan-FS`
+* **Live Deployment:** `https://arohasetu.vercel.app` | **Open-Source Code:** `github.com/EternalFlames131/Arohasetu-FS`
 
 ### Slide 2: Problem Definition & Regional Grounding
 * **The "Silent Gap" in Vulnerable Healthcare:**
@@ -65,7 +65,7 @@
   * Outer islands (Hut Bay, Little Andaman, Car Nicobar, Diglipur) face maritime transit delays of 6–10 hours.
   * Unstable cellular internet and lack of round-the-clock home nursing demand an **offline-resilient, privacy-safe, autonomous monitoring solution**.
 
-### Slide 3: Proposed Solution — The ReJivan Architecture
+### Slide 3: Proposed Solution — The Arohasetu Architecture
 * **Two-Layer Safety Shield:**
   1. **Layer 1 (Vitals Shield):** Ingests multi-parameter vitals (Heart Rate, $\text{SpO}_2$, Blood Pressure, Temperature, Blood Glucose) scored against the clinically proven **NEWS2** (National Early Warning Score 2) deterioration matrix.
   2. **Layer 2 (Visual Optical Sentinel):** Overhead room camera running on-device skeletal pose tracking (17 keypoints). Continuously classifies falls, out-of-bed wandering, and prolonged immobility. **Zero video recording or cloud transmission** (DPDP Act 2023 compliant).
@@ -136,12 +136,12 @@
 *(Can be pushed directly to the public GitHub repository)*
 
 ```markdown
-# ReJivan — A Personal Nurse for Every Family & Hospital Bed
+# Arohasetu — A Personal Nurse for Every Family & Hospital Bed
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Hackathon: HSC 2027](https://img.shields.io/badge/HSC%202027-IIT%20Bombay%20%7C%20MoYAS-blue.svg)](https://mybharat.gov.in)
 [![Live Prototype](https://img.shields.io/badge/Live%20Demo-arohasetu.vercel.app-emerald.svg)](https://arohasetu.vercel.app)
-[![Android APK](https://img.shields.io/badge/Android-APK%20v1.0-green.svg)](https://arohasetu.vercel.app/download/ReJivan_v1.0.apk)
+[![Android APK](https://img.shields.io/badge/Android-APK%20v1.0-green.svg)](https://arohasetu.vercel.app/download/Arohasetu_v1.0.apk)
 
 > Developed for **Hack for Social Cause (HSC) 2027** under the Viksit Bharat Young Leaders Dialogue (VBYLD 2027).  
 > **Knowledge Partner:** IIT Bombay | **Organized by:** Ministry of Youth Affairs & Sports (MoYAS), Govt. of India.  
@@ -149,8 +149,8 @@
 
 ---
 
-## 💡 What is ReJivan?
-ReJivan is an affordable, privacy-first remote patient monitoring platform that functions as a continuous digital nurse. It operates both at **home** for elderly individuals and in **hospital "Virtual Wards"** for understaffed facilities.
+## 💡 What is Arohasetu?
+Arohasetu is an affordable, privacy-first remote patient monitoring platform that functions as a continuous digital nurse. It operates both at **home** for elderly individuals and in **hospital "Virtual Wards"** for understaffed facilities.
 
 ### The Two-Layer Safety Shield
 1. **Layer 1: Wearable Vital Signs Monitoring** — Heart Rate, SpO2, Blood Pressure, Temperature, Blood Glucose, scored via **NEWS2** (National Early Warning Score 2).
@@ -222,8 +222,8 @@ In alignment with HSC 2027 evaluation ethics:
 
 ```bash
 # Clone the repository
-git clone https://github.com/EternalFlames131/ReJivan-FS.git
-cd ReJivan-FS
+git clone https://github.com/EternalFlames131/Arohasetu-FS.git
+cd Arohasetu-FS
 
 # Install dependencies and start local web server
 npm install
@@ -241,12 +241,12 @@ This project is open-sourced under the **MIT License**.
 ```
 
 ### 3.2 Pre-Submission Repository Audit Checklist
-* [x] **Repository Visibility:** Confirm repository is set to **PUBLIC** on GitHub (`github.com/EternalFlames131/ReJivan-FS`).
+* [x] **Repository Visibility:** Confirm repository is set to **PUBLIC** on GitHub (`github.com/EternalFlames131/Arohasetu-FS`).
 * [x] **Open-Source License:** Valid `LICENSE` file (MIT License) present in root directory.
 * [x] **Secrets Hygiene:** Ensure zero personal passwords, private API tokens, or `.env` credential files are committed.
 * [x] **Active Branch:** Branch `main` contains the latest working, verified code.
 * [x] **Live Links Tested:** `https://arohasetu.vercel.app` resolves with HTTP 200 and loads demo accounts.
-* [x] **Android APK Link:** Direct link to `ReJivan_v1.0.apk` functional and verified.
+* [x] **Android APK Link:** Direct link to `Arohasetu_v1.0.apk` functional and verified.
 
 ---
 
@@ -258,12 +258,12 @@ This project is open-sourced under the **MIT License**.
 
 | Timestamp | Visual Screen Action | Voiceover Narration Script (Spoken by Samrat / Team) |
 | :--- | :--- | :--- |
-| **0:00 – 0:30** | **Camera on Team Lead / Title Slide**<br>Samrat speaks clearly to camera with title slide overlay: "ReJivan — A Personal Nurse for Every Family". | "Namaste. I am Samrat, a teacher trainee from the Andaman and Nicobar Islands, presenting ReJivan for Hack for Social Cause 2027. Millions of elderly citizens live alone, and in government hospitals, a single nurse often watches over 40 beds at night. When an elderly person suffers a fall, a nocturnal drop in oxygen, or a heart crisis, hours can pass in silence before anyone notices. In remote island archipelagos like Andaman, where specialist hospitals are sea ferries away, that delay is fatal. ReJivan solves this with a two-layer safety shield." |
-| **0:30 – 1:15** | **Screen Capture: Live Family Dashboard (`arohasetu.vercel.app`)**<br>Log in as `asharma@demo.in`. Show Anita Sharma's dashboard: clean live vitals, green status indicators, medication administration schedule, and 5-language switcher (switch to Hindi then Bengali). | "Here is our live platform. In Family Care mode, ReJivan connects to wearable sensors monitoring Heart Rate, SpO2, Blood Pressure, and Blood Glucose. Every reading is clinically scored using the National Early Warning Score 2 (NEWS2). The dashboard is accessible in five Indian languages, and families can track medication schedules in real time, receiving immediate alerts for missed doses." |
-| **1:15 – 2:00** | **Screen Capture: Camera Zones & Fall Sentinel**<br>Navigate to Camera Zones. Show the optical pose tracking skeleton. Highlight DPDP Act 2023 compliance badge. Play the Hospital Bed-Fall demo or connect webcam. | "Our second layer is the Visual Optical Sentinel. Traditional CCTV cameras invade privacy and violate India's Digital Personal Data Protection Act. ReJivan uses on-device computer vision: it extracts 17 body joint keypoints right in the room, analyzes fall velocity and posture, and permanently erases the video in milliseconds. No video is ever stored or transmitted to the cloud." |
-| **2:00 – 2:45** | **Screen Capture: Dual-Window Admin Simulator & Emergency Escalation**<br>Open split screen: Left window shows Judge Dashboard; Right window shows `/admin/simulator`. In Admin window, trigger "Low SpO2 (88%)". Watch Left window turn RED in 1.8 seconds. Show the 3-Tier Call Ladder. | "To demonstrate how ReJivan responds to emergencies, we have an Admin Cockpit syncing live with the dashboard. If an elderly resident experiences severe hypoxemia or a sudden fall, the clinical rules engine immediately triggers an autonomous 3-tier emergency ladder: first calling the primary family caregiver; if unanswered within 15 seconds, escalating to a backup neighbor; and after 45 seconds, automatically alerting emergency dispatch 108 and marine ambulances with patient vitals." |
-| **2:45 – 3:15** | **Screen Capture: Hospital Virtual Ward (`wardnurse@demo.in`)**<br>Log out and log in as `wardnurse@demo.in`. Show Multi-Bed Ward Grid (Bed 101 to 104). Click on Bed 101. Show 4-stage alert lifecycle: click `Acknowledge` $\rightarrow$ type clinical note $\rightarrow$ click `Resolve`. | "For healthcare facilities, ReJivan transforms ordinary wards into smart Virtual Wards. The nurse station view continuously ranks inpatient beds by clinical acuity. Nurses manage a formal 4-stage alert lifecycle—New, Acknowledged, Follow-up Recorded, and Resolved—creating an immutable digital audit trail compliant with Ayushman Bharat standards." |
-| **3:15 – 3:45** | **Mobile Screen Capture / Camera on Android App & Conclusion**<br>Show native Android APK running offline on smartphone. Cut back to Team Lead for concluding pitch. | "For remote islands with erratic internet, our native Android application embeds the entire vital rules and alert engine offline with zero cloud dependency. ReJivan proves that life-saving healthcare monitoring can be affordable, privacy-first, and accessible to every Indian family. Thank you." |
+| **0:00 – 0:30** | **Camera on Team Lead / Title Slide**<br>Samrat speaks clearly to camera with title slide overlay: "Arohasetu — A Personal Nurse for Every Family". | "Namaste. I am Samrat, a teacher trainee from the Andaman and Nicobar Islands, presenting Arohasetu for Hack for Social Cause 2027. Millions of elderly citizens live alone, and in government hospitals, a single nurse often watches over 40 beds at night. When an elderly person suffers a fall, a nocturnal drop in oxygen, or a heart crisis, hours can pass in silence before anyone notices. In remote island archipelagos like Andaman, where specialist hospitals are sea ferries away, that delay is fatal. Arohasetu solves this with a two-layer safety shield." |
+| **0:30 – 1:15** | **Screen Capture: Live Family Dashboard (`arohasetu.vercel.app`)**<br>Log in as `asharma@demo.in`. Show Anita Sharma's dashboard: clean live vitals, green status indicators, medication administration schedule, and 5-language switcher (switch to Hindi then Bengali). | "Here is our live platform. In Family Care mode, Arohasetu connects to wearable sensors monitoring Heart Rate, SpO2, Blood Pressure, and Blood Glucose. Every reading is clinically scored using the National Early Warning Score 2 (NEWS2). The dashboard is accessible in five Indian languages, and families can track medication schedules in real time, receiving immediate alerts for missed doses." |
+| **1:15 – 2:00** | **Screen Capture: Camera Zones & Fall Sentinel**<br>Navigate to Camera Zones. Show the optical pose tracking skeleton. Highlight DPDP Act 2023 compliance badge. Play the Hospital Bed-Fall demo or connect webcam. | "Our second layer is the Visual Optical Sentinel. Traditional CCTV cameras invade privacy and violate India's Digital Personal Data Protection Act. Arohasetu uses on-device computer vision: it extracts 17 body joint keypoints right in the room, analyzes fall velocity and posture, and permanently erases the video in milliseconds. No video is ever stored or transmitted to the cloud." |
+| **2:00 – 2:45** | **Screen Capture: Dual-Window Admin Simulator & Emergency Escalation**<br>Open split screen: Left window shows Judge Dashboard; Right window shows `/admin/simulator`. In Admin window, trigger "Low SpO2 (88%)". Watch Left window turn RED in 1.8 seconds. Show the 3-Tier Call Ladder. | "To demonstrate how Arohasetu responds to emergencies, we have an Admin Cockpit syncing live with the dashboard. If an elderly resident experiences severe hypoxemia or a sudden fall, the clinical rules engine immediately triggers an autonomous 3-tier emergency ladder: first calling the primary family caregiver; if unanswered within 15 seconds, escalating to a backup neighbor; and after 45 seconds, automatically alerting emergency dispatch 108 and marine ambulances with patient vitals." |
+| **2:45 – 3:15** | **Screen Capture: Hospital Virtual Ward (`wardnurse@demo.in`)**<br>Log out and log in as `wardnurse@demo.in`. Show Multi-Bed Ward Grid (Bed 101 to 104). Click on Bed 101. Show 4-stage alert lifecycle: click `Acknowledge` $\rightarrow$ type clinical note $\rightarrow$ click `Resolve`. | "For healthcare facilities, Arohasetu transforms ordinary wards into smart Virtual Wards. The nurse station view continuously ranks inpatient beds by clinical acuity. Nurses manage a formal 4-stage alert lifecycle—New, Acknowledged, Follow-up Recorded, and Resolved—creating an immutable digital audit trail compliant with Ayushman Bharat standards." |
+| **3:15 – 3:45** | **Mobile Screen Capture / Camera on Android App & Conclusion**<br>Show native Android APK running offline on smartphone. Cut back to Team Lead for concluding pitch. | "For remote islands with erratic internet, our native Android application embeds the entire vital rules and alert engine offline with zero cloud dependency. Arohasetu proves that life-saving healthcare monitoring can be affordable, privacy-first, and accessible to every Indian family. Thank you." |
 
 ---
 
@@ -276,12 +276,12 @@ This project is open-sourced under the **MIT License**.
 ================================================================================
 
 1. PROJECT & INSTITUTION DETAILS:
-   - Project Name: ReJivan
+   - Project Name: Arohasetu
    - Selected Theme: Healthcare, Wellbeing & Service Delivery / Elderly Care & Healthy Ageing
    - State / Union Territory: Andaman & Nicobar Islands (UT)
    - Institution Name: [User to insert College/Institute Name]
    - Institutional AISHE Code: [User to insert AISHE Code]
-   - Public Repository URL: https://github.com/EternalFlames131/ReJivan-FS
+   - Public Repository URL: https://github.com/EternalFlames131/Arohasetu-FS
    - Live Prototype URL: https://arohasetu.vercel.app
 
 2. TEAM COMPOSITION:
@@ -311,7 +311,7 @@ This project is open-sourced under the **MIT License**.
    We hereby certify and declare that:
    a) All team members are bona fide students of the institution mentioned above 
       and meet the age criteria (18–29 years as of 17 August 2026).
-   b) The submitted project "ReJivan" is an original work developed by our team.
+   b) The submitted project "Arohasetu" is an original work developed by our team.
    c) All digital and AI-assisted development tools utilized during development 
       have been transparently disclosed in Section 4 of this submission.
    d) The project source code is publicly accessible and licensed under an 

@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 Add-Type -AssemblyName System.Drawing
 
-# ReJivan launcher icon generator (Windows). Produces legacy + adaptive icons
+# Arohasetu launcher icon generator (Windows). Produces legacy + adaptive icons
 # in every density. Colors follow the app theme: navy #0E1420, teal #2FBF8F, white.
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $res  = Join-Path $root "app\src\main\res"

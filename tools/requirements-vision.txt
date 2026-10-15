@@ -1,4 +1,4 @@
-# ReJivan vision runtime — pinned dependency set for tools/yolo_edge_sentinel.py
+# Arohasetu vision runtime — pinned dependency set for tools/yolo_edge_sentinel.py
 #
 # WHY THIS FILE EXISTS
 # --------------------

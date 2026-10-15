@@ -11,7 +11,7 @@ Set-Location $root
 $venvPy = Join-Path $root ".venv\Scripts\python.exe"
 $reqs   = Join-Path $root "tools\requirements-vision.txt"
 
-Write-Host "=== ReJivan vision runtime setup ===" -ForegroundColor Cyan
+Write-Host "=== Arohasetu vision runtime setup ===" -ForegroundColor Cyan
 
 if (-not (Test-Path $venvPy)) {
     Write-Host "[*] Creating .venv ..." -ForegroundColor Yellow

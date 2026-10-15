@@ -1,4 +1,4 @@
-// Top-level build file — native ReJivan Android app (no Capacitor/web wrapper).
+// Top-level build file — native Arohasetu Android app (no Capacitor/web wrapper).
 buildscript {
     repositories {
         google()

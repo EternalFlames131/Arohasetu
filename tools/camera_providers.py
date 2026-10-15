@@ -1,6 +1,6 @@
 """
 tools/camera_providers.py
-ReJivan Unified Camera Ingestion Architecture & Interchangeable Camera Sources.
+Arohasetu Unified Camera Ingestion Architecture & Interchangeable Camera Sources.
 Supports:
   1. LOCAL_WEBCAM: Physical webcam via OpenCV DirectShow with privacy-first on-demand activation.
   2. RTSP_CCTV: Production IP camera / NVR/VMS RTSP stream with auto-reconnect, credential masking,
@@ -33,7 +33,7 @@ except ImportError:
     np = None
 
 # Configure secure logging (ensuring passwords are never emitted)
-logger = logging.getLogger("ReJivanCameraIngestion")
+logger = logging.getLogger("ArohasetuCameraIngestion")
 if not logger.handlers:
     handler = logging.StreamHandler()
     formatter = logging.Formatter("[%(asctime)s] [%(levelname)s] [CameraIngestion] %(message)s")
@@ -198,7 +198,7 @@ def validate_rtsp_url(url: Optional[str]) -> Tuple[bool, str]:
 
 class CameraSource:
     """
-    Abstract base class for all ReJivan camera sources.
+    Abstract base class for all Arohasetu camera sources.
     Encapsulates lifecycle management, frame reading, health metrics, and
     isolated kinematic tracking state.
     """
@@ -512,7 +512,7 @@ class LocalWebcamSource(CameraSource):
 class RtspCctvSource(CameraSource):
     """
     Production-grade RTSP IP Camera and NVR/VMS Stream Source.
-    Runs locally on the ReJivan Edge Node (CUDA GPU or CPU) — never uploads raw video.
+    Runs locally on the Arohasetu Edge Node (CUDA GPU or CPU) — never uploads raw video.
     Features:
       - Strict credential masking in all logs, health outputs, and diagnostics.
       - Automatic reconnect with bounded retry count and exponential backoff.
@@ -572,9 +572,9 @@ class RtspCctvSource(CameraSource):
         """
         url = self.raw_rtsp_url
         if self.credentials_ref:
-            # Check environment variables: e.g. REJIVAN_RTSP_USER / REJIVAN_RTSP_PASS
-            user = os.environ.get(f"{self.credentials_ref}_USER") or os.environ.get("REJIVAN_RTSP_USER")
-            pwd = os.environ.get(f"{self.credentials_ref}_PASS") or os.environ.get("REJIVAN_RTSP_PASS")
+            # Check environment variables: e.g. AROHASETU_RTSP_USER / AROHASETU_RTSP_PASS
+            user = os.environ.get(f"{self.credentials_ref}_USER") or os.environ.get("AROHASETU_RTSP_USER")
+            pwd = os.environ.get(f"{self.credentials_ref}_PASS") or os.environ.get("AROHASETU_RTSP_PASS")
             if user and pwd and "://" in url and "@" not in url:
                 proto, rest = url.split("://", 1)
                 url = f"{proto}://{user}:{pwd}@{rest}"
@@ -1016,7 +1016,7 @@ class PrerecordedVideoSource(CameraSource):
 
 class EdgeNode:
     """
-    Represents an on-premises ReJivan Edge Computing Node (e.g. Hospital Ward Sentinel).
+    Represents an on-premises Arohasetu Edge Computing Node (e.g. Hospital Ward Sentinel).
     Associates one or more physical/virtual cameras with this edge machine.
     Features:
       - Multi-camera isolation: each camera maintains independent TrackingContext.
@@ -1026,7 +1026,7 @@ class EdgeNode:
     def __init__(
         self,
         edge_id: str = "edge-node-an-01",
-        name: str = "ReJivan GB Pant Hospital Edge Sentinel",
+        name: str = "Arohasetu GB Pant Hospital Edge Sentinel",
         host_identifier: Optional[str] = None,
         software_version: str = "2.4.0-edge"
     ):

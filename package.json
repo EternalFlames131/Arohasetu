@@ -1,7 +1,7 @@
 {
-  "name": "rejivan",
+  "name": "arohasetu",
   "version": "1.0.0",
-  "description": "ReJivan — A Personal Nurse for Every Family (HSC 2027)",
+  "description": "Arohasetu — A Personal Nurse for Every Family (HSC 2027)",
   "scripts": {
     "start": "node prototype/server.js",
     "dev": "node prototype/server.js",
@@ -13,7 +13,7 @@
   },
   "keywords": [
     "healthcare",
-    "rejivan",
+    "arohasetu",
     "yolo",
     "ultralytics",
     "cuda",

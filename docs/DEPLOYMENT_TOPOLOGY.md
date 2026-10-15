@@ -1,4 +1,4 @@
-# ReJivan — Camera Ingestion Architecture & Deployment Topology
+# Arohasetu — Camera Ingestion Architecture & Deployment Topology
 
 > **Executive Overview for Technical & Clinical Evaluators**  
 > Competition: *Hack for Social Cause 2027 (VBYLD 2027, MoYAS + IIT Bombay)*  
@@ -9,7 +9,7 @@
 
 ## 1. System Architecture Overview
 
-ReJivan separates physical video ingestion from cloud alerting by deploying an **On-Premises Edge Sentinel Node**. Whether processing physical IP surveillance cameras, local caregiver webcams, or clinical verification video, **all video frames are decoded, analyzed, and discarded in volatile edge RAM**. Zero raw video ever leaves the hospital or residential premises.
+Arohasetu separates physical video ingestion from cloud alerting by deploying an **On-Premises Edge Sentinel Node**. Whether processing physical IP surveillance cameras, local caregiver webcams, or clinical verification video, **all video frames are decoded, analyzed, and discarded in volatile edge RAM**. Zero raw video ever leaves the hospital or residential premises.
 
 ```mermaid
 flowchart TD
@@ -29,7 +29,7 @@ flowchart TD
         HEALTH["System Infrastructure Watchdog<br/>(7-Tier Status Hierarchy)"]
     end
 
-    subgraph CLOUDLAYER["3. ReJivan Cloud / Vercel Clinical Portal"]
+    subgraph CLOUDLAYER["3. Arohasetu Cloud / Vercel Clinical Portal"]
         CANONICAL["Canonical Event Store<br/>(Schema v2.1.0 Idempotent Events)"]
         PILLARS["3-Pillar UI Telemetry<br/>(Edge Status · Camera Status · Patient Status)"]
         CHECKIN["Resident Verification Workflow<br/>(Are You Okay? Modal & Ladder)"]
@@ -55,7 +55,7 @@ flowchart TD
 
 ## 2. Interchangeable Camera Sources & The Unified Pipeline
 
-ReJivan eliminates custom "demo-only" fall logic. All three sources feed the **identical downstream inference and event reconstruction engine**:
+Arohasetu eliminates custom "demo-only" fall logic. All three sources feed the **identical downstream inference and event reconstruction engine**:
 
 $$\text{Camera Source} \longrightarrow \text{NormalizedFrame} \longrightarrow \text{YOLO11-Pose} \longrightarrow \text{TrackingContext} \longrightarrow \text{Hypothesis Engine} \longrightarrow \text{Verification} \longrightarrow \text{Response}$$
 
@@ -86,11 +86,11 @@ class NormalizedFrame:
 
 ## 3. Production Deployment Topology (Hospital & Virtual Ward)
 
-In a real hospital (such as GB Pant Hospital in Port Blair), ReJivan interfaces with existing IP surveillance cameras without replacing hospital CCTV infrastructure:
+In a real hospital (such as GB Pant Hospital in Port Blair), Arohasetu interfaces with existing IP surveillance cameras without replacing hospital CCTV infrastructure:
 
 ```
 [Ward 302 IP Dome Camera]  ──(RTSP/H.264 over LAN)──┐
-[Ward 303 IP Bullet Camera] ──(RTSP/H.264 over LAN)──┼──> [ReJivan Edge Gateway]
+[Ward 303 IP Bullet Camera] ──(RTSP/H.264 over LAN)──┼──> [Arohasetu Edge Gateway]
 [Ward 304 IP PTZ Camera]   ──(RTSP/H.264 over LAN)──┘     (CUDA GPU or Jetson Orin)
                                                                     │
                                                                     │ Local YOLO-Pose Inference
@@ -101,7 +101,7 @@ In a real hospital (such as GB Pant Hospital in Port Blair), ReJivan interfaces 
                                                                     │
                                                     HTTPS Long-Poll / WebSockets (<2 KB/s)
                                                                     ▼
-                                                        [ReJivan Clinical Portal]
+                                                        [Arohasetu Clinical Portal]
                                                           (Nurse Station & Cloud)
 ```
 
@@ -116,16 +116,16 @@ In a real hospital (such as GB Pant Hospital in Port Blair), ReJivan interfaces 
 
 ## 4. Competition & Zero-Budget Demonstration Paths
 
-ReJivan was engineered to accommodate diverse presentation constraints without compromising technical integrity:
+Arohasetu was engineered to accommodate diverse presentation constraints without compromising technical integrity:
 
 ### Path A: Zero-Budget Laptop / Terminal-Free Evaluator Path
-- **Target:** Judges accessing `rejivan2.vercel.app` on their own laptops/smartphones.
+- **Target:** Judges accessing `arohasetu.vercel.app` on their own laptops/smartphones.
 - **Mechanism:** Click **"🎥 Pre-Recorded Hospital Demo"** in the Camera Zones portal.
 - **Execution:** The browser executes optical motion vector differencing, 7 temporal stages, 3 distinct confidences, and the resident verification dialog with **zero terminal commands or local software required**.
 
 ### Path B: Dedicated Edge Hardware Acceleration Path
 - **Target:** Local laptop with an NVIDIA CUDA GPU (auto-detected by PyTorch; falls back to CPU if none is present). Current development machine: NVIDIA GeForce RTX 4060 Laptop GPU (8GB VRAM).
-- **Mechanism:** Run `Start-ReJivan.bat` or `python tools/yolo_edge_sentinel.py`.
+- **Mechanism:** Run `Start-Arohasetu.bat` or `python tools/yolo_edge_sentinel.py`.
 - **Execution:** Ultralytics YOLO11-Pose runs locally at 25–30 FPS on CUDA. The web dashboard auto-discovers port `5050` and visualizes genuine 17-point skeletal wireframes and on-demand DPDP privacy radar.
 
 ### Path C: Hospital NVR / IP Camera Ingestion Path
@@ -137,7 +137,7 @@ ReJivan was engineered to accommodate diverse presentation constraints without c
 
 ## 5. Three-Pillar Telemetry Decoupling
 
-A critical failure of naive vision systems is conflating camera connection drops with patient emergencies. ReJivan enforces strict architectural separation between **Technical Infrastructure Health** and **Clinical Patient Health**:
+A critical failure of naive vision systems is conflating camera connection drops with patient emergencies. Arohasetu enforces strict architectural separation between **Technical Infrastructure Health** and **Clinical Patient Health**:
 
 ```mermaid
 graph LR

@@ -1,4 +1,4 @@
-# ReJivan — Working Prototype
+# Arohasetu — Working Prototype
 
 > A Personal Nurse for Every Family — remote health monitoring, on-time medicines, and automatic emergency help, working **at home and in hospital "Virtual Ward" rooms**.
 
@@ -114,7 +114,7 @@ All data endpoints require `Authorization: Bearer <token>`.
 
 ## Disclaimer
 
-ReJivan is a **prototype**, not a certified medical device. It supports — never replaces — human caregivers and doctors. A human always makes the final decision.
+Arohasetu is a **prototype**, not a certified medical device. It supports — never replaces — human caregivers and doctors. A human always makes the final decision.
 
 ## License
 

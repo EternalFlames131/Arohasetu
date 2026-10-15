@@ -2,17 +2,17 @@
 
 ## Page 1
 
-ReJivan: Concept Critique & Recommended
+Arohasetu: Concept Critique & Recommended
  Architecture
- Hackathon-focused analysis based on the ReJivan project briefing and the preceding architectural discussion
+ Hackathon-focused analysis based on the Arohasetu project briefing and the preceding architectural discussion
 Executive conclusion
-ReJivan has a strong social-impact problem and a potentially excellent technical differentiator. The project should not
+Arohasetu has a strong social-impact problem and a potentially excellent technical differentiator. The project should not
 be positioned primarily as a generic elderly-monitoring or automatic-emergency platform. Its strongest concept is
 multimodal physical-event reconstruction: combining CCTV observations, wearable/sensor telemetry, temporal
 context, and resident verification to determine what most likely happened before deciding whether escalation is
 justified.
 Recommended product story: Observe → Reconstruct → Corroborate → Reason → Verify → Escalate
-1. What problem should ReJivan actually solve?
+1. What problem should Arohasetu actually solve?
 The briefing identifies a difficult elderly-care context in the Andaman & Nicobar Islands: remote islands, limited
 specialist availability, weather/ferry disruptions, and families separated from elderly relatives. The proposed system
 combines wearables with privacy-first camera zones and emergency escalation.
@@ -141,7 +141,7 @@ Reasoning + policy
 Risk engine + verification
 Monitor / verify / escalate
 All events
-ReJivan portal + audit trail
+Arohasetu portal + audit trail
 Timeline, alerts, history
 The Core Event Pipeline
 CCTV → Pose/Tracking → Temporal Features → Event Candidate
@@ -192,7 +192,7 @@ For the hackathon narrative, de-emphasize the medical-device catalogue, large nu
 scheduling, the phrase “personal nurse” as a literal claim, and automatic ambulance dispatch. These can remain
 roadmap/product features, but they dilute the strongest technical story: multimodal physical-event reconstruction.
 Recommended Positioning
-ReJivan is a multimodal elderly-safety intelligence system that reconstructs abnormal physical
+Arohasetu is a multimodal elderly-safety intelligence system that reconstructs abnormal physical
 events from CCTV, wearable telemetry, and temporal context; distinguishes genuine incidents from
 normal activity; estimates the most probable physical mechanism; and escalates only when
 evidence and resident verification justify intervention.
@@ -219,7 +219,7 @@ MVP clarity
 6/10
 Overall potential
 9/10
-Bottom line: The strongest version of ReJivan is not “AI that detects danger.” It is a system that sees what
+Bottom line: The strongest version of Arohasetu is not “AI that detects danger.” It is a system that sees what
 happened, reconstructs the sequence, corroborates it with another sensor, compares alternative
 explanations, and only then decides how to respond.
 

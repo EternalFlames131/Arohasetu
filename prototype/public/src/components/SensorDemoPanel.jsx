@@ -1,7 +1,7 @@
 // prototype/public/src/components/SensorDemoPanel.jsx
 // Sensors & Wearables Judge-Demo Panel: hardware disconnect layering + manual smartwatch vital feed
 
-const REJIVAN_DEMO_DEVICES = [
+const AROHASETU_DEMO_DEVICES = [
   { id: "ecg", name: "SanketLife 12-Lead ECG", role: "Heart Rhythm + HR Telemetry", feeds: ["hr"], icon: Heart },
   { id: "watch", name: "Arohasetu Smartwatch", role: "HR + SpO2 (PPG) Wearable", feeds: ["hr", "spo2"], icon: Smartphone },
   { id: "bp", name: "Omron HEM-7156T", role: "Blood Pressure (NIBP Cuff)", feeds: ["bpSys", "bpDia"], icon: Activity },
@@ -33,7 +33,7 @@ const SensorDemoPanel = ({ disconnectedDevices = {}, serverDisconnectedDevices =
   const onBluetoothHeartRateRef = React.useRef(onBluetoothHeartRate);
   onBluetoothHeartRateRef.current = onBluetoothHeartRate;
 
-  const disconnectedCount = REJIVAN_DEMO_DEVICES.filter((d) => disconnectedDevices[d.id] || serverDisconnectedDevices.includes(d.id)).length;
+  const disconnectedCount = AROHASETU_DEMO_DEVICES.filter((d) => disconnectedDevices[d.id] || serverDisconnectedDevices.includes(d.id)).length;
   const manualFeedActive = !!feedOverride;
   const feedActive = manualFeedActive || bleState.status === "connected";
 
@@ -121,12 +121,12 @@ const SensorDemoPanel = ({ disconnectedDevices = {}, serverDisconnectedDevices =
               1 · Disconnect a Wearable → Watch the Layers
             </h4>
             <span className="text-[10px] font-mono text-slate-400">
-              {disconnectedCount}/{REJIVAN_DEMO_DEVICES.length} offline
+              {disconnectedCount}/{AROHASETU_DEMO_DEVICES.length} offline
             </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {REJIVAN_DEMO_DEVICES.map((dev) => {
+            {AROHASETU_DEMO_DEVICES.map((dev) => {
               const Icon = dev.icon;
               const serverOff = serverDisconnectedDevices.includes(dev.id);
               const isOff = !!disconnectedDevices[dev.id] || serverOff;

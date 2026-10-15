@@ -1,6 +1,6 @@
 """
 tools/test_camera_architecture.py
-Automated Comprehensive Test Suite for ReJivan Unified Camera Ingestion Architecture.
+Automated Comprehensive Test Suite for Arohasetu Unified Camera Ingestion Architecture.
 
 Verifies:
   1. NormalizedFrame contract & immutability of fields.

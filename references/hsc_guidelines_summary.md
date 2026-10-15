@@ -22,7 +22,7 @@ National tech challenge under Viksit Bharat Young Leaders Dialogue (VBYLD) 2027,
 
 > Note: the online submission (by 15 Oct) is what puts you into this pipeline.
 > Practical implication for us: we should also win/take part in our own college's
-> internal hackathon so our institution nominates the ReJivan team.
+> internal hackathon so our institution nominates the Arohasetu team.
 
 ## Eligibility
 - Indian citizen; age **18–29 as of 17 Aug 2026**
@@ -44,7 +44,7 @@ National tech challenge under Viksit Bharat Young Leaders Dialogue (VBYLD) 2027,
 5. **Team Self-Declaration (Annexure 1)** — member details, signed self-cert, self-attested student ID.
 
 ## File naming convention
-`<State>_<TeamName>_<Document>.pdf` (e.g. `AndamanNicobar_ReJivan_ProblemStatement.pdf`)
+`<State>_<TeamName>_<Document>.pdf` (e.g. `AndamanNicobar_Arohasetu_ProblemStatement.pdf`)
 
 > Note: Andaman & Nicobar Islands is a **Union Territory** — you compete in its
 > State/Regional round (23 Oct – 5 Nov 2026).

@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Arohasetu — Comprehensive Project Explanation</title>
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 16mm 14mm 16mm 14mm;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #0f172a;
+    background: #ffffff;
+    line-height: 1.45;
+    font-size: 9.5pt;
+    margin: 0;
+    padding: 0;
+  }
+  .header {
+    border-bottom: 2px solid #08A6A6;
+    padding-bottom: 10px;
+    margin-bottom: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .brand-title {
+    font-size: 22pt;
+    font-weight: 800;
+    color: #103663;
+    letter-spacing: -0.5px;
+    margin: 0;
+    line-height: 1.1;
+  }
+  .brand-tagline {
+    font-size: 10.5pt;
+    font-weight: 600;
+    color: #08A6A6;
+    margin: 3px 0 0 0;
+  }
+  .header-meta {
+    text-align: right;
+    font-size: 8pt;
+    color: #64748b;
+    line-height: 1.3;
+  }
+  .header-meta strong {
+    color: #1e293b;
+  }
+
+  h2 {
+    font-size: 11.5pt;
+    color: #103663;
+    margin: 14px 0 6px 0;
+    border-bottom: 1px solid #cbd5e1;
+    padding-bottom: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  h3 {
+    font-size: 9.8pt;
+    color: #08A6A6;
+    margin: 8px 0 3px 0;
+    font-weight: 700;
+  }
+  p {
+    margin: 0 0 6px 0;
+  }
+  ul, ol {
+    margin: 0 0 8px 0;
+    padding-left: 18px;
+  }
+  li {
+    margin-bottom: 3px;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 6px;
+    font-size: 7.5pt;
+    font-weight: 700;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    vertical-align: middle;
+  }
+  .badge-navy { background: #e0e7ff; color: #1e1b4b; border: 1px solid #c7d2fe; }
+  .badge-teal { background: #ccfbf1; color: #0f766e; border: 1px solid #99f6e4; }
+  .badge-green { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+  .badge-amber { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+  .badge-rose { background: #ffe4e6; color: #be123c; border: 1px solid #fecdd3; }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 5px;
+    padding: 8px 10px;
+    margin-bottom: 8px;
+  }
+  .card-teal {
+    background: #f0fdfa;
+    border: 1px solid #99f6e4;
+  }
+  .card-navy {
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+  }
+  .card-alert {
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 6px 0 10px 0;
+    font-size: 8.5pt;
+  }
+  th, td {
+    padding: 5px 7px;
+    border: 1px solid #cbd5e1;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: #f1f5f9;
+    color: #1e293b;
+    font-weight: 700;
+  }
+  tr:nth-child(even) {
+    background: #f8fafc;
+  }
+
+  .page-break {
+    page-break-before: always;
+  }
+
+  .footer {
+    margin-top: 15px;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 6px;
+    font-size: 7.5pt;
+    color: #94a3b8;
+    display: flex;
+    justify-content: space-between;
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div>
+    <div class="brand-title">Arohasetu (रीजीवन)</div>
+    <div class="brand-tagline">Connected care. Earlier action. · A Personal Nurse for Every Family</div>
+  </div>
+  <div class="header-meta">
+    <strong>Hack for Social Cause 2027</strong> (VBYLD 2027 · MoYAS + IIT Bombay)<br>
+    Submission Deadline: <strong>15 October 2026</strong><br>
+    Theme: Healthcare & Wellbeing · Elderly Care & Ageing<br>
+    Regional Anchor: Andaman & Nicobar Islands (UT)<br>
+    Owner: <strong>Samrat</strong> · Teacher Trainee
+  </div>
+</div>
+
+<!-- SECTION 1 -->
+<h2>1. Executive Summary: What is Arohasetu?</h2>
+<p>
+  <strong>Arohasetu</strong> is an intelligent remote healthcare monitoring system engineered to serve as a tireless, 24/7 personal nurse for elderly relatives living at home and for patients in understaffed hospital rooms (<strong>"Virtual Wards"</strong>).
+</p>
+<p>
+  In India today, millions of elderly parents live alone while their adult children work. Concurrently, government and semi-urban hospitals experience severe nurse-to-patient ratios often exceeding 1:30 during night shifts. When an elderly person falls, suffers a silent stroke, experiences sudden hypoxemia, or enters diabetic coma, hours can pass before discovery. Arohasetu closes this critical gap through a <strong>Dual-Layer Shield</strong> backed by an <strong>Autonomous 3-Tier Escalation Ladder</strong>.
+</p>
+
+<div class="grid-2">
+  <div class="card card-teal">
+    <h3 style="margin-top:0;">Layer 1: Continuous Physiological Shield</h3>
+    <p style="font-size:8.8pt; margin:0;">
+      Ingests clinical vital signs (Heart Rate, SpO2, Blood Pressure, Temperature, Respiratory Rate, Blood Glucose) from consumer & medical wearables. Analyzes readings against the gold-standard <strong>NEWS2</strong> (National Early Warning Score 2) deterioration engine.
+    </p>
+  </div>
+  <div class="card card-navy">
+    <h3 style="margin-top:0;">Layer 2: Privacy-First Camera Zones</h3>
+    <p style="font-size:8.8pt; margin:0;">
+      Uses an overhead room camera sentinel to detect catastrophic physical events: sudden falls, long-lie immobility, or unmonitored bed exit. <strong>100% video-private:</strong> no camera video is ever recorded, stored, or streamed to the cloud. Raw camera frames are turned into mathematical joint coordinates in device RAM and erased immediately.
+    </p>
+  </div>
+</div>
+
+<!-- SECTION 2 -->
+<h2>2. The Problem Matrix: The "Silent Gap" in Care</h2>
+<p>
+  Medical crises among the elderly rarely present with loud calls for help. They happen in terrifying silence:
+</p>
+<table>
+  <thead>
+    <tr>
+      <th style="width:25%;">Clinical Crisis</th>
+      <th style="width:35%;">Why It Is Often Fatal Today</th>
+      <th style="width:40%;">How Arohasetu Intervenes Early</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>The Post-Fall "Long Lie"</strong></td>
+      <td>Over 30% of elderly adults fall annually. Inability to reach a phone for 6–12 hours leads to hypothermia, rhabdomyolysis (muscle breakdown), renal failure, and pressure necrosis.</td>
+      <td>Optical kinematics detect rapid descent velocity and prolonged floor stillness, triggering autonomous alerts within 30 seconds.</td>
+    </tr>
+    <tr>
+      <td><strong>Silent Nocturnal Hypoxia</strong></td>
+      <td>Patients with COPD, pneumonia, or cardiac failure suffer silent oxygen desaturations during deep sleep, progressing to CO2 narcosis and arrest without awakening.</td>
+      <td>Continuous SpO2 tracking identifies drops below 90% immediately, sounding local awakenings and alerting family.</td>
+    </tr>
+    <tr>
+      <td><strong>Understaffed Hospital Wards</strong></td>
+      <td>Night-shift ward nurses cannot check vitals continuously for 40 beds. Post-operative deterioration between 4-hour manual rounds goes unnoticed.</td>
+      <td>The Virtual Ward central matrix ranks all beds by real-time NEWS2 score, highlighting deteriorating patients instantly at the nurse station.</td>
+    </tr>
+    <tr>
+      <td><strong>Island Healthcare Isolation</strong></td>
+      <td>In Andaman & Nicobar, outer islands (e.g., Little Andaman) are hours away from tertiary care at GB Pant Hospital in Port Blair. Delays in recognizing crises cause preventable deaths.</td>
+      <td>Local edge intelligence and 100% offline mobile operations enable immediate local triage and prompt emergency boat/ambulance dispatch.</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- SECTION 3 -->
+<h2>3. The Autonomous 3-Tier Emergency Ladder</h2>
+<p>
+  Unlike conventional smartwatches that merely vibrate on the user's wrist when they are unconscious, Arohasetu executes a deterministic, fail-safe rescue ladder:
+</p>
+<div class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div><strong>Tier 1 (0 to 15s): Primary Family Caregiver</strong></div>
+    <span class="badge badge-teal">In-App Alert + Voice Call</span>
+  </div>
+  <p style="font-size:8.5pt; margin:2px 0 0 0; color:#475569;">
+    Pushes high-priority alert and auto-initiates phone call to the primary contact (e.g., daughter Priya).
+  </p>
+</div>
+<div class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div><strong>Tier 2 (15 to 45s): Secondary Family / Neighbor Backup</strong></div>
+    <span class="badge badge-amber">Automated Escalation</span>
+  </div>
+  <p style="font-size:8.5pt; margin:2px 0 0 0; color:#475569;">
+    If primary caregiver is unreachable or doesn't acknowledge within 30s, the system escalates to the backup contact (e.g., Dr. Rajesh or trusted neighbor).
+  </p>
+</div>
+<div class="card card-alert">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div><strong>Tier 3 (45s+): Autonomous Emergency Dispatch (108 / 112)</strong></div>
+    <span class="badge badge-rose">Life-Saving Dispatch</span>
+  </div>
+  <p style="font-size:8.5pt; margin:2px 0 0 0; color:#9f1239;">
+    If both family tiers fail, autonomous emergency protocols dispatch government EMS (108 Ambulance / Port Blair Marine Ambulance) transmitting GPS coordinates, medical history, and vital crisis telemetry.
+  </p>
+</div>
+
+<!-- PAGE BREAK FOR CLEAN PRINTING -->
+<div class="page-break"></div>
+
+<!-- SECTION 4 -->
+<h2>4. Dual Deployment: Home Care vs. Hospital "Virtual Ward"</h2>
+<div class="grid-2">
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3 style="margin:0;">Home Care Mode</h3>
+      <span class="badge badge-navy">Family Access</span>
+    </div>
+    <p style="font-size:8.5pt; margin:4px 0 6px 0; color:#475569;">
+      Tailored for adult children monitoring parents living in Port Blair or outer islands.
+    </p>
+    <ul style="font-size:8.5pt; padding-left:14px; margin:0;">
+      <li><strong>5 Indian Languages:</strong> English, Hindi (हिन्दी), Bengali (বাংলা), Tamil (தமிழ்), Telugu (తెలుగు).</li>
+      <li><strong>Medication MAR:</strong> Clear adherence tracker with daily dosages and missed-pill alerts.</li>
+      <li><strong>Privacy Radar:</strong> Displays posture status (Standing, Seated, Supine) without exposing video.</li>
+      <li><strong>One-Tap Check-in:</strong> Direct voice reassurance button.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3 style="margin:0;">Hospital Virtual Ward</h3>
+      <span class="badge badge-teal">Clinician Access</span>
+    </div>
+    <p style="font-size:8.5pt; margin:4px 0 6px 0; color:#475569;">
+      Dedicated to hospital nurses (e.g., GB Pant Hospital Ward Nurse Shift A).
+    </p>
+    <ul style="font-size:8.5pt; padding-left:14px; margin:0;">
+      <li><strong>Multi-Bed Telemetry:</strong> Live dashboard tracking Bed 101 to 104 with dynamic acuity rank.</li>
+      <li><strong>NEWS2 Scoring:</strong> Standard Royal College of Physicians clinical scoring.</li>
+      <li><strong>4-Stage Follow-up Lifecycle:</strong> <code>New</code> &rarr; <code>Acknowledged</code> &rarr; <code>Follow-up Recorded</code> &rarr; <code>Resolved</code>.</li>
+      <li><strong>Clinical Audit Trail:</strong> Documented nurse action notes compliant with ABDM standards.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- SECTION 5 -->
+<h2>5. Architectural Components Inside the Arohasetu Workspace</h2>
+<table>
+  <thead>
+    <tr>
+      <th style="width:28%;">Subsystem</th>
+      <th style="width:32%;">Location in Codebase</th>
+      <th style="width:40%;">Key Capabilities</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Judge & Clinician Web Platform</strong></td>
+      <td><code>prototype/</code><br>Node.js, Express, React</td>
+      <td>Serves live dashboard at <code>localhost:8080</code> and <code>arohasetu.vercel.app</code>. Multi-patient isolation (Anita Sharma, Ram Prakash, Ward Nurse). Zero-refresh telemetry polling.</td>
+    </tr>
+    <tr>
+      <td><strong>Administrator Simulator</strong></td>
+      <td><code>prototype/public/admin-simulator.html</code><br>Route: <code>/admin/simulator</code></td>
+      <td>Protected by a private, server-verified team developer key. Injects deterministic physiological scenarios (Normal, High HR, Low SpO2, BP Crisis, Recovery). Powers seamless live demonstrations.</td>
+    </tr>
+    <tr>
+      <td><strong>Edge Computer Vision Sentinel</strong></td>
+      <td><code>tools/yolo_edge_sentinel.py</code><br>Python, Ultralytics YOLO-Pose</td>
+      <td>Extracts 17 COCO body keypoints on local GPU (RTX 4060 / GTX 1650). Computes descent velocity, torso tilt, floor immobility, and patient room disappearance.</td>
+    </tr>
+    <tr>
+      <td><strong>Offline Native Android App</strong></td>
+      <td><code>app-android/</code><br>Kotlin, Jetpack Compose</td>
+      <td>100% offline-first. Contains embedded VitalSimulator, RulesEngine, MedStore, and Emergency Caller. Built APK ready at <code>Arohasetu_v1.0.apk</code>.</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- SECTION 6 -->
+<h2>6. Prototype Honesty: What is Real vs. Simulated</h2>
+<p>
+  In compliance with Hack for Social Cause 2027 rules and academic ethics, we explicitly disclose the implementation boundary:
+</p>
+<div class="grid-2">
+  <div class="card card-teal">
+    <div style="font-weight:700; color:#0f766e; margin-bottom:4px;">&#10004; FULLY REAL & OPERATIONAL SOFTWARE</div>
+    <ul style="font-size:8.2pt; padding-left:14px; margin:0;">
+      <li>Full web applications, dashboards, routing, and role authentication.</li>
+      <li>Deterministic clinical rules engine and NEWS2 acuity calculation.</li>
+      <li>4-stage clinical alert follow-up lifecycle and persistent database notes.</li>
+      <li>YOLO-Pose AI computer vision pipeline running on local graphics hardware.</li>
+      <li>Native offline Android application with embedded rules engine.</li>
+      <li>Real-time dual-interface state synchronization (Admin &rarr; Judge).</li>
+    </ul>
+  </div>
+  <div class="card card-navy">
+    <div style="font-weight:700; color:#1e293b; margin-bottom:4px;">&#9888; SIMULATED FOR SAFE LIVE DEMONSTRATION</div>
+    <ul style="font-size:8.2pt; padding-left:14px; margin:0;">
+      <li><strong>Hardware Sensor BLE Pairing:</strong> Vitals are injected via the Admin Simulator so judges can evaluate emergency alarms without wearing medical hardware.</li>
+      <li><strong>Carrier Telecom Dialing:</strong> Escalation logic, timing, retries, and dispatch sirens are 100% real, but actual cellular tower connections to government 108/112 lines are simulated to prevent false emergency dispatches.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- SECTION 7 -->
+<h2>7. How to Demonstrate Arohasetu to Evaluators (Step-by-Step)</h2>
+<div class="card">
+  <ol style="font-size:8.8pt; margin:0; padding-left:16px;">
+    <li><strong>Step 1: Open Judge View</strong> &mdash; Open <code>http://localhost:8080</code> (or <code>https://arohasetu.vercel.app</code>). Log in as Hospital Nurse (<code>wardnurse@demo.in</code> / <code>demo123</code>). Point out the clean, professional ward telemetry grid with Bed 101–104.</li>
+    <li><strong>Step 2: Open Admin Simulator</strong> &mdash; In a separate browser tab or phone, open <code>/admin/simulator</code> and enter the private developer key shared with the presenting team.</li>
+    <li><strong>Step 3: Trigger Physiological Crisis</strong> &mdash; Click <strong>"Elevated HR"</strong> (138 bpm) or <strong>"Low SpO2"</strong> (88%).</li>
+    <li><strong>Step 4: Observe Live Sync</strong> &mdash; Without refreshing the Judge window, observe Bed 101 turn amber/red within 1.8 seconds. A critical alert is prepended displaying the exact clinical condition: <em>"Heart Rate critical elevation: 138 bpm (threshold: &gt;100 bpm)"</em>.</li>
+    <li><strong>Step 5: Demonstrate Nurse Workflow</strong> &mdash; On the Judge dashboard, click <strong>"Acknowledge"</strong>, type clinician notes in <strong>"Document Follow-up"</strong>, and mark <strong>"Resolved"</strong> to complete the medical audit cycle!</li>
+  </ol>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div>Arohasetu Project Documentation · Single Source of Truth</div>
+  <div>Hack for Social Cause 2027 · A&N UT Institution Round</div>
+  <div>Owner: Samrat · Teacher Trainee</div>
+</div>
+
+</body>
+</html>

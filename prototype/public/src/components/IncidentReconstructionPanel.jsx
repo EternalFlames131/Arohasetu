@@ -119,8 +119,8 @@ const IncidentReconstructionPanel = ({ onTriggerVerification, currentVitals }) =
   const evidence = getScenarioEvidence(activeScenario);
   
   // Use movement engine if available or fallback cleanly
-  const engineResult = typeof ReJivanMovementEngine !== "undefined"
-    ? ReJivanMovementEngine.evaluateHypotheses(evidence)
+  const engineResult = typeof ArohasetuMovementEngine !== "undefined"
+    ? ArohasetuMovementEngine.evaluateHypotheses(evidence)
     : {
         winningHypothesis: {
           id: activeScenario === "trip_fall" ? "H7" : activeScenario === "sitting" ? "H2" : activeScenario === "bed_exit" ? "H3" : activeScenario === "tremor" ? "H1" : "H8",
@@ -142,8 +142,8 @@ const IncidentReconstructionPanel = ({ onTriggerVerification, currentVitals }) =
         allHypotheses: []
       };
 
-  const timeline = typeof ReJivanMovementEngine !== "undefined"
-    ? ReJivanMovementEngine.generateChronologicalTimeline(activeScenario)
+  const timeline = typeof ArohasetuMovementEngine !== "undefined"
+    ? ArohasetuMovementEngine.generateChronologicalTimeline(activeScenario)
     : [
         { time: "14:31:32", event: "Steady Ambulation", detail: "Gait velocity 0.82 m/s · Step symmetry 96%" },
         { time: "14:31:38", event: "Locomotion Deceleration", detail: "Lateral torso sway detected (18° deviation)" },

@@ -3,7 +3,7 @@
 
 // --- START: prototype\movement-engine.js ---
 // prototype/movement-engine.js
-// ReJivan Unified Motion Kinematics, Hypothesis Scoring, Counterfactual Reasoning & Sensor Fusion Engine
+// Arohasetu Unified Motion Kinematics, Hypothesis Scoring, Counterfactual Reasoning & Sensor Fusion Engine
 // Compatible with both browser (MediaPipe / Optical Flow) and edge hardware (YOLO11-Pose via local CUDA GPU)
 // Architectural flow: OBSERVE -> RECONSTRUCT -> CORROBORATE -> REASON -> VERIFY -> RESPOND
 
@@ -14,8 +14,8 @@
     module.exports = factory();
   } else {
     root.ArohasetuMovementEngine = factory();
-    root.ArohaMovementEngine = root.ArohasetuMovementEngine;
-    root.ReJivanMovementEngine = root.ArohaMovementEngine;
+    root.ArohasetuMovementEngine = root.ArohasetuMovementEngine;
+    root.ArohasetuMovementEngine = root.ArohasetuMovementEngine;
   }
 })(typeof window !== "undefined" ? window : (typeof self !== "undefined" ? self : this), function () {
   "use strict";
@@ -599,7 +599,7 @@ const HeartPulse = (props) => (
   />
 );
 
-// Official ReJivan Brand Logo Mark matching the user-provided identity
+// Official Arohasetu Brand Logo Mark matching the user-provided identity
 const BrandLogo = ({ className = "w-9 h-9", imgClassName = "w-5 h-5", rounded = "rounded-xl", withBg = true }) => {
   if (withBg) {
     return (
@@ -1384,7 +1384,7 @@ const Sidebar = ({
         {/* Brand Header */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-slate-200/80">
           <div className="flex items-center gap-3 min-w-0">
-            {/* ReJivan Brand Logo Mark matching official identity */}
+            {/* Arohasetu Brand Logo Mark matching official identity */}
             <BrandLogo className="w-9 h-9" imgClassName="w-5 h-5" rounded="rounded-xl" withBg={true} />
             {!collapsed && (
               <div className="min-w-0">
@@ -1479,12 +1479,12 @@ const Sidebar = ({
               <p className="text-[11px] text-slate-500 mt-1 leading-normal">
                 Simulated for demonstration purposes.
               </p>
-              <a href="/downloads/ReJivan-Demo.apk" download className="mt-2 flex items-center gap-1.5 text-[11px] font-semibold text-blue-700 hover:text-blue-900">
+              <a href="/downloads/Arohasetu-Demo.apk" download className="mt-2 flex items-center gap-1.5 text-[11px] font-semibold text-blue-700 hover:text-blue-900">
                 <Download className="h-3.5 w-3.5" /> Download Android demo
               </a>
             </div>
           ) : (
-            <a href="/downloads/ReJivan-Demo.apk" download className="w-full flex justify-center py-2 text-blue-700" title="Download Arohasetu Android demo APK" aria-label="Download Arohasetu Android demo APK">
+            <a href="/downloads/Arohasetu-Demo.apk" download className="w-full flex justify-center py-2 text-blue-700" title="Download Arohasetu Android demo APK" aria-label="Download Arohasetu Android demo APK">
               <Download className="h-4 w-4" />
             </a>
           )}
@@ -1760,7 +1760,7 @@ const FamilyMonitorView = ({ patient, vitals, alerts = [], connectivity, seconds
   const [isThinking, setIsThinking] = React.useState(false);
   const [geminiKey, setGeminiKey] = React.useState(() => {
     try {
-      return localStorage.getItem("rejivan_gemini_key") || "";
+      return localStorage.getItem("arohasetu_gemini_key") || "";
     } catch (e) {
       return "";
     }
@@ -1788,8 +1788,8 @@ const FamilyMonitorView = ({ patient, vitals, alerts = [], connectivity, seconds
     const trimmed = newKey.trim();
     setGeminiKey(trimmed);
     try {
-      if (trimmed) localStorage.setItem("rejivan_gemini_key", trimmed);
-      else localStorage.removeItem("rejivan_gemini_key");
+      if (trimmed) localStorage.setItem("arohasetu_gemini_key", trimmed);
+      else localStorage.removeItem("arohasetu_gemini_key");
     } catch (e) {}
     setShowKeyInput(false);
   };
@@ -3730,8 +3730,8 @@ const IncidentReconstructionPanel = ({ onTriggerVerification, currentVitals }) =
   const evidence = getScenarioEvidence(activeScenario);
   
   // Use movement engine if available or fallback cleanly
-  const engineResult = typeof ReJivanMovementEngine !== "undefined"
-    ? ReJivanMovementEngine.evaluateHypotheses(evidence)
+  const engineResult = typeof ArohasetuMovementEngine !== "undefined"
+    ? ArohasetuMovementEngine.evaluateHypotheses(evidence)
     : {
         winningHypothesis: {
           id: activeScenario === "trip_fall" ? "H7" : activeScenario === "sitting" ? "H2" : activeScenario === "bed_exit" ? "H3" : activeScenario === "tremor" ? "H1" : "H8",
@@ -3753,8 +3753,8 @@ const IncidentReconstructionPanel = ({ onTriggerVerification, currentVitals }) =
         allHypotheses: []
       };
 
-  const timeline = typeof ReJivanMovementEngine !== "undefined"
-    ? ReJivanMovementEngine.generateChronologicalTimeline(activeScenario)
+  const timeline = typeof ArohasetuMovementEngine !== "undefined"
+    ? ArohasetuMovementEngine.generateChronologicalTimeline(activeScenario)
     : [
         { time: "14:31:32", event: "Steady Ambulation", detail: "Gait velocity 0.82 m/s · Step symmetry 96%" },
         { time: "14:31:38", event: "Locomotion Deceleration", detail: "Lateral torso sway detected (18° deviation)" },
@@ -4436,7 +4436,7 @@ const ResidentCheckinModal = ({ isOpen, onClose, scenario, onEmergencyConfirmed,
 
 // --- START: prototype\public\src\components\CameraZonesView.jsx ---
 // prototype/public/src/components/CameraZonesView.jsx
-// ReJivan Unified Camera Monitoring & Prerecorded Demonstration Sentinel
+// Arohasetu Unified Camera Monitoring & Prerecorded Demonstration Sentinel
 // Treats prerecorded hospital video as an authentic virtual camera source alongside Live Webcam and RTSP CCTV.
 // Real-Time YOLO11-Pose 17-Keypoint Inference & Client Optical Consensus with Zero Hardcoded Time Gates.
 
@@ -4670,7 +4670,7 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
   const userSwitchedModeRef = React.useRef(false);
   const [availableWebcams, setAvailableWebcams] = React.useState([]);
   const [selectedCameraDeviceId, setSelectedCameraDeviceId] = React.useState(() => {
-    try { return window.localStorage.getItem("rejivan_camera_device_id") || ""; } catch (e) { return ""; }
+    try { return window.localStorage.getItem("arohasetu_camera_device_id") || ""; } catch (e) { return ""; }
   });
   const [hardwareCameraIndex, setHardwareCameraIndex] = React.useState(0);
   const [cameraSwitchError, setCameraSwitchError] = React.useState("");
@@ -4694,7 +4694,7 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
         const preferred = webcams.find((device) => SYSTEM_CAMERA_LABEL.test(device.label) && !MOBILE_CAMERA_LABEL.test(device.label));
         const nextId = (preferred || webcams[0])?.deviceId || "";
         try {
-          if (nextId) window.localStorage.setItem("rejivan_camera_device_id", nextId);
+          if (nextId) window.localStorage.setItem("arohasetu_camera_device_id", nextId);
         } catch (e) {}
         return nextId;
       });
@@ -4759,7 +4759,7 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
       setLiveCameraMode("BROWSER_WEBCAM");
       setHardwareStreamPaused(true);
       setSelectedCameraDeviceId(device.deviceId);
-      try { window.localStorage.setItem("rejivan_camera_device_id", device.deviceId); } catch (e) {}
+      try { window.localStorage.setItem("arohasetu_camera_device_id", device.deviceId); } catch (e) {}
       if (playbackState === "PLAYING" && cameraSource === "LIVE_WEBCAM") {
         await handleSelectBrowserCamera(device.deviceId, true);
       }
@@ -4771,7 +4771,7 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
   const handleSelectBrowserCamera = async (deviceId, switchWhilePlaying = false) => {
     setSelectedCameraDeviceId(deviceId);
     setCameraSwitchError("");
-    try { window.localStorage.setItem("rejivan_camera_device_id", deviceId); } catch (e) {}
+    try { window.localStorage.setItem("arohasetu_camera_device_id", deviceId); } catch (e) {}
     if (playbackState === "PLAYING" && cameraSource === "LIVE_WEBCAM" && (liveCameraMode === "BROWSER_WEBCAM" || switchWhilePlaying)) {
       if (webcamStreamRef.current) {
         webcamStreamRef.current.getTracks().forEach((t) => t.stop());
@@ -5138,7 +5138,7 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
         const actualDeviceId = stream.getVideoTracks()[0]?.getSettings?.().deviceId || selectedCameraDeviceId;
         if (actualDeviceId) {
           setSelectedCameraDeviceId(actualDeviceId);
-          try { window.localStorage.setItem("rejivan_camera_device_id", actualDeviceId); } catch (e) {}
+          try { window.localStorage.setItem("arohasetu_camera_device_id", actualDeviceId); } catch (e) {}
         }
         if (videoElementRef.current) {
           videoElementRef.current.srcObject = stream;
@@ -5704,10 +5704,10 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
             ctx.fillText(`OPTICAL MOTION: ${motionPercent}% | VEL: ${downwardVelocity.toFixed(1)}m/s`, bX + 6, Math.max(24, bY - 10));
           }
 
-          // Evaluate using ReJivan Movement Engine
+          // Evaluate using Arohasetu Movement Engine
           let clientStage = { id: "STAGE_RESTING", label: "Normal In-Bed Resting", state: "NORMAL" };
-          if (window.ReJivanMovementEngine && window.ReJivanMovementEngine.determineStageFromEvidence) {
-            clientStage = window.ReJivanMovementEngine.determineStageFromEvidence({
+          if (window.ArohasetuMovementEngine && window.ArohasetuMovementEngine.determineStageFromEvidence) {
+            clientStage = window.ArohasetuMovementEngine.determineStageFromEvidence({
               downwardVelocity: downwardVelocity,
               torsoAngle: isFloorLevel ? 75 : (isBedLevel ? 25 : 15),
               isFloorLevel: isFloorLevel,
@@ -9689,7 +9689,7 @@ const MedicalDevicesView = ({ currentUser, activePatient }) => {
 // prototype/public/src/components/SensorDemoPanel.jsx
 // Sensors & Wearables Judge-Demo Panel: hardware disconnect layering + manual smartwatch vital feed
 
-const REJIVAN_DEMO_DEVICES = [
+const AROHASETU_DEMO_DEVICES = [
   { id: "ecg", name: "SanketLife 12-Lead ECG", role: "Heart Rhythm + HR Telemetry", feeds: ["hr"], icon: Heart },
   { id: "watch", name: "Arohasetu Smartwatch", role: "HR + SpO2 (PPG) Wearable", feeds: ["hr", "spo2"], icon: Smartphone },
   { id: "bp", name: "Omron HEM-7156T", role: "Blood Pressure (NIBP Cuff)", feeds: ["bpSys", "bpDia"], icon: Activity },
@@ -9721,7 +9721,7 @@ const SensorDemoPanel = ({ disconnectedDevices = {}, serverDisconnectedDevices =
   const onBluetoothHeartRateRef = React.useRef(onBluetoothHeartRate);
   onBluetoothHeartRateRef.current = onBluetoothHeartRate;
 
-  const disconnectedCount = REJIVAN_DEMO_DEVICES.filter((d) => disconnectedDevices[d.id] || serverDisconnectedDevices.includes(d.id)).length;
+  const disconnectedCount = AROHASETU_DEMO_DEVICES.filter((d) => disconnectedDevices[d.id] || serverDisconnectedDevices.includes(d.id)).length;
   const manualFeedActive = !!feedOverride;
   const feedActive = manualFeedActive || bleState.status === "connected";
 
@@ -9809,12 +9809,12 @@ const SensorDemoPanel = ({ disconnectedDevices = {}, serverDisconnectedDevices =
               1 · Disconnect a Wearable → Watch the Layers
             </h4>
             <span className="text-[10px] font-mono text-slate-400">
-              {disconnectedCount}/{REJIVAN_DEMO_DEVICES.length} offline
+              {disconnectedCount}/{AROHASETU_DEMO_DEVICES.length} offline
             </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {REJIVAN_DEMO_DEVICES.map((dev) => {
+            {AROHASETU_DEMO_DEVICES.map((dev) => {
               const Icon = dev.icon;
               const serverOff = serverDisconnectedDevices.includes(dev.id);
               const isOff = !!disconnectedDevices[dev.id] || serverOff;
@@ -11882,7 +11882,7 @@ const App = () => {
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [curLang, setCurLang] = React.useState(() => {
     try {
-      const saved = localStorage.getItem("rejivan_lang");
+      const saved = localStorage.getItem("arohasetu_lang");
       return ["en", "hi", "bn", "ta", "te"].includes(saved) ? saved : "en";
     } catch (e) {
       return "en";
@@ -11892,7 +11892,7 @@ const App = () => {
   const translatedTextOriginals = React.useRef(new WeakMap());
   const translatedAttributeOriginals = React.useRef(new WeakMap());
   const [user, setUser] = React.useState(ACCOUNT_PROFILES["asharma@demo.in"]);
-  const [token, setToken] = React.useState(localStorage.getItem("rejivan_token") || "");
+  const [token, setToken] = React.useState(localStorage.getItem("arohasetu_token") || "");
 
   React.useEffect(() => {
     if (!token) {
@@ -11905,7 +11905,7 @@ const App = () => {
         .then((data) => {
           if (data && data.token) {
             setToken(data.token);
-            try { localStorage.setItem("rejivan_token", data.token); } catch (e) {}
+            try { localStorage.setItem("arohasetu_token", data.token); } catch (e) {}
           }
         })
         .catch(() => {});
@@ -11929,7 +11929,7 @@ const App = () => {
   }, []);
 
   React.useEffect(() => {
-    try { localStorage.setItem("rejivan_lang", curLang); } catch (e) {}
+    try { localStorage.setItem("arohasetu_lang", curLang); } catch (e) {}
     document.documentElement.lang = curLang;
     const root = document.getElementById("root");
     if (!root || !translationDictionary?.en) return undefined;
@@ -12043,7 +12043,7 @@ const App = () => {
 
   // A vital is offline only when every wearable that supplies it is disconnected.
   const isVitalOffline = (vitalKey) => {
-    const feeders = REJIVAN_DEMO_DEVICES.filter((device) => device.feeds.includes(vitalKey));
+    const feeders = AROHASETU_DEMO_DEVICES.filter((device) => device.feeds.includes(vitalKey));
     return feeders.length > 0 && feeders.every((device) => disconnectedDevices[device.id]);
   };
 
@@ -12114,7 +12114,7 @@ const App = () => {
 
   // Feature A: toggle a wearable's connection. Disconnect -> vitals go stale + danger alert; camera layer stays on.
   const handleToggleDevice = (deviceId) => {
-    const dev = REJIVAN_DEMO_DEVICES.find((d) => d.id === deviceId);
+    const dev = AROHASETU_DEMO_DEVICES.find((d) => d.id === deviceId);
     if (!dev) return;
     const nowOff = !disconnectedDevices[deviceId];
     setDisconnectedDevices((prev) => ({ ...prev, [deviceId]: nowOff }));
@@ -12279,7 +12279,7 @@ const App = () => {
 
     const syncWithBackend = async () => {
       try {
-        const tokenStr = token || localStorage.getItem("rejivan_token");
+        const tokenStr = token || localStorage.getItem("arohasetu_token");
         const authHeader = tokenStr ? { Authorization: `Bearer ${tokenStr}` } : {};
 
         // Fetch vitals from authoritative shared server
@@ -12382,7 +12382,7 @@ const App = () => {
   // Clinician Action Handlers (Acknowledge, Follow-up, Resolve)
   const handleAcknowledgeAlert = async (alertId) => {
     try {
-      const tokenStr = token || localStorage.getItem("rejivan_token");
+      const tokenStr = token || localStorage.getItem("arohasetu_token");
       await fetch(`/api/alerts/${alertId}/acknowledge`, {
         method: "POST",
         headers: {
@@ -12403,7 +12403,7 @@ const App = () => {
 
   const handleRecordFollowup = async (alertId, actionNote) => {
     try {
-      const tokenStr = token || localStorage.getItem("rejivan_token");
+      const tokenStr = token || localStorage.getItem("arohasetu_token");
       await fetch(`/api/alerts/${alertId}/followup`, {
         method: "POST",
         headers: {
@@ -12424,7 +12424,7 @@ const App = () => {
 
   const handleResolveAlert = async (alertId, resolutionNote) => {
     try {
-      const tokenStr = token || localStorage.getItem("rejivan_token");
+      const tokenStr = token || localStorage.getItem("arohasetu_token");
       await fetch(`/api/alerts/${alertId}/resolve`, {
         method: "POST",
         headers: {
@@ -12771,7 +12771,7 @@ const App = () => {
         const data = await res.json();
         setToken(data.token);
         setUser({ ...profile, ...(data.user || {}) });
-        localStorage.setItem("rejivan_token", data.token);
+        localStorage.setItem("arohasetu_token", data.token);
         setVitals({
           ...profile.defaultVitals,
           lastSync: "Just now",
@@ -12826,7 +12826,7 @@ const App = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("rejivan_token");
+    localStorage.removeItem("arohasetu_token");
     setToken("");
     setLoginModalOpen(true);
   };
@@ -12844,7 +12844,7 @@ const App = () => {
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (cancelled || !data?.token) return;
-        localStorage.setItem("rejivan_token", data.token);
+        localStorage.setItem("arohasetu_token", data.token);
         setToken(data.token);
         setUser({ ...ACCOUNT_PROFILES["asharma@demo.in"], ...(data.user || {}) });
       })

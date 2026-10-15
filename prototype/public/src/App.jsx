@@ -769,7 +769,7 @@ const App = () => {
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [curLang, setCurLang] = React.useState(() => {
     try {
-      const saved = localStorage.getItem("rejivan_lang");
+      const saved = localStorage.getItem("arohasetu_lang");
       return ["en", "hi", "bn", "ta", "te"].includes(saved) ? saved : "en";
     } catch (e) {
       return "en";
@@ -779,7 +779,7 @@ const App = () => {
   const translatedTextOriginals = React.useRef(new WeakMap());
   const translatedAttributeOriginals = React.useRef(new WeakMap());
   const [user, setUser] = React.useState(ACCOUNT_PROFILES["asharma@demo.in"]);
-  const [token, setToken] = React.useState(localStorage.getItem("rejivan_token") || "");
+  const [token, setToken] = React.useState(localStorage.getItem("arohasetu_token") || "");
 
   React.useEffect(() => {
     if (!token) {
@@ -792,7 +792,7 @@ const App = () => {
         .then((data) => {
           if (data && data.token) {
             setToken(data.token);
-            try { localStorage.setItem("rejivan_token", data.token); } catch (e) {}
+            try { localStorage.setItem("arohasetu_token", data.token); } catch (e) {}
           }
         })
         .catch(() => {});
@@ -816,7 +816,7 @@ const App = () => {
   }, []);
 
   React.useEffect(() => {
-    try { localStorage.setItem("rejivan_lang", curLang); } catch (e) {}
+    try { localStorage.setItem("arohasetu_lang", curLang); } catch (e) {}
     document.documentElement.lang = curLang;
     const root = document.getElementById("root");
     if (!root || !translationDictionary?.en) return undefined;
@@ -930,7 +930,7 @@ const App = () => {
 
   // A vital is offline only when every wearable that supplies it is disconnected.
   const isVitalOffline = (vitalKey) => {
-    const feeders = REJIVAN_DEMO_DEVICES.filter((device) => device.feeds.includes(vitalKey));
+    const feeders = AROHASETU_DEMO_DEVICES.filter((device) => device.feeds.includes(vitalKey));
     return feeders.length > 0 && feeders.every((device) => disconnectedDevices[device.id]);
   };
 
@@ -1001,7 +1001,7 @@ const App = () => {
 
   // Feature A: toggle a wearable's connection. Disconnect -> vitals go stale + danger alert; camera layer stays on.
   const handleToggleDevice = (deviceId) => {
-    const dev = REJIVAN_DEMO_DEVICES.find((d) => d.id === deviceId);
+    const dev = AROHASETU_DEMO_DEVICES.find((d) => d.id === deviceId);
     if (!dev) return;
     const nowOff = !disconnectedDevices[deviceId];
     setDisconnectedDevices((prev) => ({ ...prev, [deviceId]: nowOff }));
@@ -1166,7 +1166,7 @@ const App = () => {
 
     const syncWithBackend = async () => {
       try {
-        const tokenStr = token || localStorage.getItem("rejivan_token");
+        const tokenStr = token || localStorage.getItem("arohasetu_token");
         const authHeader = tokenStr ? { Authorization: `Bearer ${tokenStr}` } : {};
 
         // Fetch vitals from authoritative shared server
@@ -1269,7 +1269,7 @@ const App = () => {
   // Clinician Action Handlers (Acknowledge, Follow-up, Resolve)
   const handleAcknowledgeAlert = async (alertId) => {
     try {
-      const tokenStr = token || localStorage.getItem("rejivan_token");
+      const tokenStr = token || localStorage.getItem("arohasetu_token");
       await fetch(`/api/alerts/${alertId}/acknowledge`, {
         method: "POST",
         headers: {
@@ -1290,7 +1290,7 @@ const App = () => {
 
   const handleRecordFollowup = async (alertId, actionNote) => {
     try {
-      const tokenStr = token || localStorage.getItem("rejivan_token");
+      const tokenStr = token || localStorage.getItem("arohasetu_token");
       await fetch(`/api/alerts/${alertId}/followup`, {
         method: "POST",
         headers: {
@@ -1311,7 +1311,7 @@ const App = () => {
 
   const handleResolveAlert = async (alertId, resolutionNote) => {
     try {
-      const tokenStr = token || localStorage.getItem("rejivan_token");
+      const tokenStr = token || localStorage.getItem("arohasetu_token");
       await fetch(`/api/alerts/${alertId}/resolve`, {
         method: "POST",
         headers: {
@@ -1658,7 +1658,7 @@ const App = () => {
         const data = await res.json();
         setToken(data.token);
         setUser({ ...profile, ...(data.user || {}) });
-        localStorage.setItem("rejivan_token", data.token);
+        localStorage.setItem("arohasetu_token", data.token);
         setVitals({
           ...profile.defaultVitals,
           lastSync: "Just now",
@@ -1713,7 +1713,7 @@ const App = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("rejivan_token");
+    localStorage.removeItem("arohasetu_token");
     setToken("");
     setLoginModalOpen(true);
   };
@@ -1731,7 +1731,7 @@ const App = () => {
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (cancelled || !data?.token) return;
-        localStorage.setItem("rejivan_token", data.token);
+        localStorage.setItem("arohasetu_token", data.token);
         setToken(data.token);
         setUser({ ...ACCOUNT_PROFILES["asharma@demo.in"], ...(data.user || {}) });
       })
