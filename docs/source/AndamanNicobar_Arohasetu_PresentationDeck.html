@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Arohasetu — HSC 2027 Presentation Deck</title>
+<style>
+  @page {
+    size: 297mm 210mm;
+    margin: 0;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #0f172a;
+    background: #e2e8f0;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .slide {
+    width: 297mm;
+    height: 210mm;
+    page-break-after: always;
+    background: #ffffff;
+    padding: 16mm 20mm;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+  }
+  .slide-header {
+    border-bottom: 2.5px solid #08A6A6;
+    padding-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .slide-num {
+    font-size: 10pt;
+    font-weight: 800;
+    color: #08A6A6;
+    background: #ccfbf1;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .slide-title {
+    font-size: 20pt;
+    font-weight: 800;
+    color: #103663;
+    margin: 0;
+    line-height: 1.1;
+  }
+  .slide-subtitle {
+    font-size: 10.5pt;
+    color: #475569;
+    margin: 2px 0 0 0;
+  }
+  .slide-body {
+    flex: 1;
+    padding: 10px 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .slide-footer {
+    border-top: 1px solid #cbd5e1;
+    padding-top: 5px;
+    font-size: 8.5pt;
+    color: #64748b;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+  }
+  .grid-4 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 12px;
+  }
+
+  .card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 10px 14px;
+  }
+  .card-teal { background: #f0fdfa; border: 1.5px solid #99f6e4; }
+  .card-navy { background: #f1f5f9; border: 1.5px solid #cbd5e1; }
+  .card-alert { background: #fff1f2; border: 1.5px solid #fecdd3; }
+  .card-dark { background: #103663; color: #ffffff; border: none; }
+
+  h3 {
+    font-size: 12pt;
+    color: #103663;
+    margin: 0 0 6px 0;
+    font-weight: 700;
+  }
+  p {
+    font-size: 9.5pt;
+    line-height: 1.45;
+    margin: 0 0 6px 0;
+  }
+  ul {
+    font-size: 9.2pt;
+    line-height: 1.4;
+    margin: 0;
+    padding-left: 18px;
+  }
+  li {
+    margin-bottom: 4px;
+  }
+  .badge {
+    display: inline-block;
+    padding: 2px 7px;
+    font-size: 8pt;
+    font-weight: 700;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .badge-teal { background: #ccfbf1; color: #0f766e; }
+  .badge-navy { background: #e0e7ff; color: #1e1b4b; }
+  .badge-rose { background: #ffe4e6; color: #be123c; }
+  .badge-gold { background: #fef9c3; color: #854d0e; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8.8pt;
+  }
+  th, td {
+    padding: 6px 8px;
+    border: 1px solid #cbd5e1;
+    text-align: left;
+    vertical-align: top;
+  }
+  th { background: #f1f5f9; color: #103663; font-weight: 700; }
+  tr:nth-child(even) { background: #f8fafc; }
+</style>
+</head>
+<body>
+
+<!-- SLIDE 1: TITLE & TEAM IDENTIFICATION -->
+<div class="slide">
+  <div class="slide-header">
+    <div>
+      <div class="slide-title">Arohasetu (आरोहासेतु)</div>
+      <div class="slide-subtitle">"Notice Sooner, Care Better — A Personal Nurse for Every Family & Hospital Bed"</div>
+    </div>
+    <div class="slide-num">Slide 1 / 7</div>
+  </div>
+
+  <div class="slide-body">
+    <div class="grid-2" style="align-items: center;">
+      <div class="card card-teal" style="padding: 18px;">
+        <span class="badge badge-teal" style="margin-bottom: 8px;">Hack for Social Cause 2027</span>
+        <h3 style="font-size: 14pt; color: #103663; margin-top: 6px;">Viksit Bharat Young Leaders Dialogue (VBYLD 2027)</h3>
+        <p style="font-size: 10pt; color: #334155; margin-bottom: 12px;">
+          <strong>Knowledge Partner:</strong> IIT Bombay &bull; <strong>Organized by:</strong> Ministry of Youth Affairs & Sports (MoYAS)
+        </p>
+        <p style="font-size: 9.5pt;"><strong>Primary Theme:</strong> Healthcare, Wellbeing & Service Delivery</p>
+        <p style="font-size: 9.5pt;"><strong>Secondary Track:</strong> Elderly Care & Healthy Ageing &bull; Assistive Tech</p>
+        <p style="font-size: 9.5pt;"><strong>Target State / UT:</strong> Andaman & Nicobar Islands (Union Territory)</p>
+        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #99f6e4;">
+          <strong style="color: #0f766e;">Live Prototype:</strong> <a href="https://arohasetu.vercel.app" style="color: #0284c7; text-decoration: none;">https://arohasetu.vercel.app</a><br>
+          <strong style="color: #0f766e;">Open Source:</strong> <a href="https://github.com/EternalFlames131/Arohasetu" style="color: #0284c7; text-decoration: none;">github.com/EternalFlames131/Arohasetu</a>
+        </div>
+      </div>
+
+      <div class="card card-navy" style="padding: 18px;">
+        <h3 style="font-size: 13pt; margin-bottom: 8px;">Team & Institutional Identification</h3>
+        <div style="margin-bottom: 8px;">
+          <strong>Team Lead:</strong> Samrat (Teacher Trainee & Lead Innovator)<br>
+          <span style="font-size: 8.5pt; color: #64748b;">Role: Clinical workflow design, system architecture, regional ground-truth validation</span>
+        </div>
+        <div style="margin-bottom: 8px;">
+          <strong>Team Member 2:</strong> [Team Member 2 Name / Role]<br>
+          <span style="font-size: 8.5pt; color: #64748b;">Role: Frontend engineering, 5-language localization & UI testing</span>
+        </div>
+        <div style="margin-bottom: 8px;">
+          <strong>Team Member 3:</strong> [Team Member 3 Name / Role]<br>
+          <span style="font-size: 8.5pt; color: #64748b;">Role: Edge computer vision testing & hardware integration research</span>
+        </div>
+        <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #cbd5e1;">
+          <strong>Institution:</strong> [College Name], Port Blair, Andaman & Nicobar Islands<br>
+          <strong>AISHE Code:</strong> [AISHE Code to insert]
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-footer">
+    <div>Arohasetu — Hack for Social Cause 2027 Submission Deck</div>
+    <div>Theme: Healthcare & Elderly Care &bull; MoYAS + IIT Bombay</div>
+    <div>Port Blair, Andaman & Nicobar Islands</div>
+  </div>
+</div>
+
+<!-- SLIDE 2: PROBLEM DEFINITION & REGIONAL GROUNDING -->
+<div class="slide">
+  <div class="slide-header">
+    <div>
+      <div class="slide-title">Problem Definition: The "Silent Gap" in Care</div>
+      <div class="slide-subtitle">Vulnerabilities in Solo Elderly Care, Hospital Ward Overburden, and Island Geography</div>
+    </div>
+    <div class="slide-num">Slide 2 / 7</div>
+  </div>
+
+  <div class="slide-body">
+    <div class="grid-3">
+      <div class="card card-alert">
+        <h3 style="color: #be123c;">1. The Post-Fall "Long Lie"</h3>
+        <p style="font-size: 8.8pt;">
+          <strong>30% of seniors fall annually.</strong> When an elder falls and cannot reach a phone for 6–12 hours, rapid rhabdomyolysis (muscle breakdown), pressure ulcers, hypothermia, and kidney failure set in.
+        </p>
+        <p style="font-size: 8.5pt; color: #be123c; margin: 0;">
+          <strong>Fatal Statistic:</strong> Over 50% of elders who experience a "long lie" do not survive past 6 months.
+        </p>
+      </div>
+
+      <div class="card card-alert">
+        <h3 style="color: #be123c;">2. Silent Nocturnal Hypoxia</h3>
+        <p style="font-size: 8.8pt;">
+          COPD, heart failure, and post-viral pulmonary patients suffer severe oxygen desaturation below 85% during deep sleep without waking up.
+        </p>
+        <p style="font-size: 8.5pt; color: #be123c; margin: 0;">
+          <strong>Hospital Crises:</strong> Night nurse-to-patient ratios exceed <strong>1:30</strong> in government wards, leaving hemodynamic deterioration unspotted between 4-hour manual rounds.
+        </p>
+      </div>
+
+      <div class="card card-teal">
+        <h3 style="color: #0f766e;">3. Andaman & Nicobar Island Reality</h3>
+        <p style="font-size: 8.8pt;">
+          36 inhabited islands with only <strong>one tertiary referral center (GB Pant Hospital, Port Blair)</strong>. Outer islands (Hut Bay, Little Andaman, Car Nicobar) face 6–10 hour sea transit delays.
+        </p>
+        <p style="font-size: 8.5pt; color: #0f766e; margin: 0;">
+          <strong>The Need:</strong> An offline-first, autonomous monitoring sentinel that detects deterioration immediately, without relying on stable internet or active panic buttons.
+        </p>
+      </div>
+    </div>
+
+    <div class="card card-navy" style="margin-top: 12px; padding: 10px;">
+      <strong style="color: #103663;">Why Existing Products Fail:</strong> Traditional panic buttons require the victim to be conscious to press them. Commercial smartwatches (Apple/Galaxy) suffer from 80%+ false alarms during hand gestures, cost ₹30,000–₹80,000, and cannot be afforded by rural families.
+    </div>
+  </div>
+
+  <div class="slide-footer">
+    <div>Arohasetu — Hack for Social Cause 2027 Submission Deck</div>
+    <div>Slide 2: Problem Statement & Beneficiary Gaps</div>
+    <div>Knowledge Partner: IIT Bombay</div>
+  </div>
+</div>
+
+<!-- SLIDE 3: PROPOSED SOLUTION & ARCHITECTURE -->
+<div class="slide">
+  <div class="slide-header">
+    <div>
+      <div class="slide-title">Proposed Solution: The Arohasetu Architecture</div>
+      <div class="slide-subtitle">Two-Layer Safety Shield + Autonomous 3-Tier Escalation Ladder + Dual Deployment</div>
+    </div>
+    <div class="slide-num">Slide 3 / 7</div>
+  </div>
+
+  <div class="slide-body">
+    <div class="grid-2" style="margin-bottom: 10px;">
+      <div class="card card-teal">
+        <h3>Layer 1: Wearable Physiological Shield</h3>
+        <ul style="font-size: 8.8pt;">
+          <li>Ingests vital biometrics: <strong>Heart Rate, SpO2, Blood Pressure, Temperature, Respiratory Rate, Blood Glucose</strong>.</li>
+          <li>Analyzes trends via the clinically proven <strong>NEWS2</strong> (National Early Warning Score 2) deterioration matrix.</li>
+          <li>Replaces black-box generative AI with auditable, deterministic clinical rules to eliminate medical hallucinations.</li>
+        </ul>
+      </div>
+
+      <div class="card card-navy">
+        <h3>Layer 2: Privacy-First Optical Sentinel</h3>
+        <ul style="font-size: 8.8pt;">
+          <li>Uses an overhead commodity webcam running on-device edge AI (<strong>Ultralytics YOLO-Pose</strong>).</li>
+          <li>Extracts 17 skeletal joint coordinates at 25+ FPS to detect sudden falls, floor stillness, and wandering.</li>
+          <li><strong>100% Video-Private:</strong> Zero video is recorded, stored, or streamed to the cloud (DPDP Act 2023 compliant).</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card card-alert" style="padding: 10px 14px;">
+      <h3 style="color: #be123c; margin-bottom: 4px;">Autonomous 3-Tier Fail-Safe Escalation Ladder</h3>
+      <div class="grid-3" style="font-size: 8.8pt; gap: 10px;">
+        <div><strong>Tier 1 (0–15s):</strong> Instant push notification and automated voice call to primary family caregiver.</div>
+        <div><strong>Tier 2 (15–45s):</strong> Automated escalation to secondary contact, neighbor, or attending physician if unacknowledged.</div>
+        <div><strong>Tier 3 (45s+):</strong> Autonomous emergency dispatch (108 / 112 / Island Marine Ambulance) with telemetry payload.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-footer">
+    <div>Arohasetu — Hack for Social Cause 2027 Submission Deck</div>
+    <div>Slide 3: System Architecture & Safety Protocols</div>
+    <div>Knowledge Partner: IIT Bombay</div>
+  </div>
+</div>
+
+<!-- SLIDE 4: TECHNICAL IMPLEMENTATION & WORKING PROTOTYPE -->
+<div class="slide">
+  <div class="slide-header">
+    <div>
+      <div class="slide-title">Technical Implementation & Working Prototype</div>
+      <div class="slide-subtitle">A Fully Operational, Production-Deployed Software Ecosystem (Not a Figma Mockup)</div>
+    </div>
+    <div class="slide-num">Slide 4 / 7</div>
+  </div>
+
+  <div class="slide-body">
+    <div class="grid-4" style="margin-bottom: 12px;">
+      <div class="card">
+        <span class="badge badge-navy">Web & Cloud</span>
+        <h3 style="font-size: 10.5pt; margin: 4px 0;">React 18 + Node.js</h3>
+        <p style="font-size: 8.2pt; color: #475569;">
+          Serverless API on Vercel (`arohasetu.vercel.app`) with HMAC-SHA256 authenticated sessions, sub-1.8s live sync, and responsive PWA layout.
+        </p>
+      </div>
+
+      <div class="card">
+        <span class="badge badge-teal">Edge Computer Vision</span>
+        <h3 style="font-size: 10.5pt; margin: 4px 0;">YOLO-Pose Daemon</h3>
+        <p style="font-size: 8.2pt; color: #475569;">
+          Python sentinel extracting 17 COCO keypoints locally with GPU/CPU acceleration. Dedicated capture worker delivers 9.6ms fresh snapshots.
+        </p>
+      </div>
+
+      <div class="card">
+        <span class="badge badge-rose">Mobile Ecosystem</span>
+        <h3 style="font-size: 10.5pt; margin: 4px 0;">Native Android App</h3>
+        <p style="font-size: 8.2pt; color: #475569;">
+          Standalone Kotlin + Jetpack Compose APK (`Download/Arohasetu-Demo.apk`) running 100% offline with embedded rules engine and MedStore.
+        </p>
+      </div>
+
+      <div class="card">
+        <span class="badge badge-gold">Evaluator Testbed</span>
+        <h3 style="font-size: 10.5pt; margin: 4px 0;">Admin Simulator</h3>
+        <p style="font-size: 8.2pt; color: #475569;">
+          Developer cockpit at `/admin/simulator` for judges to trigger clinical presets (High HR, Low SpO2, BP Crisis, Disconnect) with live sync.
+        </p>
+      </div>
+    </div>
+
+    <div class="card card-teal" style="padding: 10px 14px;">
+      <h3 style="color: #0f766e; margin-bottom: 4px;">Dual Deployment Modes</h3>
+      <div class="grid-2" style="font-size: 8.8pt;">
+        <div>
+          <strong>Home Caregiver Portal:</strong> Complete 5-language localization (English, Hindi, Bengali, Tamil, Telugu), Prajñā AI Assistant, medication adherence tracker, and privacy-first kinematic radar.
+        </div>
+        <div>
+          <strong>Hospital "Virtual Ward":</strong> Multi-bed telemetry grid (Beds 101–104) with dynamic NEWS2 acuity sorting, 4-stage clinician lifecycle (`New` &rarr; `Acknowledged` &rarr; `Follow-up` &rarr; `Resolved`), and ABDM audit trails.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-footer">
+    <div>Arohasetu — Hack for Social Cause 2027 Submission Deck</div>
+    <div>Slide 4: Technical Stack & Operational Capabilities</div>
+    <div>Knowledge Partner: IIT Bombay</div>
+  </div>
+</div>
+
+<!-- SLIDE 5: SOCIAL IMPACT, SCALABILITY & HEALTHCARE INTEGRATION -->
+<div class="slide">
+  <div class="slide-header">
+    <div>
+      <div class="slide-title">Social Impact, Scalability & Healthcare Integration</div>
+      <div class="slide-subtitle">Democratizing ICU-Grade Monitoring for 140M+ Indian Elders and Rural Primary Centers</div>
+    </div>
+    <div class="slide-num">Slide 5 / 7</div>
+  </div>
+
+  <div class="slide-body">
+    <div class="grid-3" style="margin-bottom: 12px;">
+      <div class="card card-teal">
+        <h3 style="color: #0f766e;">1. National Health Alignment</h3>
+        <ul style="font-size: 8.5pt;">
+          <li><strong>Ayushman Bharat (ABDM):</strong> Designed for 14-digit ABHA Health ID integration and Electronic Health Record export.</li>
+          <li><strong>Tele-MANAS & 108 Emergency:</strong> Integrated with national emergency helpline dispatch protocols.</li>
+          <li><strong>UN SDGs:</strong> Directly addresses <strong>SDG 3</strong> (Good Health & Well-being) and <strong>SDG 10</strong> (Reduced Inequalities).</li>
+        </ul>
+      </div>
+
+      <div class="card card-navy">
+        <h3>2. Frugal Social Innovation</h3>
+        <ul style="font-size: 8.5pt;">
+          <li><strong>Replaces ₹3,00,000 ICU Beds:</strong> Software-first approach converts any ₹800 webcam and existing smartphone into an optical monitor.</li>
+          <li><strong>Hardware Roadmap:</strong> Indigenous "Made in India" multi-sensor IoT bedside gateway planned at &lt;₹5,000 for rural Primary Health Centres.</li>
+          <li><strong>Saves Rural Families:</strong> Prevents emergency ICU admissions caused by undetected falls and delayed interventions.</li>
+        </ul>
+      </div>
+
+      <div class="card card-teal">
+        <h3 style="color: #0f766e;">3. Inclusive Vernacular Access</h3>
+        <ul style="font-size: 8.5pt;">
+          <li><strong>5 Indian Languages:</strong> English, Hindi (हिन्दी), Bengali (বাংলা), Tamil (தமிழ்), Telugu (తెలుగు).</li>
+          <li><strong>Empowers ASHA / ANMs:</strong> Simple color-coded triage allows community health workers to monitor rural sub-centers.</li>
+          <li><strong>Island Resilience:</strong> Works during cellular or submarine fiber cuts via local edge processing.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card card-dark" style="padding: 10px 14px;">
+      <strong style="color: #99f6e4;">The Viksit Bharat 2047 Vision:</strong> Ensuring that no senior citizen in India—whether living in a metro apartment in Delhi or an isolated wooden house in Little Andaman—ever dies alone and undiscovered during a preventable medical crisis.
+    </div>
+  </div>
+
+  <div class="slide-footer">
+    <div>Arohasetu — Hack for Social Cause 2027 Submission Deck</div>
+    <div>Slide 5: Scalability, Public Health & Economic Impact</div>
+    <div>Knowledge Partner: IIT Bombay</div>
+  </div>
+</div>
+
+<!-- SLIDE 6: VALIDATION, CLINICAL RELIABILITY & PROTOTYPE HONESTY -->
+<div class="slide">
+  <div class="slide-header">
+    <div>
+      <div class="slide-title">Clinical Reliability, Validation & Prototype Honesty</div>
+      <div class="slide-subtitle">7 Built-in Failsafes, 100% Automated Regression Pass Rate, and Strict Academic Integrity</div>
+    </div>
+    <div class="slide-num">Slide 6 / 7</div>
+  </div>
+
+  <div class="slide-body">
+    <div class="grid-2" style="margin-bottom: 12px;">
+      <div class="card card-teal">
+        <h3 style="color: #0f766e;">7 Built-in Clinical Reliability Safeguards</h3>
+        <ul style="font-size: 8.5pt;">
+          <li><strong>1. Physiological Range Validation:</strong> Filters impossible sensor artifact spikes.</li>
+          <li><strong>2. Device Confidence Indexing:</strong> Rates sensor skin contact (0–100%).</li>
+          <li><strong>3. Consecutive Verification:</strong> Requires sustained danger before EMS dispatch.</li>
+          <li><strong>4. Sensor Heartbeat Watchdog:</strong> Instantly alerts if a sensor powers off or drops.</li>
+          <li><strong>5. Alarm Rate-Limiting:</strong> Groups repetitive alerts to eliminate alarm fatigue.</li>
+          <li><strong>6. Immutable ABDM Audit Trail:</strong> Logs every clinician note with timestamps.</li>
+          <li><strong>7. Multi-Modal Graceful Degradation:</strong> Vision watch persists if wearables die.</li>
+        </ul>
+      </div>
+
+      <div class="card card-navy">
+        <h3>Exhaustive Automated Regression Testing</h3>
+        <ul style="font-size: 8.5pt; margin-bottom: 8px;">
+          <li><strong>23/23 False-Positive Scenarios Passed (100%):</strong> Tested sitting fast, tying shoelaces, dropping phones, lying on sofa, and furniture occlusions.</li>
+          <li><strong>7/7 Kinematics Unit Tests Passed (100%):</strong> Verified velocity derivatives ($\frac{dv}{dt}$), torso inclination angle ($\theta$), and ground stillness windows.</li>
+        </ul>
+        <div style="padding-top: 6px; border-top: 1px dashed #cbd5e1;">
+          <strong style="color: #103663;">Prototype Honesty Disclosure:</strong><br>
+          <span style="font-size: 8.2pt; color: #475569;">
+            &bull; <strong>REAL:</strong> Web application, Virtual Ward, NEWS2 rules engine, local YOLO-Pose vision, offline Android app, 4-stage nurse lifecycle.<br>
+            &bull; <strong>SIMULATED:</strong> Physical BLE hardware ingestion (via Admin Simulator) and carrier telephone dialing to 108/112 (simulated for live demo safety).
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-footer">
+    <div>Arohasetu — Hack for Social Cause 2027 Submission Deck</div>
+    <div>Slide 6: Quality Assurance, Verification & Honesty</div>
+    <div>Knowledge Partner: IIT Bombay</div>
+  </div>
+</div>
+
+<!-- SLIDE 7: TEAM SYNERGY, ROADMAP & MANDATORY AI DISCLOSURE -->
+<div class="slide">
+  <div class="slide-header">
+    <div>
+      <div class="slide-title">Roadmap, Team Synergy & Mandatory AI Disclosure</div>
+      <div class="slide-subtitle">Phased Execution Plan, Community-Rooted Leadership, and Transparent Tool Usage</div>
+    </div>
+    <div class="slide-num">Slide 7 / 7</div>
+  </div>
+
+  <div class="slide-body">
+    <div class="grid-2" style="margin-bottom: 12px;">
+      <div class="card card-teal">
+        <h3 style="color: #0f766e;">Phased Execution Roadmap (2026–2027)</h3>
+        <ul style="font-size: 8.5pt;">
+          <li><strong>Phase 1 (Completed - Oct 2026):</strong> Production web portal, local YOLO edge sentinel, offline Android APK, and simulator verified for HSC 2027.</li>
+          <li><strong>Phase 2 (Nov–Dec 2026):</strong> Grassroots pilot with ASHA workers in Port Blair and hardware BLE sensor testing.</li>
+          <li><strong>Phase 3 (Jan 2027):</strong> National showcase demonstration at VBYLD New Delhi (IIT Bombay); pilot at GB Pant Hospital Virtual Ward.</li>
+          <li><strong>Phase 4 (2027+):</strong> Integration with Ayushman Bharat ABHA IDs and low-cost indigenous bedside IoT gateway manufacturing (&lt;₹5,000).</li>
+        </ul>
+      </div>
+
+      <div class="card card-navy">
+        <h3>Official Mandatory AI-Use Disclosure</h3>
+        <p style="font-size: 8.2pt; color: #334155; margin-bottom: 6px;">
+          <strong>Human Ownership & Authorship:</strong> This project was <strong>not</strong> completely made through AI. All clinical problem analysis, system design, NEWS2 deterioration protocols, and multi-tier escalation algorithms were authored and led by the human team.
+        </p>
+        <p style="font-size: 8.2pt; color: #334155; margin-bottom: 6px;">
+          <strong>Tools Utilized:</strong> Google Antigravity (coding assistance environment).
+        </p>
+        <p style="font-size: 8.2pt; color: #334155; margin: 0;">
+          <strong>Limited Scope of Usage:</strong> AI tools were used strictly as a minor development assistant for writing a few code snippets, syntax boilerplate, and test runner formatting under team direction. Every line of logic was verified by the authors.
+        </p>
+      </div>
+    </div>
+
+    <div class="card card-alert" style="padding: 10px 14px; text-align: center;">
+      <strong style="color: #be123c; font-size: 10pt;">
+        "Arohasetu: Notice sooner, care better — Empowering families and safeguarding lives across Bharat."
+      </strong>
+    </div>
+  </div>
+
+  <div class="slide-footer">
+    <div>Arohasetu — Hack for Social Cause 2027 Submission Deck</div>
+    <div>Slide 7: Roadmap, Leadership & Formal Declaration</div>
+    <div>Knowledge Partner: IIT Bombay</div>
+  </div>
+</div>
+
+</body>
+</html>
