@@ -8,8 +8,8 @@ Theme:             Healthcare, Wellbeing & Service Delivery · Elderly Care & Ag
 Target Region:     Andaman & Nicobar Islands (UT) & National Rural/Semi-Urban India
 Project Owner:     Samrat (Teacher Trainee)
 Submission Date:   October 2026 / National Showcase: January 2027 (New Delhi)
-Official Repos:    github.com/splinemotions/Arohasetu-FS
-                   github.com/EternalFlames131/Arohasetu-FS
+Official Repos:    github.com/splinemotions/Arohasetu
+                   github.com/EternalFlames131/Arohasetu
 Live Prototype:    https://arohasetu.vercel.app  (and local dev at http://localhost:8080)
 
 --------------------------------------------------------------------------------

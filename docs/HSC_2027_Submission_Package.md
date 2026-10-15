@@ -4,7 +4,7 @@
 **Project Name:** Arohasetu — A Personal Nurse for Every Family & Hospital Bed  
 **Target Region:** Andaman & Nicobar Islands (UT) & Pan-India Rural/Semi-Urban Communities  
 **Theme:** Healthcare, Wellbeing & Service Delivery · Elderly Care & Healthy Ageing  
-**Public Repository:** `https://github.com/EternalFlames131/Arohasetu-FS` (Mirror: `https://github.com/splinemotions/Arohasetu-FS`)  
+**Public Repository:** `https://github.com/EternalFlames131/Arohasetu` (Mirror: `https://github.com/splinemotions/Arohasetu`)  
 **Live Prototype URL:** `https://arohasetu.vercel.app`  
 
 ---
@@ -53,7 +53,7 @@
   * **Team Member 2:** `[Name / Role / MY Bharat ID]`
   * **Team Member 3:** `[Name / Role / MY Bharat ID]`
 * **Institution:** `[College Name]`, Port Blair, Andaman & Nicobar Islands | **AISHE Code:** `[User to insert]`
-* **Live Deployment:** `https://arohasetu.vercel.app` | **Open-Source Code:** `github.com/EternalFlames131/Arohasetu-FS`
+* **Live Deployment:** `https://arohasetu.vercel.app` | **Open-Source Code:** `github.com/EternalFlames131/Arohasetu`
 
 ### Slide 2: Problem Definition & Regional Grounding
 * **The "Silent Gap" in Vulnerable Healthcare:**
@@ -222,8 +222,8 @@ In alignment with HSC 2027 evaluation ethics:
 
 ```bash
 # Clone the repository
-git clone https://github.com/EternalFlames131/Arohasetu-FS.git
-cd Arohasetu-FS
+git clone https://github.com/EternalFlames131/Arohasetu.git
+cd Arohasetu
 
 # Install dependencies and start local web server
 npm install
@@ -241,7 +241,7 @@ This project is open-sourced under the **MIT License**.
 ```
 
 ### 3.2 Pre-Submission Repository Audit Checklist
-* [x] **Repository Visibility:** Confirm repository is set to **PUBLIC** on GitHub (`github.com/EternalFlames131/Arohasetu-FS`).
+* [x] **Repository Visibility:** Confirm repository is set to **PUBLIC** on GitHub (`github.com/EternalFlames131/Arohasetu`).
 * [x] **Open-Source License:** Valid `LICENSE` file (MIT License) present in root directory.
 * [x] **Secrets Hygiene:** Ensure zero personal passwords, private API tokens, or `.env` credential files are committed.
 * [x] **Active Branch:** Branch `main` contains the latest working, verified code.
@@ -281,7 +281,7 @@ This project is open-sourced under the **MIT License**.
    - State / Union Territory: Andaman & Nicobar Islands (UT)
    - Institution Name: [User to insert College/Institute Name]
    - Institutional AISHE Code: [User to insert AISHE Code]
-   - Public Repository URL: https://github.com/EternalFlames131/Arohasetu-FS
+   - Public Repository URL: https://github.com/EternalFlames131/Arohasetu
    - Live Prototype URL: https://arohasetu.vercel.app
 
 2. TEAM COMPOSITION:

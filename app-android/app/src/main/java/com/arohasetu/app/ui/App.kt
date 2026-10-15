@@ -172,7 +172,7 @@ private fun LoginScreen(state: AppState) {
                     BrandLogoMark(size = 44.dp)
                     Spacer(Modifier.width(12.dp))
                     Column {
-                        Text("Arohasetu FS", color = AppColors.accent, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                        Text("Arohasetu", color = AppColors.accent, fontSize = 24.sp, fontWeight = FontWeight.Bold)
                         Text("Notice sooner, care better", color = AppColors.muted, fontSize = 12.sp)
                     }
                 }
@@ -279,7 +279,7 @@ fun MainShell(state: AppState) {
                 BrandLogoMark(size = 32.dp)
                 Spacer(Modifier.width(10.dp))
                 Column {
-                    Text("Arohasetu FS", color = AppColors.txt, fontSize = 19.sp, fontWeight = FontWeight.Bold, lineHeight = 20.sp)
+                    Text("Arohasetu", color = AppColors.txt, fontSize = 19.sp, fontWeight = FontWeight.Bold, lineHeight = 20.sp)
                     Text("Notice sooner, care better", color = AppColors.muted, fontSize = 9.5.sp, lineHeight = 11.sp)
                 }
                 Spacer(Modifier.weight(1f))
