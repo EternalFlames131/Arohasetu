@@ -439,6 +439,8 @@ class SimulationService {
       value: score,
       unit: "% confidence",
       threshold: "Trigger: Downward velocity >1.2 m/s & Floor contact >3s",
+      title,
+      source: cleanSource,
       conditionReason: `${title} (${score}% AI kinematic confidence). ${cleanSummary} Source: ${cleanSource}.`,
       severity,
       status: "New",

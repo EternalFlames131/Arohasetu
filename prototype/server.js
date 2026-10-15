@@ -61,7 +61,8 @@ if (process.env.NODE_ENV !== "production" && !process.env.ADMIN_SIMULATOR_KEY) {
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
+app.use(express.raw({ type: ["image/*", "application/octet-stream"], limit: "15mb" }));
 
 // Vercel functions do not share their local filesystem or process memory. When
 // an Upstash Redis REST store is configured, hydrate the simulator before every
@@ -327,6 +328,7 @@ function snapshotFor(p, now) {
     id: p.id, name: p.name, age: p.age, sex: p.sex,
     location: p.location, addr: p.address || null, ward: p.ward || null,
     region: REGION, condition: p.condition,
+    status: (simPatient && simPatient.status) || "normal",
     vitals: validation.cleanVitals,
     rawVitals: g.vitals,
     lastUpdated: (simPatient && simPatient.lastUpdated) || now,
@@ -1460,14 +1462,23 @@ app.all("/api/yolo/*", (req, res) => {
     }
   });
 
-  if (["POST", "PUT", "PATCH"].includes(req.method) && req.body) {
-    const bodyData = JSON.stringify(req.body);
-    proxyReq.setHeader("Content-Type", "application/json");
-    proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyData));
-    proxyReq.write(bodyData);
-    proxyReq.end();
-  } else if (["POST", "PUT", "PATCH"].includes(req.method)) {
-    req.pipe(proxyReq);
+  if (["POST", "PUT", "PATCH"].includes(req.method)) {
+    if (Buffer.isBuffer(req.body)) {
+      proxyReq.setHeader("Content-Length", req.body.length);
+      proxyReq.write(req.body);
+      proxyReq.end();
+    } else {
+      const isJson = req.headers["content-type"] && req.headers["content-type"].includes("application/json");
+      if (isJson && req.body && Object.keys(req.body).length > 0) {
+        const bodyData = JSON.stringify(req.body);
+        proxyReq.setHeader("Content-Type", "application/json");
+        proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyData));
+        proxyReq.write(bodyData);
+        proxyReq.end();
+      } else {
+        req.pipe(proxyReq);
+      }
+    }
   } else proxyReq.end();
 });
 

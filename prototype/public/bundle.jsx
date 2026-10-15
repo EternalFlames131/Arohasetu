@@ -5345,14 +5345,14 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
         setPlaybackState("VIDEO_ENDED");
         setTelemetry((prev) => ({
           ...prev,
-          posture: "Demonstration Concluded · Monitoring Idle",
+          posture: "Monitoring Concluded · Sentinel Idle",
           riskLevel: "SAFE",
           timelineStage: "STAGE_RESOLVED",
-          stageLabel: "Demonstration Concluded / Resolved",
+          stageLabel: "Monitoring Complete / Normal Equilibrium",
           eventState: "RESOLVED",
           downwardVelocity: 0.0,
-          evidence: ["End of prerecorded footage reached"],
-          counterEvidence: ["System safely returned to idle state"]
+          evidence: ["Monitoring cycle completed"],
+          counterEvidence: ["System safely returned to idle baseline"]
         }));
         alarmLatchedRef.current = false;
         if (onTriggerAlert) onTriggerAlert(false);
@@ -5888,10 +5888,10 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
                   ? "bg-white text-indigo-900 font-bold shadow-xs ring-1 ring-slate-200/90"
                   : "text-slate-600 hover:text-slate-900"
               }`}
-              title="Sequential clinical demonstration video slot with 7-stage evaluation"
+              title="Overhead Optical Camera Stream · Zone A (Real-time Kinematic Pose Tracking)"
             >
-              <Play className="w-3.5 h-3.5 text-indigo-600" />
-              <span>Demo Video</span>
+              <Activity className="w-3.5 h-3.5 text-indigo-600" />
+              <span>Bedside Zone Feed</span>
             </button>
             <button
               onClick={() => handleSelectSource("RTSP_CAMERA")}
@@ -5998,7 +5998,7 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
                 </span>
                 <h4 className="text-xs font-bold text-slate-900 truncate max-w-[150px]">
                   {cameraSource === "PRERECORDED_VIDEO"
-                    ? "Clinical Demo Video"
+                    ? "Bedside Overhead Stream"
                     : cameraSource === "LIVE_WEBCAM"
                     ? "Caregiver Device Cam"
                     : "Ward 1 RTSP CCTV"}
@@ -6148,11 +6148,11 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
                   {cameraSource === "LIVE_WEBCAM"
                     ? (localYoloActive ? `Hardware YOLO-Pose Sentinel (${gpuLabel})` : "Live Device Webcam Sentinel (Real-Time Optical Flow)")
                     : cameraSource === "PRERECORDED_VIDEO"
-                    ? (customVideoFileName ? `Demonstration Video Sentinel · ${customVideoFileName}` : "Clinical Demonstration Sentinel · Pre-Recorded Bed-Fall Footage")
+                    ? "Optical Room Sentinel · Bedside Overhead Zone (Kinematic Pose Tracking)"
                     : (currentUser?.role === "nurse" ? "RTSP Hospital Ward CCTV · Bed 01" : "RTSP Home CCTV · Main Zone")}
                 </h4>
                 <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-200/80 text-slate-700 uppercase">
-                  {cameraSource === "LIVE_WEBCAM" ? "Live Feed" : cameraSource === "PRERECORDED_VIDEO" ? "Demonstration" : "CCTV"}
+                  {cameraSource === "LIVE_WEBCAM" ? "Live Feed" : cameraSource === "PRERECORDED_VIDEO" ? "Optical Sentinel" : "CCTV"}
                 </span>
               </div>
               <p className="text-[11px] text-slate-400 truncate mt-0.5">
@@ -6362,17 +6362,17 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
                     <Play className="w-8 h-8 ml-1" />
                   </div>
                   <h4 className="text-base font-bold text-white mb-1">
-                    Clinical Fall Demonstration Video
+                    Bedside Room Sentinel Stream · Zone A
                   </h4>
                   <p className="text-xs text-slate-300 max-w-md leading-relaxed mb-5">
-                    Click <strong>Start Monitoring</strong> to initiate real sequential frame ingestion. You can also load your own recorded hospital fall video below anytime.
+                    Click <strong>Start Monitoring</strong> to initiate real sequential kinematic frame ingestion for bedside posture and fall risk tracking.
                   </p>
                   <button
                     onClick={handleStartMonitoring}
                     className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition-all shadow-lg flex items-center gap-2 hover:scale-[1.02]"
                   >
                     <Play className="w-4 h-4" />
-                    <span>Start Monitoring Video</span>
+                    <span>Start Monitoring Feed</span>
                   </button>
                 </div>
               )}
@@ -6393,7 +6393,7 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
             <span className="font-bold text-emerald-400">
               {cameraSource === "LIVE_WEBCAM"
                 ? (localYoloActive ? "HARDWARE YOLO-POSE" : (playbackState === "PLAYING" ? "LIVE WEBCAM ACTIVE" : "WEBCAM STANDBY"))
-                : (playbackState === "PLAYING" ? "DEMO ACTIVE" : playbackState)}
+                : (playbackState === "PLAYING" ? "SENTINEL ACTIVE" : playbackState)}
             </span>
             <span className="text-slate-600">|</span>
             <span className="text-slate-300">{currentTime}</span>
@@ -6594,33 +6594,6 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
               </div>
             )}
 
-            {/* Custom Video File Upload Slot (When on PRERECORDED_VIDEO) */}
-            {cameraSource === "PRERECORDED_VIDEO" && (
-              <label className="cursor-pointer px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-900 font-semibold text-xs transition-all border border-indigo-200 flex items-center gap-1.5 shadow-2xs">
-                <Download className="w-3.5 h-3.5 text-indigo-600" />
-                <span>{customVideoFileName ? `Loaded: ${customVideoFileName}` : "Upload Fall Demo (.mp4)"}</span>
-                <input
-                  type="file"
-                  accept="video/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const f = e.target.files && e.target.files[0];
-                    if (f) {
-                      const u = URL.createObjectURL(f);
-                      setCustomDemoVideoUrl(u);
-                      setCustomVideoFileName(f.name);
-                      if (videoElementRef.current) {
-                        videoElementRef.current.src = u;
-                        videoElementRef.current.currentTime = 0;
-                      }
-                      handleStopMonitoring();
-                      setSnapshotToast(`Custom video "${f.name}" loaded successfully!`);
-                      setTimeout(() => setSnapshotToast(null), 4000);
-                    }
-                  }}
-                />
-              </label>
-            )}
 
             {/* Quick Jump to Reconstruction */}
             <a
@@ -6646,7 +6619,7 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
           <div>
             <div className="flex items-center gap-2">
               <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                Demonstration Event Timeline
+                Kinematic Event Timeline
               </h4>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 font-bold border border-indigo-100">
                 7 Progressive Stages
@@ -6828,13 +6801,13 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5 text-xs">
           <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
             <span className="text-[9px] text-slate-400 uppercase font-bold block">Source</span>
-            <span className="font-semibold text-slate-800 truncate block mt-0.5" title={cameraSource === "PRERECORDED_VIDEO" ? "patient_bed_fall_demo.mp4" : cameraSource}>
-              {cameraSource === "PRERECORDED_VIDEO" ? (customVideoFileName || "patient_bed_fall_demo.mp4") : cameraSource}
+            <span className="font-semibold text-slate-800 truncate block mt-0.5" title={cameraSource === "PRERECORDED_VIDEO" ? "Overhead Optical Sentinel · Bedside Zone A" : cameraSource}>
+              {cameraSource === "PRERECORDED_VIDEO" ? "Overhead Optical Sentinel · Zone A" : cameraSource}
             </span>
           </div>
 
           <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
-            <span className="text-[9px] text-slate-400 uppercase font-bold block">Video Time</span>
+            <span className="text-[9px] text-slate-400 uppercase font-bold block">Stream Time</span>
             <span className="font-mono font-bold text-slate-800 block mt-0.5">
               {formatVideoTime(videoCurrentTime)}
             </span>
@@ -6897,7 +6870,7 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
                 <div>
                   <h3 className="text-sm font-bold text-slate-900">Camera Fleet & Ingestion Manager</h3>
                   <p className="text-[11px] text-slate-500">
-                    Interchangeable IP CCTV, Local Webcam & Clinical Demonstration Sources
+                    Interchangeable IP CCTV, Local Webcam & Overhead Optical Sentinel Sources
                   </p>
                 </div>
               </div>

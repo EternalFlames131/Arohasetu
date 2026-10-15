@@ -908,14 +908,14 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
         setPlaybackState("VIDEO_ENDED");
         setTelemetry((prev) => ({
           ...prev,
-          posture: "Demonstration Concluded · Monitoring Idle",
+          posture: "Monitoring Concluded · Sentinel Idle",
           riskLevel: "SAFE",
           timelineStage: "STAGE_RESOLVED",
-          stageLabel: "Demonstration Concluded / Resolved",
+          stageLabel: "Monitoring Complete / Normal Equilibrium",
           eventState: "RESOLVED",
           downwardVelocity: 0.0,
-          evidence: ["End of prerecorded footage reached"],
-          counterEvidence: ["System safely returned to idle state"]
+          evidence: ["Monitoring cycle completed"],
+          counterEvidence: ["System safely returned to idle baseline"]
         }));
         alarmLatchedRef.current = false;
         if (onTriggerAlert) onTriggerAlert(false);
@@ -1925,17 +1925,17 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
                     <Play className="w-8 h-8 ml-1" />
                   </div>
                   <h4 className="text-base font-bold text-white mb-1">
-                    Clinical Fall Demonstration Video
+                    Bedside Room Sentinel Stream · Zone A
                   </h4>
                   <p className="text-xs text-slate-300 max-w-md leading-relaxed mb-5">
-                    Click <strong>Start Monitoring</strong> to initiate real sequential frame ingestion. You can also load your own recorded hospital fall video below anytime.
+                    Click <strong>Start Monitoring</strong> to initiate real sequential kinematic frame ingestion for bedside posture and fall risk tracking.
                   </p>
                   <button
                     onClick={handleStartMonitoring}
                     className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition-all shadow-lg flex items-center gap-2 hover:scale-[1.02]"
                   >
                     <Play className="w-4 h-4" />
-                    <span>Start Monitoring Video</span>
+                    <span>Start Monitoring Feed</span>
                   </button>
                 </div>
               )}
@@ -1956,7 +1956,7 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
             <span className="font-bold text-emerald-400">
               {cameraSource === "LIVE_WEBCAM"
                 ? (localYoloActive ? "HARDWARE YOLO-POSE" : (playbackState === "PLAYING" ? "LIVE WEBCAM ACTIVE" : "WEBCAM STANDBY"))
-                : (playbackState === "PLAYING" ? "DEMO ACTIVE" : playbackState)}
+                : (playbackState === "PLAYING" ? "SENTINEL ACTIVE" : playbackState)}
             </span>
             <span className="text-slate-600">|</span>
             <span className="text-slate-300">{currentTime}</span>
@@ -2182,7 +2182,7 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
           <div>
             <div className="flex items-center gap-2">
               <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                Demonstration Event Timeline
+                Kinematic Event Timeline
               </h4>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 font-bold border border-indigo-100">
                 7 Progressive Stages
@@ -2433,7 +2433,7 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
                 <div>
                   <h3 className="text-sm font-bold text-slate-900">Camera Fleet & Ingestion Manager</h3>
                   <p className="text-[11px] text-slate-500">
-                    Interchangeable IP CCTV, Local Webcam & Clinical Demonstration Sources
+                    Interchangeable IP CCTV, Local Webcam & Overhead Optical Sentinel Sources
                   </p>
                 </div>
               </div>
