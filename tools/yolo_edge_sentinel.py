@@ -67,11 +67,17 @@ print("=" * 76)
 EDGE_PORT = int(os.environ.get("AROHASETU_EDGE_PORT", "5050"))
 
 
-def _edge_port_in_use(port):
-    """True if something is already accepting connections on 127.0.0.1:port."""
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
-        probe.settimeout(1.0)
-        return probe.connect_ex(("127.0.0.1", port)) == 0
+def _edge_port_in_use(port, retries=5, delay=0.5):
+    """True if something is already accepting connections on 127.0.0.1:port.
+    Includes a brief grace period to allow freshly terminated sockets to release."""
+    for i in range(retries):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+            probe.settimeout(0.5)
+            if probe.connect_ex(("127.0.0.1", port)) != 0:
+                return False
+        if i < retries - 1:
+            time.sleep(delay)
+    return True
 
 
 # Only enforced when this file is RUN as the daemon. The test suites import this
@@ -1996,6 +2002,39 @@ class SingleInstanceHTTPServer(ThreadingHTTPServer):
     daemon_threads = True
 
 
+def _heartbeat_sender_loop():
+    """Background thread that proactively pushes telemetry heartbeat to Arohasetu Node server (port 8080)."""
+    import urllib.request
+    web_server_url = "http://127.0.0.1:8080/api/edge/heartbeat"
+    while getattr(hub, "running", True):
+        try:
+            cam_id = getattr(hub, "active_camera_id", "cam-prerecorded-demo")
+            node_id = hub.edge_node.node_id if hasattr(hub, "edge_node") and hub.edge_node else "edge-node-an-01"
+            payload = {
+                "edgeId": node_id,
+                "name": "Arohasetu GB Pant Hospital Edge Sentinel",
+                "status": "ONLINE",
+                "activeCameraId": cam_id,
+                "device": GPU_NAME,
+                "cudaEnabled": CUDA_AVAILABLE,
+                "engine": "Ultralytics YOLO11-Pose",
+                "fps": round(getattr(hub, "current_fps", 0.0), 1),
+                "playbackState": getattr(hub, "playback_state", "STOPPED")
+            }
+            req_data = json.dumps(payload).encode("utf-8")
+            req = urllib.request.Request(
+                web_server_url,
+                data=req_data,
+                headers={"Content-Type": "application/json"},
+                method="POST"
+            )
+            with urllib.request.urlopen(req, timeout=1.5) as resp:
+                pass
+        except Exception:
+            pass  # Node server might not be running yet or network busy
+        time.sleep(3.0)
+
+
 def run_server(port=EDGE_PORT):
     # Re-checked here as well: the port could have been taken during the model
     # load above. (The fast path is the early guard near the top of the file.)
@@ -2021,6 +2060,9 @@ def run_server(port=EDGE_PORT):
 
     cam_thread = threading.Thread(target=camera_processing_thread, daemon=True)
     cam_thread.start()
+
+    hb_thread = threading.Thread(target=_heartbeat_sender_loop, daemon=True)
+    hb_thread.start()
 
     try:
         httpd.serve_forever()

@@ -1266,13 +1266,18 @@ async function startEdgeDaemon() {
       try {
         const netstatOutput = execSync(`netstat -aon | findstr ":5050" | findstr "LISTENING"`, { encoding: "utf8" });
         const lines = netstatOutput.trim().split("\n");
+        let killedZombie = false;
         for (const line of lines) {
           const parts = line.trim().split(/\s+/);
           const pid = parts[parts.length - 1];
           if (pid && /^\d+$/.test(pid) && pid !== "0") {
             console.log(`[Arohasetu] Freeing stale port 5050 (terminating zombie PID ${pid})...`);
             execSync(`taskkill /F /PID ${pid}`, { stdio: "ignore" });
+            killedZombie = true;
           }
+        }
+        if (killedZombie) {
+          await new Promise((r) => setTimeout(r, 1200));
         }
       } catch (e) {}
     }
@@ -1322,6 +1327,29 @@ async function startEdgeDaemon() {
     isStartingYolo = false;
     throw err;
   }
+}
+
+// ---- Edge Sentinel Self-Healing Watchdog -----------------------------------
+// Runs every 8 seconds on local non-serverless host.
+// If the YOLO daemon process terminates or port 5050 goes silent,
+// the watchdog automatically detects it and resurrects the daemon.
+if (!process.env.VERCEL) {
+  setInterval(async () => {
+    try {
+      if (!isStartingYolo && !process.env.AROHASETU_NO_YOLO) {
+        const alive = await isEdgeDaemonAlive(1000);
+        if (!alive) {
+          console.log("[Arohasetu Watchdog] YOLO Sentinel not detected on port 5050. Auto-healing / resurrecting daemon...");
+          await startEdgeDaemon();
+        } else {
+          latestEdgeHeartbeat.lastReceived = Date.now();
+          latestEdgeHeartbeat.status = "ONLINE";
+        }
+      }
+    } catch (e) {
+      // Suppress watchdog probe errors
+    }
+  }, 8000);
 }
 
 async function stopEdgeDaemon() {
@@ -1447,6 +1475,30 @@ app.all("/api/yolo/*", (req, res) => {
 
 app.get(["/api/system/health", "/api/system-health"], async (req, res) => {
   const now = Date.now();
+
+  // Actively probe the local Edge Sentinel daemon (port 5050)
+  let edgeDevice = latestEdgeHeartbeat.device;
+  let edgeCuda = latestEdgeHeartbeat.cudaEnabled;
+  try {
+    const probe = await fetch(`${EDGE_DAEMON_BASE}/api/yolo/status`, {
+      signal: AbortSignal.timeout ? AbortSignal.timeout(1200) : undefined
+    });
+    if (probe.ok) {
+      const info = await probe.json();
+      latestEdgeHeartbeat.lastReceived = now;
+      latestEdgeHeartbeat.status = "ONLINE";
+      latestEdgeHeartbeat.device = info.device;
+      latestEdgeHeartbeat.cudaEnabled = info.cuda_enabled;
+      edgeDevice = info.device;
+      edgeCuda = info.cuda_enabled;
+      if (info.camera_id) {
+        activeCameraId = info.camera_id;
+      }
+    }
+  } catch (e) {
+    // Daemon not reachable on this host — fall through
+  }
+
   const timeSinceHeartbeat = now - (latestEdgeHeartbeat.lastReceived || latestEdgeHeartbeat.timestamp || now);
   const isEdgeStale = timeSinceHeartbeat > 8000;
   const edgeStatus = isEdgeStale ? "OFFLINE" : (latestEdgeHeartbeat.status || "ONLINE");
@@ -1473,23 +1525,6 @@ app.get(["/api/system/health", "/api/system-health"], async (req, res) => {
   // Vision hardware is reported by the edge daemon itself — its /api/yolo/status
   // carries the real torch.cuda device name. Never hardcode a GPU model here:
   // this host may be CPU-only, and the daemon may run on different hardware.
-  // Prefer the ingested heartbeat; otherwise probe the local daemon directly.
-  let edgeDevice = latestEdgeHeartbeat.device;
-  let edgeCuda = latestEdgeHeartbeat.cudaEnabled;
-  if (!edgeDevice) {
-    try {
-      const probe = await fetch(`${EDGE_DAEMON_BASE}/api/yolo/status`, {
-        signal: AbortSignal.timeout(1200)
-      });
-      if (probe.ok) {
-        const info = await probe.json();
-        edgeDevice = info.device;
-        edgeCuda = info.cuda_enabled;
-      }
-    } catch (e) {
-      // Daemon not reachable on this host — fall through to the generic label.
-    }
-  }
   const edgeDeviceLabel = edgeDevice
     ? `${edgeDevice} (${edgeCuda ? "CUDA" : "CPU"})`
     : "Auto-detected NVIDIA CUDA GPU / CPU Fallback";

@@ -11,7 +11,7 @@ const IncidentReconstructionPanel = ({ onTriggerVerification, currentVitals }) =
   // Probe localhost:5050 for local YOLO daemon on mount
   React.useEffect(() => {
     let isMounted = true;
-    fetch("http://127.0.0.1:5050/api/yolo/status", { method: "GET", mode: "cors" })
+    fetch("/api/yolo/status", { method: "GET" })
       .then((res) => {
         if (res.ok) return res.json();
         throw new Error("Local daemon not responding");

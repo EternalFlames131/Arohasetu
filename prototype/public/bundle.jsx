@@ -3622,7 +3622,7 @@ const IncidentReconstructionPanel = ({ onTriggerVerification, currentVitals }) =
   // Probe localhost:5050 for local YOLO daemon on mount
   React.useEffect(() => {
     let isMounted = true;
-    fetch("http://127.0.0.1:5050/api/yolo/status", { method: "GET", mode: "cors" })
+    fetch("/api/yolo/status", { method: "GET" })
       .then((res) => {
         if (res.ok) return res.json();
         throw new Error("Local daemon not responding");
@@ -4663,7 +4663,7 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
   const disappearanceAlertedRef = React.useRef(false);
   const verificationTimerRef = React.useRef(null);
 
-  const YOLO_API_BASE = "http://127.0.0.1:5050";
+  const YOLO_API_BASE = typeof window !== "undefined" && window.location.port === "5050" ? "http://127.0.0.1:5050" : "";
 
   // Live Camera Source Modes: "HARDWARE_YOLO" (NVIDIA GPU MJPEG stream) vs "BROWSER_WEBCAM" (direct WebRTC in browser)
   const [liveCameraMode, setLiveCameraMode] = React.useState("HARDWARE_YOLO");

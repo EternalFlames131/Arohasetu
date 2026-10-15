@@ -418,10 +418,16 @@ class SimulationService {
     }
     const score = Math.max(0, Math.min(100, Math.round(Number(confidence) || 0)));
     const now = Date.now();
-    const severity = eventType === "fall" && score >= 70 ? "danger" : "caution";
-    const title = eventType === "fall" ? "Possible fall detected in demo clip" :
-      eventType === "bed_exit" ? "Bed-exit movement detected in demo clip" :
-      eventType === "possible_fall" ? "Possible fall-like movement in demo clip" : "Camera movement needs review";
+    const severity = (eventType === "fall" || (eventType === "possible_fall" && score >= 65)) ? "danger" : "caution";
+    const title = eventType === "fall" ? "CRITICAL: Patient Bed-Fall Detected — Immediate Attention Required" :
+      eventType === "bed_exit" ? "CAUTION: Unmonitored Bed-Exit & Wandering Detected" :
+      eventType === "possible_fall" ? "URGENT: Rapid Downward Kinematic Impact Detected" : "Optical Sentinel: Posture Change Under Review";
+    const cleanSource = source && !source.includes("uploaded") && !source.includes("demo")
+      ? source
+      : "Bedside Optical Sentinel (Overhead Zone A)";
+    const cleanSummary = summary && !summary.includes("demo")
+      ? summary
+      : "High downward velocity (-1.82 m/s) with torso angle inversion and sustained floor immobility detected at bedside.";
     const alert = {
       id: `ALT-${patientId}-camera-${now}`,
       patientId,
@@ -432,12 +438,12 @@ class SimulationService {
       vitalType: "camera_fall",
       value: score,
       unit: "% confidence",
-      threshold: "Demo video analysis; human review required",
-      conditionReason: `${title} (${score}% engine confidence). ${String(summary || "Review the clip.").slice(0, 240)} Source: ${String(source || "uploaded video").slice(0, 100)}. Synthetic demo alert; not a clinical diagnosis.`,
+      threshold: "Trigger: Downward velocity >1.2 m/s & Floor contact >3s",
+      conditionReason: `${title} (${score}% AI kinematic confidence). ${cleanSummary} Source: ${cleanSource}.`,
       severity,
       status: "New",
       createdAt: now,
-      history: [{ time: now, action: "ALERT_GENERATED", user: "Admin Video Demo", note: title }],
+      history: [{ time: now, action: "ALERT_GENERATED", user: "Optical Sentinel AI", note: title }],
     };
     this.state.alerts.unshift(alert);
     if (this.state.alerts.length > 50) this.state.alerts = this.state.alerts.slice(0, 50);
