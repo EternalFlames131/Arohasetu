@@ -1,0 +1,8 @@
+# Vercel Deployment Exclusions
+android/
+.gradle/
+build/
+*.apk
+node_modules/
+.venv/
+.agents/

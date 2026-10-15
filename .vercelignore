@@ -1,0 +1,13 @@
+.git/
+.venv/
+app-android/
+docs/
+references/
+scratch/
+tools/
+application/
+*.pt
+*.onnx
+*.apk
+prototype/android/
+prototype/node_modules/
