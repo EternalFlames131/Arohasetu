@@ -124,9 +124,9 @@
   * *Phase 2 (Nov–Dec 2026):* Community pilot with ASHA workers in Port Blair; live BLE sensor pairing.
   * *Phase 3 (Jan 2027 onwards):* Low-cost hardware enclosure prototyping and hospital pilot at GB Pant Hospital.
 * **Official Disclosure on the Use of AI / Digital Assistance Tools:**
-  * *Human Ownership:* The project was **not** completely made through AI. All clinical problem analysis, system design, NEWS2 deterioration protocols, and multi-tier escalation algorithms were authored and led by the human team.
-  * *Tools Utilized:* Google Antigravity (coding assistance environment).
-  * *Scope of Usage:* AI was used strictly as a minor development assistant for writing a few code snippets, syntax boilerplate, and test runner formatting under team direction. Every line of logic was reviewed and verified by the authors.
+  * *Human Ownership:* The core project concept, healthcare problem definition, system architecture, feature workflows, user interface designs, and verification scenarios were entirely conceived, directed, and executed by the team members.
+  * *Tools Utilized:* AI Coding Assistant (Generative AI Developer Tools).
+  * *Scope of Usage:* An AI coding assistant was used to help write and build the major code implementations (full-stack web application scaffolding, Express API routes, component logic, and automated test scripts) under the step-by-step guidance and review of the team members.
 
 ---
 
@@ -347,24 +347,19 @@ This project is open-sourced under the **MIT License**.
      escalation procedures were conceived, designed, and executed directly by the human team.
 
 2. Tools Used:
-   - Google Antigravity (development assistant environment).
+   - AI Coding Assistant (Generative AI Developer Tools).
 
-3. Nature and Limited Extent of Assistance:
-   - AI tools were utilized strictly for writing a few code snippets, boilerplate syntax, and basic formatting:
-     a) Writing a few code snippets and boilerplate components (React functional scaffolding, Express routing).
-     b) Automated formatting of test runner assertions (tools/test_false_positive_lab.py).
-     c) Formatting markdown documentation and layout styling under human direction.
+3. Nature and Extent of Assistance:
+   - An AI coding assistant was used to help write and build the major code implementations under the direct guidance of the team:
+     a) Writing full-stack application code (React frontend components, Express REST API routing, and state management).
+     b) Implementing algorithm logic for kinematic calculations and automated test suites.
+     c) Formatting documentation, configuration files, and script automation under human direction.
 
 4. Human Ingenuity and Independent Execution:
    - The fundamental healthcare problem statement, the Two-Layer Safety Shield concept, 
-     the Andaman & Nicobar island deployment model, and the clinical logic were 
-     conceived entirely by the human team.
-   - Clinical threshold parameters were mapped from published medical standards: 
-     the National Early Warning Score 2 (NEWS2) established by the Royal College of 
-     Physicians and India's Ministry of Health.
-   - The zero-video DPDP-compliant computer vision architecture, mathematical keypoint 
-     velocity equations, state machine transitions, and physical hardware verification 
-     were engineered and validated directly on local test machines.
+     the community deployment model, and the clinical rules were conceived entirely by the human team.
+   - The user workflows, UI/UX screen design, hardware device selection, threshold limits, and testing 
+     scenarios were engineered, directed, and verified directly by the team members.
 
 5. Prototype Honesty Confirmation:
    - We truthfully declare that physical wearable sensor integration and telecom 

@@ -140,10 +140,10 @@ python tools/test_fall_kinematics.py
 
 ## 🤖 Official Disclosure on the Use of AI / Digital Assistance Tools
 
-In accordance with Hack for Social Cause 2027 (MoYAS & IIT Bombay) rules:
-* **Primary Human Authorship:** This project was **not** completely made through AI. All clinical problem analysis, system architecture, NEWS2 deterioration protocols, multi-tier escalation algorithms, and island healthcare grounding were authored and engineered directly by the human team.
-* **Tools Utilized:** Google Antigravity (coding assistance environment).
-* **Scope of Usage:** AI tools were used strictly as a minor programming assistant for writing a few code snippets, syntax boilerplate, and test runner formatting under human direction. Every line of logic was verified by the authors.
+In accordance with Hack for Social Cause 2027 (MoYAS & IIT Bombay) guidelines:
+* **Human Authorship & Ownership:** The core project concept, healthcare problem definition, system architecture, feature workflows, user interface designs, and verification scenarios were entirely conceived, directed, and executed by the team members.
+* **Tools Utilized:** AI Coding Assistant (Generative AI Developer Tools).
+* **Scope of Usage:** An AI coding assistant was used to help write and build the major code implementations (full-stack web application scaffolding, Express API routes, component logic, and automated test scripts) under the step-by-step guidance and review of the team members.
 
 ---
 
