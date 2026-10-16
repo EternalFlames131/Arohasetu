@@ -1261,6 +1261,20 @@ const Server = (props) => (
   />
 );
 
+const Info = (props) => (
+  <IconBase
+    {...props}
+    d={
+      <>
+        <circle cx="12" cy="12" r="10" />
+        <path d="M12 16v-4" />
+        <path d="M12 8h.01" />
+      </>
+    }
+  />
+);
+
+
 
 
 
@@ -4795,48 +4809,150 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
   };
 
   const [isStartingDaemon, setIsStartingDaemon] = React.useState(false);
+  const [daemonFeedback, setDaemonFeedback] = React.useState(null);
   const autoStartTriggeredRef = React.useRef(false);
 
   const handleStartDaemon = async () => {
     setIsStartingDaemon(true);
+    setCameraSwitchError("");
+    setDaemonFeedback({
+      type: "loading",
+      message: "⚡ Initiating YOLO Sentinel: Probing Edge Daemon on port 5050..."
+    });
+
+    const isCloudHost = typeof window !== "undefined" && 
+      window.location.hostname !== "localhost" && 
+      window.location.hostname !== "127.0.0.1" && 
+      !window.location.hostname.startsWith("192.168.");
+
     try {
-      await fetch("/api/yolo/daemon/start", { method: "POST" });
-    } catch (e) {
-      console.warn("Daemon start call error:", e);
-    }
-    // Poll quickly for status resolution
-    let attempts = 0;
-    const pollTimer = setInterval(async () => {
-      attempts++;
+      // 1. Proactive Direct Check: maybe the daemon is already running locally!
       try {
-        const res = await fetch(`${YOLO_API_BASE}/api/yolo/status`, {
-          signal: AbortSignal.timeout ? AbortSignal.timeout(1500) : undefined
+        const directProbe = await fetch(`${YOLO_API_BASE}/api/yolo/status`, {
+          signal: AbortSignal.timeout ? AbortSignal.timeout(2000) : undefined
         });
-        if (res.ok) {
-          const data = await res.json();
+        if (directProbe.ok) {
+          const directData = await directProbe.json();
           setLocalYoloActive(true);
-          setLocalYoloInfo(data);
+          setLocalYoloInfo(directData);
           setLiveCameraMode("HARDWARE_YOLO");
           setHardwareStreamPaused(false);
           setStreamRetryKey(Date.now());
           setCameraSwitchError("");
-          fetch(`${YOLO_API_BASE}/api/yolo/start`, { method: "POST" }).catch(() => {});
-          if (webcamStreamRef.current) {
-            webcamStreamRef.current.getTracks().forEach((track) => track.stop());
-            webcamStreamRef.current = null;
-          }
-          if (cameraSource === "LIVE_WEBCAM") setPlaybackState("PLAYING");
           setIsStartingDaemon(false);
-          clearInterval(pollTimer);
+          setDaemonFeedback({
+            type: "success",
+            message: `✅ YOLO Edge Sentinel is ONLINE (${directData.device || "GPU/CPU"} · Port 5050)`
+          });
+          setTimeout(() => setDaemonFeedback(null), 5000);
           return;
         }
-      } catch (e) {}
-      if (attempts >= 12) {
-        setIsStartingDaemon(false);
-        setCameraSwitchError("YOLO Edge is offline on this computer. In-Browser analysis is still available.");
-        clearInterval(pollTimer);
+      } catch (e) {
+        // Direct probe failed, proceed to backend spawn
       }
-    }, 1000);
+
+      // 2. Call backend daemon launcher
+      setDaemonFeedback({
+        type: "loading",
+        message: isCloudHost 
+          ? "Connecting to Edge Sentinel... (Cloud mode: In-Browser optical fallback ready)"
+          : "⚡ Launching YOLO Sentinel: Starting Python daemon and loading neural network..."
+      });
+
+      const launchRes = await fetch("/api/yolo/daemon/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+      const launchData = await launchRes.json().catch(() => ({}));
+
+      // If backend reports already running or immediately online
+      if (launchData.status === "ALREADY_RUNNING" || launchData.status === "ONLINE") {
+        setLocalYoloActive(true);
+        setLiveCameraMode("HARDWARE_YOLO");
+        setHardwareStreamPaused(false);
+        setStreamRetryKey(Date.now());
+        setIsStartingDaemon(false);
+        setDaemonFeedback({
+          type: "success",
+          message: "✅ YOLO Edge Sentinel is ONLINE and actively streaming!"
+        });
+        setTimeout(() => setDaemonFeedback(null), 5000);
+        return;
+      }
+
+      // If on Cloud Vercel where local Python cannot be spawned:
+      if (launchData.error && launchData.error.includes("Vercel")) {
+        // Auto-switch to In-Browser WebRTC + MediaPipe fallback so the user is never stuck!
+        setLiveCameraMode("BROWSER_WEBCAM");
+        setCameraSwitchError("");
+        setIsStartingDaemon(false);
+        setDaemonFeedback({
+          type: "info",
+          message: "🌐 Cloud Environment: In-Browser Optical Vision Sentinel active (30 FPS pose tracking & fall detection). To use local NVIDIA GPU acceleration, run Arohasetu locally via npm start."
+        });
+        setTimeout(() => setDaemonFeedback(null), 8000);
+        return;
+      }
+
+      // 3. Poll for resolution with visible progressive countdown
+      let attempts = 0;
+      const maxAttempts = 30; // 30 seconds for cold weight load on CPU/GPU
+      const pollTimer = setInterval(async () => {
+        attempts++;
+        setDaemonFeedback({
+          type: "loading",
+          message: `⚡ Initializing YOLO neural network weights (warming up: ${attempts}/${maxAttempts}s)...`
+        });
+
+        try {
+          const res = await fetch(`${YOLO_API_BASE}/api/yolo/status`, {
+            signal: AbortSignal.timeout ? AbortSignal.timeout(2000) : undefined
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setLocalYoloActive(true);
+            setLocalYoloInfo(data);
+            setLiveCameraMode("HARDWARE_YOLO");
+            setHardwareStreamPaused(false);
+            setStreamRetryKey(Date.now());
+            setCameraSwitchError("");
+            fetch(`${YOLO_API_BASE}/api/yolo/start`, { method: "POST" }).catch(() => {});
+            if (webcamStreamRef.current) {
+              webcamStreamRef.current.getTracks().forEach((track) => track.stop());
+              webcamStreamRef.current = null;
+            }
+            if (cameraSource === "LIVE_WEBCAM") setPlaybackState("PLAYING");
+            setIsStartingDaemon(false);
+            setDaemonFeedback({
+              type: "success",
+              message: `✅ YOLO Edge Sentinel is ONLINE (${data.device || "GPU/CPU"} · Port 5050)`
+            });
+            setTimeout(() => setDaemonFeedback(null), 5000);
+            clearInterval(pollTimer);
+            return;
+          }
+        } catch (e) {}
+
+        if (attempts >= maxAttempts) {
+          setIsStartingDaemon(false);
+          clearInterval(pollTimer);
+          setCameraSwitchError("YOLO Sentinel startup timed out. In-Browser analysis remains active.");
+          setDaemonFeedback({
+            type: "error",
+            message: "⚠️ Could not start YOLO automatically. In-Browser optical sentinel is active. Tip: You can also start it manually via tools\\run_yolo.bat."
+          });
+          setTimeout(() => setDaemonFeedback(null), 8000);
+        }
+      }, 1000);
+
+    } catch (err) {
+      setIsStartingDaemon(false);
+      setDaemonFeedback({
+        type: "error",
+        message: `Error initiating YOLO: ${err.message}`
+      });
+      setTimeout(() => setDaemonFeedback(null), 6000);
+    }
   };
 
   // Poll Local Hardware YOLO Sentinel Daemon with Debounced 3-Strike Resilience & Auto-Recovery
@@ -5951,16 +6067,32 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
                 </h4>
               </div>
             </div>
-            <span
-              className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md ${
+            <button
+              onClick={handleStartDaemon}
+              disabled={isStartingDaemon}
+              title={systemHealth.edgeStatus === "EDGE_ONLINE" ? "Edge daemon is online (click to refresh status)" : "Click to launch and connect YOLO Sentinel"}
+              className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md cursor-pointer transition-all ${
                 systemHealth.edgeStatus === "EDGE_ONLINE"
-                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                  : "bg-amber-50 text-amber-700 border border-amber-200"
+                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
+                  : "bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 animate-pulse"
               }`}
             >
-              {systemHealth.edgeStatus === "EDGE_ONLINE" ? `ONLINE · ${systemHealth.latencyMs}ms` : "STANDBY"}
-            </span>
+              {isStartingDaemon ? "STARTING…" : systemHealth.edgeStatus === "EDGE_ONLINE" ? `ONLINE · ${systemHealth.latencyMs}ms` : "OFFLINE · CLICK TO START"}
+            </button>
           </div>
+
+          {systemHealth.edgeStatus !== "EDGE_ONLINE" && (
+            <div className="mt-2.5 pt-2 border-t border-slate-100">
+              <button
+                onClick={handleStartDaemon}
+                disabled={isStartingDaemon}
+                className="w-full py-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-60"
+              >
+                <Activity className={`w-3.5 h-3.5 ${isStartingDaemon ? "animate-spin text-emerald-200" : ""}`} />
+                <span>{isStartingDaemon ? "Starting YOLO Daemon (port 5050)..." : "⚡ Start YOLO Edge Sentinel"}</span>
+              </button>
+            </div>
+          )}
 
           <div className="mt-3 pt-3 border-t border-slate-100 grid grid-cols-3 gap-2 text-center">
             <div className="bg-slate-50 p-2 rounded-xl border border-slate-100">
@@ -6214,7 +6346,7 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
                         : "text-slate-600 hover:text-slate-900"
                     }`}
                   >
-                    <Activity className="w-3 h-3" />
+                    <Activity className={`w-3 h-3 ${isStartingDaemon ? "animate-spin text-amber-500" : ""}`} />
                     <span>{isStartingDaemon ? "Starting YOLO…" : localYoloActive ? "⚡ YOLO Edge" : "⚡ YOLO Edge · Offline"}</span>
                   </button>
               </div>
@@ -7134,6 +7266,43 @@ const CameraZonesView = ({ onTriggerAlert, onTriggerVerification, currentUser, a
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Dynamic YOLO Daemon Feedback Toast */}
+      {daemonFeedback && (
+        <div
+          className={`fixed bottom-6 right-6 z-50 max-w-md p-3.5 rounded-xl shadow-xl border flex items-center gap-3 transition-all animate-in fade-in slide-in-from-bottom-2 ${
+            daemonFeedback.type === "loading"
+              ? "bg-slate-900 text-white border-slate-700"
+              : daemonFeedback.type === "success"
+              ? "bg-emerald-950 text-emerald-100 border-emerald-700"
+              : daemonFeedback.type === "error"
+              ? "bg-rose-950 text-rose-100 border-rose-700"
+              : "bg-indigo-950 text-indigo-100 border-indigo-700"
+          }`}
+        >
+          {daemonFeedback.type === "loading" && (
+            <Activity className="w-5 h-5 text-amber-400 animate-spin shrink-0" />
+          )}
+          {daemonFeedback.type === "success" && (
+            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+          )}
+          {daemonFeedback.type === "error" && (
+            <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
+          )}
+          {daemonFeedback.type === "info" && (
+            <Info className="w-5 h-5 text-indigo-400 shrink-0" />
+          )}
+          <div className="text-xs font-medium leading-relaxed">
+            {daemonFeedback.message}
+          </div>
+          <button
+            onClick={() => setDaemonFeedback(null)}
+            className="ml-auto text-slate-400 hover:text-white text-xs p-1 rounded-sm cursor-pointer"
+          >
+            ✕
+          </button>
         </div>
       )}
     </div>

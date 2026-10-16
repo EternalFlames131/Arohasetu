@@ -1227,8 +1227,9 @@ app.post("/api/edge/heartbeat", (req, res) => {
 const EDGE_DAEMON_BASE = process.env.AROHASETU_EDGE_BASE || process.env.AROHA_EDGE_BASE || process.env.AROHASETU_EDGE_BASE || "http://127.0.0.1:5050";
 let yoloChildProcess = null;
 let isStartingYolo = false;
+let yoloStartingTimestamp = 0;
 
-async function isEdgeDaemonAlive(timeoutMs = 1200) {
+async function isEdgeDaemonAlive(timeoutMs = 3500) {
   try {
     const res = await fetch(`${EDGE_DAEMON_BASE}/api/yolo/status`, {
       signal: AbortSignal.timeout ? AbortSignal.timeout(timeoutMs) : undefined
@@ -1243,14 +1244,22 @@ async function startEdgeDaemon() {
   if (process.env.VERCEL) {
     return { ok: false, error: "Cloud Vercel serverless environment does not support local edge Python daemon." };
   }
-  if (await isEdgeDaemonAlive()) {
+  if (await isEdgeDaemonAlive(1500)) {
     console.log("[Arohasetu] YOLO Edge Sentinel is already online and responding on port 5050.");
+    isStartingYolo = false;
     return { ok: true, status: "ALREADY_RUNNING" };
   }
-  if (isStartingYolo) {
+  // If a child process is already spawned and within its 35s startup window, wait for it
+  if (yoloChildProcess && !yoloChildProcess.killed && (Date.now() - yoloStartingTimestamp < 35000)) {
+    console.log(`[Arohasetu] YOLO Sentinel (PID ${yoloChildProcess.pid}) is already initializing...`);
+    return { ok: true, status: "STARTING_IN_PROGRESS", pid: yoloChildProcess.pid };
+  }
+  if (isStartingYolo && (Date.now() - yoloStartingTimestamp < 35000)) {
     return { ok: true, status: "STARTING_IN_PROGRESS" };
   }
+
   isStartingYolo = true;
+  yoloStartingTimestamp = Date.now();
 
   try {
     const rootDir = path.resolve(__dirname, "..");
@@ -1273,6 +1282,12 @@ async function startEdgeDaemon() {
           const parts = line.trim().split(/\s+/);
           const pid = parts[parts.length - 1];
           if (pid && /^\d+$/.test(pid) && pid !== "0") {
+            // First verify if it's already responding
+            if (await isEdgeDaemonAlive(1000)) {
+              console.log(`[Arohasetu] Process on PID ${pid} is already responsive on port 5050.`);
+              isStartingYolo = false;
+              return { ok: true, status: "ALREADY_RUNNING" };
+            }
             console.log(`[Arohasetu] Freeing stale port 5050 (terminating zombie PID ${pid})...`);
             execSync(`taskkill /F /PID ${pid}`, { stdio: "ignore" });
             killedZombie = true;
@@ -1297,7 +1312,7 @@ async function startEdgeDaemon() {
 
     yoloChildProcess.stdout.on("data", (chunk) => {
       const text = chunk.toString();
-      if (text.includes("Serving") || text.includes("Hardware Platform") || text.includes("CUDA") || text.includes("Ready")) {
+      if (text.includes("Serving") || text.includes("Hardware Platform") || text.includes("CUDA") || text.includes("Ready") || text.includes("listening")) {
         console.log(`[YOLO Sentinel] ${text.trim()}`);
       }
       fs.appendFile(startupLog, text, () => {});
@@ -1313,12 +1328,14 @@ async function startEdgeDaemon() {
       yoloChildProcess = null;
     });
 
-    // Wait up to 10 seconds for it to become ready
-    for (let i = 0; i < 20; i++) {
+    // Wait up to 25 seconds for it to become ready
+    for (let i = 0; i < 50; i++) {
       await new Promise((r) => setTimeout(r, 500));
       if (await isEdgeDaemonAlive(500)) {
         console.log("[Arohasetu] YOLO Edge Sentinel is now ONLINE and ready on port 5050!");
         isStartingYolo = false;
+        latestEdgeHeartbeat.lastReceived = Date.now();
+        latestEdgeHeartbeat.status = "ONLINE";
         return { ok: true, status: "ONLINE", port: 5050 };
       }
     }
@@ -1332,14 +1349,18 @@ async function startEdgeDaemon() {
 }
 
 // ---- Edge Sentinel Self-Healing Watchdog -----------------------------------
-// Runs every 8 seconds on local non-serverless host.
+// Runs every 10 seconds on local non-serverless host.
 // If the YOLO daemon process terminates or port 5050 goes silent,
 // the watchdog automatically detects it and resurrects the daemon.
 if (!process.env.VERCEL) {
   setInterval(async () => {
     try {
       if (!isStartingYolo && !process.env.AROHASETU_NO_YOLO) {
-        const alive = await isEdgeDaemonAlive(1000);
+        if (yoloChildProcess && !yoloChildProcess.killed && (Date.now() - yoloStartingTimestamp < 35000)) {
+          // Process is still within its startup warmup window — give it time
+          return;
+        }
+        const alive = await isEdgeDaemonAlive(2500);
         if (!alive) {
           console.log("[Arohasetu Watchdog] YOLO Sentinel not detected on port 5050. Auto-healing / resurrecting daemon...");
           await startEdgeDaemon();
@@ -1351,7 +1372,7 @@ if (!process.env.VERCEL) {
     } catch (e) {
       // Suppress watchdog probe errors
     }
-  }, 8000);
+  }, 10000);
 }
 
 async function stopEdgeDaemon() {
