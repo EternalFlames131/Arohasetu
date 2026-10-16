@@ -141,6 +141,18 @@ const REGION = "Andaman & Nicobar Islands (UT), India";
 
 app.use(express.static(path.join(__dirname, "public")));
 
+// High-capacity Android demo APK distribution route (Bypasses Vercel 4.5MB Serverless limit via GitHub CDN)
+app.get(["/downloads/Arohasetu-Demo.apk", "/download/apk"], (req, res) => {
+  if (process.env.VERCEL) {
+    return res.redirect(302, "https://github.com/EternalFlames131/Arohasetu/raw/main/prototype/public/downloads/Arohasetu-Demo.apk");
+  }
+  const localApk = path.join(__dirname, "public", "downloads", "Arohasetu-Demo.apk");
+  if (fs.existsSync(localApk)) {
+    return res.download(localApk, "Arohasetu-Demo.apk");
+  }
+  res.redirect(302, "https://github.com/EternalFlames131/Arohasetu/raw/main/prototype/public/downloads/Arohasetu-Demo.apk");
+});
+
 // Developer Backend Console routes
 app.get(["/dev", "/developer"], (req, res) => {
   res.sendFile(path.join(__dirname, "public", "dev.html"));
