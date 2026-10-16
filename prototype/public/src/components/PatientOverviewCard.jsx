@@ -47,7 +47,7 @@ const PatientOverviewCard = ({
                 <span>{patient.status || "Monitoring"}</span>
               </span>
               <span className="text-xs text-slate-400 font-mono">
-                ID: {patient.patientId || patient.id || "REJ-8042"}
+                ID: {patient.patientId || patient.id || "ARO-8042"}
               </span>
             </div>
 

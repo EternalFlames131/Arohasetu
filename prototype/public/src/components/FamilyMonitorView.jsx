@@ -86,10 +86,10 @@ const FamilyMonitorView = ({ patient, vitals, alerts = [], connectivity, seconds
         body: JSON.stringify({
           question: q,
           patient: {
-            name: patient.name,
-            patientId: patient.patientId || patient.id,
-            condition: patient.condition,
-            location: patient.location,
+            name: patient?.name || "Patient",
+            patientId: patient?.patientId || patient?.id || "ARO-8042",
+            condition: patient?.condition || "Routine Telemetry Monitoring",
+            location: patient?.location || "Port Blair, Andaman & Nicobar Islands",
           },
           vitals,
           alerts: groupedAlerts,

@@ -198,6 +198,21 @@ const MedicinesView = ({ onOpenAddModal, currentUser }) => {
     setMeds(accountData.meds);
   }, [accountData]);
 
+  const handleToggleTaken = (medId) => {
+    setMeds((prev) =>
+      prev.map((m) => {
+        if (m.id === medId) {
+          const isNowTaken = m.status !== "Taken";
+          return {
+            ...m,
+            status: isNowTaken ? "Taken" : "Upcoming",
+          };
+        }
+        return m;
+      })
+    );
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       {/* Header & Adherence Summary */}
@@ -271,17 +286,28 @@ const MedicinesView = ({ onOpenAddModal, currentUser }) => {
                       {m.doctor}
                     </td>
                     <td className="py-3.5 px-5">
-                      {isTaken ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-200/80">
-                          <Check className="w-3 h-3 text-emerald-600" />
-                          <span>Taken</span>
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200/70">
-                          <Clock className="w-3 h-3 text-blue-500" />
-                          <span>Upcoming</span>
-                        </span>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleToggleTaken(m.id)}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold cursor-pointer transition-all shadow-2xs hover:scale-[1.02] active:scale-[0.98] ${
+                          isTaken
+                            ? "bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100"
+                            : "bg-blue-50 text-blue-700 border border-blue-300 hover:bg-blue-100"
+                        }`}
+                        title={isTaken ? "Click to toggle upcoming" : "Click to mark as taken"}
+                      >
+                        {isTaken ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2.5]" />
+                            <span>Taken</span>
+                          </>
+                        ) : (
+                          <>
+                            <Clock className="w-3.5 h-3.5 text-blue-500" />
+                            <span>Mark Taken</span>
+                          </>
+                        )}
+                      </button>
                     </td>
                     <td className="py-3.5 px-5 text-right font-mono font-bold text-xs text-slate-800">
                       {m.adherence}

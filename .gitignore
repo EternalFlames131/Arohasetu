@@ -23,5 +23,7 @@ prototype/skills-lock.json
 
 .vercel/
 
-# Android binaries (local offline-first APKs — avoid GitHub HTTP 408 payload timeout)
+# Android binaries (allow public demo APK for cloud distribution; ignore all other APK builds)
 *.apk
+!prototype/public/downloads/Arohasetu-Demo.apk
+

@@ -35,7 +35,7 @@ const ACCOUNT_PROFILES = {
     name: "Ram Prakash",
     role: "caregiver",
     email: "rprakash@demo.in",
-    patientId: "REJ-9120",
+    patientId: "ARO-9120",
     age: 72,
     gender: "Male",
     location: "Remote Cottage → Hut Bay, Little Andaman",
@@ -96,7 +96,7 @@ const HOSPITAL_INPATIENT_BEDS = {
     id: "bed-101",
     bedNumber: "Bed 101",
     name: "Anita Sharma",
-    patientId: "REJ-8042",
+    patientId: "ARO-8042",
     age: 67,
     gender: "Female",
     location: "GB Pant Hospital → Ward A, Bed 101 (Port Blair)",
@@ -245,7 +245,7 @@ const HOSPITAL_INPATIENT_BEDS = {
     id: "bed-102",
     bedNumber: "Bed 102",
     name: "Ram Prakash",
-    patientId: "REJ-9120",
+    patientId: "ARO-9120",
     age: 72,
     gender: "Male",
     location: "GB Pant Hospital → Ward A, Bed 102 (Little Andaman Link)",
@@ -402,7 +402,7 @@ const HOSPITAL_INPATIENT_BEDS = {
     id: "bed-103",
     bedNumber: "Bed 103",
     name: "Meera Nair",
-    patientId: "REJ-6319",
+    patientId: "ARO-6319",
     age: 58,
     gender: "Female",
     location: "GB Pant Hospital → Ward A, Bed 103 (Surgical Recovery B)",
@@ -551,7 +551,7 @@ const HOSPITAL_INPATIENT_BEDS = {
     id: "bed-104",
     bedNumber: "Bed 104",
     name: "Kavitha Raman",
-    patientId: "REJ-4981",
+    patientId: "ARO-4981",
     age: 64,
     gender: "Female",
     location: "GB Pant Hospital → Ward A, Bed 104 (Cardiology Unit)",
@@ -961,6 +961,10 @@ const App = () => {
   const [serverAlerts, setServerAlerts] = React.useState([]);
   const [serverOfflineDevices, setServerOfflineDevices] = React.useState([]);
 
+  const activeAlertsCount = React.useMemo(() => {
+    return (serverAlerts || []).filter((a) => a.status !== "Resolved").length;
+  }, [serverAlerts]);
+
   const isNurse = user?.role === "nurse" || user?.email === "wardnurse@demo.in";
 
   const activePatient = React.useMemo(() => {
@@ -1183,6 +1187,10 @@ const App = () => {
                 "bed-102": "P2",
                 "bed-103": "P3",
                 "bed-104": "P4",
+                "ARO-8042": "P1",
+                "ARO-9120": "P2",
+                "ARO-6319": "P3",
+                "ARO-4981": "P4",
                 "REJ-8042": "P1",
                 "REJ-9120": "P2",
                 "P1": "P1",
@@ -1760,7 +1768,7 @@ const App = () => {
         setActiveTab={setActiveTab}
         collapsed={sidebarCollapsed}
         setCollapsed={setSidebarCollapsed}
-        alertCount={3}
+        alertCount={activeAlertsCount}
         mobileOpen={mobileOpen}
         setMobileOpen={setMobileOpen}
         user={user}
@@ -1780,7 +1788,9 @@ const App = () => {
           onSwitchUser={(email, pw) => handleLogin(email, pw)}
           curLang={curLang}
           setCurLang={setCurLang}
-          notificationCount={3}
+          notificationCount={activeAlertsCount}
+          liveAlerts={serverAlerts || []}
+          onNavigateToAlerts={() => setActiveTab("alerts")}
           setMobileOpen={setMobileOpen}
         />
 

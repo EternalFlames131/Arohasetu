@@ -8,7 +8,9 @@ const TopBar = ({
   onSwitchUser,
   curLang,
   setCurLang,
-  notificationCount = 3,
+  notificationCount = 0,
+  liveAlerts = [],
+  onNavigateToAlerts,
   onOpenNotifications,
   setMobileOpen,
 }) => {
@@ -128,29 +130,55 @@ const TopBar = ({
             <div className="absolute right-0 mt-2 w-80 bg-white border border-slate-200 rounded-xl shadow-lg p-3 z-50 animate-in fade-in slide-in-from-top-1">
               <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100">
                 <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                  Active Clinical Alerts ({notificationCount})
+                  Active Alerts ({notificationCount})
                 </span>
-                <span className="text-[11px] text-blue-600 font-medium">Real-time</span>
+                <span className="text-[11px] text-blue-600 font-medium font-mono">Live Queue</span>
               </div>
-              <div className="space-y-2">
-                <div className="p-2 bg-amber-50/70 border border-amber-200/80 rounded-lg text-xs">
-                  <div className="flex items-center justify-between font-semibold text-amber-900">
-                    <span>Blood Pressure Elevated</span>
-                    <span className="text-[10px] text-amber-700 font-mono">8m ago</span>
-                  </div>
-                  <p className="text-[11px] text-amber-800 mt-0.5">
-                    149/97 mmHg detected (Systolic &gt; 140 threshold).
-                  </p>
+              {liveAlerts.length === 0 ? (
+                <div className="p-4 text-center text-slate-500 text-xs bg-slate-50 rounded-lg border border-slate-100 my-1">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500 mx-auto mb-1" />
+                  <span className="font-medium text-slate-700 block">All Vitals Nominal</span>
+                  <span className="text-[11px] text-slate-400">Zero active unacknowledged alerts.</span>
                 </div>
-                <div className="p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs">
-                  <div className="flex items-center justify-between font-semibold text-slate-800">
-                    <span>Continuous Temp Sync</span>
-                    <span className="text-[10px] text-slate-500 font-mono">21m ago</span>
-                  </div>
-                  <p className="text-[11px] text-slate-600 mt-0.5">
-                    TempTraq patch logged normal 37.0 °C.
-                  </p>
+              ) : (
+                <div className="space-y-2 max-h-64 overflow-y-auto pr-0.5">
+                  {liveAlerts.slice(0, 4).map((alert, idx) => (
+                    <div
+                      key={alert.id || idx}
+                      onClick={() => {
+                        setNotifOpen(false);
+                        if (onNavigateToAlerts) onNavigateToAlerts();
+                      }}
+                      className={`p-2.5 rounded-lg text-xs cursor-pointer transition-colors ${
+                        alert.severity === "danger" || alert.severity === "critical"
+                          ? "bg-rose-50/80 border border-rose-200 text-rose-900 hover:bg-rose-100"
+                          : "bg-amber-50/70 border border-amber-200 text-amber-900 hover:bg-amber-100"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between font-semibold">
+                        <span className="truncate pr-1.5">{alert.title || alert.conditionReason || "Threshold Alert"}</span>
+                        <span className="text-[10px] text-slate-500 font-mono shrink-0">{alert.time || "Recent"}</span>
+                      </div>
+                      {alert.reading && (
+                        <p className="text-[11px] font-mono mt-0.5 opacity-90">
+                          Reading: {alert.reading}
+                        </p>
+                      )}
+                    </div>
+                  ))}
                 </div>
+              )}
+              <div className="pt-2 mt-2 border-t border-slate-100 flex justify-between items-center text-[11px]">
+                <span className="text-slate-400 font-mono text-[10px]">Real-time Telemetry</span>
+                <button
+                  onClick={() => {
+                    setNotifOpen(false);
+                    if (onNavigateToAlerts) onNavigateToAlerts();
+                  }}
+                  className="text-blue-600 font-bold hover:underline cursor-pointer"
+                >
+                  View Full Triage Queue →
+                </button>
               </div>
             </div>
           )}

@@ -235,7 +235,7 @@ const ClinicalExportModal = ({ isOpen, onClose, vitalsData, currentUser, activeP
   if (!isOpen) return null;
 
   const patient = activePatient || {
-    id: "REJ-8042",
+    id: "ARO-8042",
     name: "Anita Sharma",
     age: 67,
     gender: "Female",
@@ -246,7 +246,7 @@ const ClinicalExportModal = ({ isOpen, onClose, vitalsData, currentUser, activeP
   const handleDownload = () => {
     const reportData = {
       patient: patient.name,
-      patientId: patient.id,
+      patientId: patient.patientId || patient.id || "ARO-8042",
       age: patient.age,
       gender: patient.gender,
       location: patient.location,
@@ -262,7 +262,7 @@ const ClinicalExportModal = ({ isOpen, onClose, vitalsData, currentUser, activeP
       auditTrailConfidence: "98% (High Clinical Confidence)",
       devices:
         patient.hardwareDevices?.map((d) => `${d.model} (${d.type})`) ||
-        (patient.id === "REJ-9120" || patient.patientId === "REJ-9120"
+        (patient.id === "ARO-9120" || patient.id === "REJ-9120" || patient.patientId === "ARO-9120"
           ? ["FreeStyle Libre 3 CGM", "Accu-Chek Instant", "Beurer BM 57 BP", "Cellular Gateway #AP-4109"]
           : patient.id === "WARD-STA-01" || patient.patientId === "WARD-STA-01"
           ? ["GB Pant Ward Gateway #GW-8042", "Philips IntelliVue MP50", "Masimo Rad-97"]

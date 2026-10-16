@@ -1521,7 +1521,9 @@ const TopBar = ({
   onSwitchUser,
   curLang,
   setCurLang,
-  notificationCount = 3,
+  notificationCount = 0,
+  liveAlerts = [],
+  onNavigateToAlerts,
   onOpenNotifications,
   setMobileOpen,
 }) => {
@@ -1641,29 +1643,55 @@ const TopBar = ({
             <div className="absolute right-0 mt-2 w-80 bg-white border border-slate-200 rounded-xl shadow-lg p-3 z-50 animate-in fade-in slide-in-from-top-1">
               <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100">
                 <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                  Active Clinical Alerts ({notificationCount})
+                  Active Alerts ({notificationCount})
                 </span>
-                <span className="text-[11px] text-blue-600 font-medium">Real-time</span>
+                <span className="text-[11px] text-blue-600 font-medium font-mono">Live Queue</span>
               </div>
-              <div className="space-y-2">
-                <div className="p-2 bg-amber-50/70 border border-amber-200/80 rounded-lg text-xs">
-                  <div className="flex items-center justify-between font-semibold text-amber-900">
-                    <span>Blood Pressure Elevated</span>
-                    <span className="text-[10px] text-amber-700 font-mono">8m ago</span>
-                  </div>
-                  <p className="text-[11px] text-amber-800 mt-0.5">
-                    149/97 mmHg detected (Systolic &gt; 140 threshold).
-                  </p>
+              {liveAlerts.length === 0 ? (
+                <div className="p-4 text-center text-slate-500 text-xs bg-slate-50 rounded-lg border border-slate-100 my-1">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500 mx-auto mb-1" />
+                  <span className="font-medium text-slate-700 block">All Vitals Nominal</span>
+                  <span className="text-[11px] text-slate-400">Zero active unacknowledged alerts.</span>
                 </div>
-                <div className="p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs">
-                  <div className="flex items-center justify-between font-semibold text-slate-800">
-                    <span>Continuous Temp Sync</span>
-                    <span className="text-[10px] text-slate-500 font-mono">21m ago</span>
-                  </div>
-                  <p className="text-[11px] text-slate-600 mt-0.5">
-                    TempTraq patch logged normal 37.0 °C.
-                  </p>
+              ) : (
+                <div className="space-y-2 max-h-64 overflow-y-auto pr-0.5">
+                  {liveAlerts.slice(0, 4).map((alert, idx) => (
+                    <div
+                      key={alert.id || idx}
+                      onClick={() => {
+                        setNotifOpen(false);
+                        if (onNavigateToAlerts) onNavigateToAlerts();
+                      }}
+                      className={`p-2.5 rounded-lg text-xs cursor-pointer transition-colors ${
+                        alert.severity === "danger" || alert.severity === "critical"
+                          ? "bg-rose-50/80 border border-rose-200 text-rose-900 hover:bg-rose-100"
+                          : "bg-amber-50/70 border border-amber-200 text-amber-900 hover:bg-amber-100"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between font-semibold">
+                        <span className="truncate pr-1.5">{alert.title || alert.conditionReason || "Threshold Alert"}</span>
+                        <span className="text-[10px] text-slate-500 font-mono shrink-0">{alert.time || "Recent"}</span>
+                      </div>
+                      {alert.reading && (
+                        <p className="text-[11px] font-mono mt-0.5 opacity-90">
+                          Reading: {alert.reading}
+                        </p>
+                      )}
+                    </div>
+                  ))}
                 </div>
+              )}
+              <div className="pt-2 mt-2 border-t border-slate-100 flex justify-between items-center text-[11px]">
+                <span className="text-slate-400 font-mono text-[10px]">Real-time Telemetry</span>
+                <button
+                  onClick={() => {
+                    setNotifOpen(false);
+                    if (onNavigateToAlerts) onNavigateToAlerts();
+                  }}
+                  className="text-blue-600 font-bold hover:underline cursor-pointer"
+                >
+                  View Full Triage Queue →
+                </button>
               </div>
             </div>
           )}
@@ -1855,10 +1883,10 @@ const FamilyMonitorView = ({ patient, vitals, alerts = [], connectivity, seconds
         body: JSON.stringify({
           question: q,
           patient: {
-            name: patient.name,
-            patientId: patient.patientId || patient.id,
-            condition: patient.condition,
-            location: patient.location,
+            name: patient?.name || "Patient",
+            patientId: patient?.patientId || patient?.id || "ARO-8042",
+            condition: patient?.condition || "Routine Telemetry Monitoring",
+            location: patient?.location || "Port Blair, Andaman & Nicobar Islands",
           },
           vitals,
           alerts: groupedAlerts,
@@ -2332,7 +2360,7 @@ const PatientOverviewCard = ({
                 <span>{patient.status || "Monitoring"}</span>
               </span>
               <span className="text-xs text-slate-400 font-mono">
-                ID: {patient.patientId || patient.id || "REJ-8042"}
+                ID: {patient.patientId || patient.id || "ARO-8042"}
               </span>
             </div>
 
@@ -4429,7 +4457,7 @@ const ResidentCheckinModal = ({ isOpen, onClose, scenario, onEmergencyConfirmed,
               </p>
               <div className="mt-4 p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs font-mono text-slate-700 text-left">
                 <div>&bull; Calling: {activePatient?.primaryContact || "Rajesh Sharma (Son) · +91 94342 88100"}... [DIALING]</div>
-                <div>&bull; Dispatched: {activePatient?.id === "REJ-9120" ? "Little Andaman Marine Ambulance & 108 PHC Station" : activePatient?.id === "WARD-STA-01" ? "GB Pant Hospital Crash Team & Code Blue" : "GB Pant Hospital Ambulance Station (108)"}</div>
+                <div>&bull; Dispatched: {activePatient?.id === "ARO-9120" || activePatient?.id === "REJ-9120" || activePatient?.patientId === "ARO-9120" ? "Little Andaman Marine Ambulance & 108 PHC Station" : activePatient?.id === "WARD-STA-01" ? "GB Pant Hospital Crash Team & Code Blue" : "GB Pant Hospital Ambulance Station (108)"}</div>
                 <div>&bull; Location: {activePatient?.location || "Junglighat, Port Blair (11.6643° N, 92.7303° E)"}</div>
               </div>
               <button
@@ -8961,6 +8989,21 @@ const MedicinesView = ({ onOpenAddModal, currentUser }) => {
     setMeds(accountData.meds);
   }, [accountData]);
 
+  const handleToggleTaken = (medId) => {
+    setMeds((prev) =>
+      prev.map((m) => {
+        if (m.id === medId) {
+          const isNowTaken = m.status !== "Taken";
+          return {
+            ...m,
+            status: isNowTaken ? "Taken" : "Upcoming",
+          };
+        }
+        return m;
+      })
+    );
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       {/* Header & Adherence Summary */}
@@ -9034,17 +9077,28 @@ const MedicinesView = ({ onOpenAddModal, currentUser }) => {
                       {m.doctor}
                     </td>
                     <td className="py-3.5 px-5">
-                      {isTaken ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-200/80">
-                          <Check className="w-3 h-3 text-emerald-600" />
-                          <span>Taken</span>
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200/70">
-                          <Clock className="w-3 h-3 text-blue-500" />
-                          <span>Upcoming</span>
-                        </span>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleToggleTaken(m.id)}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold cursor-pointer transition-all shadow-2xs hover:scale-[1.02] active:scale-[0.98] ${
+                          isTaken
+                            ? "bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100"
+                            : "bg-blue-50 text-blue-700 border border-blue-300 hover:bg-blue-100"
+                        }`}
+                        title={isTaken ? "Click to toggle upcoming" : "Click to mark as taken"}
+                      >
+                        {isTaken ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2.5]" />
+                            <span>Taken</span>
+                          </>
+                        ) : (
+                          <>
+                            <Clock className="w-3.5 h-3.5 text-blue-500" />
+                            <span>Mark Taken</span>
+                          </>
+                        )}
+                      </button>
                     </td>
                     <td className="py-3.5 px-5 text-right font-mono font-bold text-xs text-slate-800">
                       {m.adherence}
@@ -10410,7 +10464,7 @@ const ClinicalExportModal = ({ isOpen, onClose, vitalsData, currentUser, activeP
   if (!isOpen) return null;
 
   const patient = activePatient || {
-    id: "REJ-8042",
+    id: "ARO-8042",
     name: "Anita Sharma",
     age: 67,
     gender: "Female",
@@ -10421,7 +10475,7 @@ const ClinicalExportModal = ({ isOpen, onClose, vitalsData, currentUser, activeP
   const handleDownload = () => {
     const reportData = {
       patient: patient.name,
-      patientId: patient.id,
+      patientId: patient.patientId || patient.id || "ARO-8042",
       age: patient.age,
       gender: patient.gender,
       location: patient.location,
@@ -10437,7 +10491,7 @@ const ClinicalExportModal = ({ isOpen, onClose, vitalsData, currentUser, activeP
       auditTrailConfidence: "98% (High Clinical Confidence)",
       devices:
         patient.hardwareDevices?.map((d) => `${d.model} (${d.type})`) ||
-        (patient.id === "REJ-9120" || patient.patientId === "REJ-9120"
+        (patient.id === "ARO-9120" || patient.id === "REJ-9120" || patient.patientId === "ARO-9120"
           ? ["FreeStyle Libre 3 CGM", "Accu-Chek Instant", "Beurer BM 57 BP", "Cellular Gateway #AP-4109"]
           : patient.id === "WARD-STA-01" || patient.patientId === "WARD-STA-01"
           ? ["GB Pant Ward Gateway #GW-8042", "Philips IntelliVue MP50", "Masimo Rad-97"]
@@ -11290,7 +11344,7 @@ const ACCOUNT_PROFILES = {
     name: "Ram Prakash",
     role: "caregiver",
     email: "rprakash@demo.in",
-    patientId: "REJ-9120",
+    patientId: "ARO-9120",
     age: 72,
     gender: "Male",
     location: "Remote Cottage → Hut Bay, Little Andaman",
@@ -11351,7 +11405,7 @@ const HOSPITAL_INPATIENT_BEDS = {
     id: "bed-101",
     bedNumber: "Bed 101",
     name: "Anita Sharma",
-    patientId: "REJ-8042",
+    patientId: "ARO-8042",
     age: 67,
     gender: "Female",
     location: "GB Pant Hospital → Ward A, Bed 101 (Port Blair)",
@@ -11500,7 +11554,7 @@ const HOSPITAL_INPATIENT_BEDS = {
     id: "bed-102",
     bedNumber: "Bed 102",
     name: "Ram Prakash",
-    patientId: "REJ-9120",
+    patientId: "ARO-9120",
     age: 72,
     gender: "Male",
     location: "GB Pant Hospital → Ward A, Bed 102 (Little Andaman Link)",
@@ -11657,7 +11711,7 @@ const HOSPITAL_INPATIENT_BEDS = {
     id: "bed-103",
     bedNumber: "Bed 103",
     name: "Meera Nair",
-    patientId: "REJ-6319",
+    patientId: "ARO-6319",
     age: 58,
     gender: "Female",
     location: "GB Pant Hospital → Ward A, Bed 103 (Surgical Recovery B)",
@@ -11806,7 +11860,7 @@ const HOSPITAL_INPATIENT_BEDS = {
     id: "bed-104",
     bedNumber: "Bed 104",
     name: "Kavitha Raman",
-    patientId: "REJ-4981",
+    patientId: "ARO-4981",
     age: 64,
     gender: "Female",
     location: "GB Pant Hospital → Ward A, Bed 104 (Cardiology Unit)",
@@ -12216,6 +12270,10 @@ const App = () => {
   const [serverAlerts, setServerAlerts] = React.useState([]);
   const [serverOfflineDevices, setServerOfflineDevices] = React.useState([]);
 
+  const activeAlertsCount = React.useMemo(() => {
+    return (serverAlerts || []).filter((a) => a.status !== "Resolved").length;
+  }, [serverAlerts]);
+
   const isNurse = user?.role === "nurse" || user?.email === "wardnurse@demo.in";
 
   const activePatient = React.useMemo(() => {
@@ -12438,6 +12496,10 @@ const App = () => {
                 "bed-102": "P2",
                 "bed-103": "P3",
                 "bed-104": "P4",
+                "ARO-8042": "P1",
+                "ARO-9120": "P2",
+                "ARO-6319": "P3",
+                "ARO-4981": "P4",
                 "REJ-8042": "P1",
                 "REJ-9120": "P2",
                 "P1": "P1",
@@ -13015,7 +13077,7 @@ const App = () => {
         setActiveTab={setActiveTab}
         collapsed={sidebarCollapsed}
         setCollapsed={setSidebarCollapsed}
-        alertCount={3}
+        alertCount={activeAlertsCount}
         mobileOpen={mobileOpen}
         setMobileOpen={setMobileOpen}
         user={user}
@@ -13035,7 +13097,9 @@ const App = () => {
           onSwitchUser={(email, pw) => handleLogin(email, pw)}
           curLang={curLang}
           setCurLang={setCurLang}
-          notificationCount={3}
+          notificationCount={activeAlertsCount}
+          liveAlerts={serverAlerts || []}
+          onNavigateToAlerts={() => setActiveTab("alerts")}
           setMobileOpen={setMobileOpen}
         />
 

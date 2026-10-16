@@ -261,7 +261,7 @@ const ResidentCheckinModal = ({ isOpen, onClose, scenario, onEmergencyConfirmed,
               </p>
               <div className="mt-4 p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs font-mono text-slate-700 text-left">
                 <div>&bull; Calling: {activePatient?.primaryContact || "Rajesh Sharma (Son) · +91 94342 88100"}... [DIALING]</div>
-                <div>&bull; Dispatched: {activePatient?.id === "REJ-9120" ? "Little Andaman Marine Ambulance & 108 PHC Station" : activePatient?.id === "WARD-STA-01" ? "GB Pant Hospital Crash Team & Code Blue" : "GB Pant Hospital Ambulance Station (108)"}</div>
+                <div>&bull; Dispatched: {activePatient?.id === "ARO-9120" || activePatient?.id === "REJ-9120" || activePatient?.patientId === "ARO-9120" ? "Little Andaman Marine Ambulance & 108 PHC Station" : activePatient?.id === "WARD-STA-01" ? "GB Pant Hospital Crash Team & Code Blue" : "GB Pant Hospital Ambulance Station (108)"}</div>
                 <div>&bull; Location: {activePatient?.location || "Junglighat, Port Blair (11.6643° N, 92.7303° E)"}</div>
               </div>
               <button
