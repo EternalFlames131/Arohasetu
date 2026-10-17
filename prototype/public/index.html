@@ -98,19 +98,75 @@
 <body class="h-full bg-slate-50 text-slate-900">
   <!-- React App Root Container -->
   <div id="root">
-    <!-- Initial Clinical Splash State -->
-    <div class="min-h-screen flex items-center justify-center bg-slate-50">
-      <div class="text-center p-8">
-        <div class="w-12 h-12 rounded-xl bg-[#103663] text-[#08A6A6] flex items-center justify-center mx-auto mb-3 shadow-md animate-pulse">
+    <!-- Initial Clinical Splash State with Automated Recovery Watchdog -->
+    <div id="initial-splash-container" class="min-h-screen flex items-center justify-center bg-slate-50">
+      <div class="text-center p-8 max-w-sm mx-auto">
+        <div id="splash-icon-pulse" class="w-12 h-12 rounded-xl bg-[#103663] text-[#08A6A6] flex items-center justify-center mx-auto mb-3 shadow-md animate-pulse">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
           </svg>
         </div>
         <h2 class="text-base font-bold text-slate-900">Arohasetu Clinical Portal</h2>
-        <p class="text-xs text-slate-500 mt-1">Initializing Real-time Telemetry Engine...</p>
+        <p id="splash-status-text" class="text-xs text-slate-500 mt-1">Initializing Real-time Telemetry Engine...</p>
+
+        <!-- Progressive Recovery / Timeout Diagnostic Container (shown if startup takes longer than 4s) -->
+        <div id="splash-recovery-box" style="display:none;" class="mt-4 p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-left text-xs text-amber-900 animate-in fade-in">
+          <div class="flex items-center gap-2 font-semibold mb-1">
+            <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+            <span id="splash-recovery-title">Startup taking longer than expected</span>
+          </div>
+          <p id="splash-recovery-msg" class="text-[11px] text-amber-700 leading-normal">
+            Verifying telemetry connection and application assets...
+          </p>
+          <div class="mt-3 flex items-center gap-2">
+            <button onclick="window.location.reload()" class="px-3 py-1.5 bg-slate-900 text-white rounded-lg text-xs font-semibold hover:bg-slate-800 transition-colors cursor-pointer shadow-xs">
+              Retry Connection
+            </button>
+            <button onclick="try{localStorage.removeItem('arohasetu_token');}catch(e){}window.location.reload();" class="px-3 py-1.5 bg-white border border-slate-200 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-50 transition-colors cursor-pointer shadow-xs">
+              Reset Session
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
+
+  <!-- Startup connection watchdog script -->
+  <script>
+    (function() {
+      var splashText = document.getElementById('splash-status-text');
+      var recoveryBox = document.getElementById('splash-recovery-box');
+      var recoveryTitle = document.getElementById('splash-recovery-title');
+      var recoveryMsg = document.getElementById('splash-recovery-msg');
+
+      // Phase 1: 3.5s soft warning
+      setTimeout(function() {
+        if (document.getElementById('initial-splash-container')) {
+          if (splashText) splashText.textContent = "Connecting to Telemetry Services...";
+          if (recoveryBox) {
+            recoveryBox.style.display = "block";
+            if (!navigator.onLine && recoveryMsg) {
+              recoveryTitle.textContent = "Network Offline Detected";
+              recoveryMsg.textContent = "Your browser appears to be offline. Reconnecting to local cache...";
+            }
+          }
+        }
+      }, 3500);
+
+      // Phase 2: 7.5s hard timeout with clear recovery instructions
+      setTimeout(function() {
+        if (document.getElementById('initial-splash-container')) {
+          if (splashText) splashText.textContent = "Telemetry Gateway Unreachable";
+          var pulseIcon = document.getElementById('splash-icon-pulse');
+          if (pulseIcon) pulseIcon.classList.remove('animate-pulse');
+          if (recoveryTitle) recoveryTitle.textContent = "Connection Timeout";
+          if (recoveryMsg) {
+            recoveryMsg.innerHTML = "Unable to connect to live telemetry gateway after 7.5 seconds. Click <strong>Retry Connection</strong> to reload, or <strong>Reset Session</strong> if your session token was interrupted.";
+          }
+        }
+      }, 7500);
+    })();
+  </script>
 
   <!-- Clinical error trap to prevent silent white screens -->
   <script>

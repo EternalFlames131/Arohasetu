@@ -212,9 +212,15 @@ if (meds.list().length === 0) {
 
 // ---- Helpers ---------------------------------------------------------------
 function requireAuth(req, res, next) {
-  const token = String(req.headers.authorization || "").replace(/^Bearer\s+/i, "");
-  let user = auth.userForToken(token);
-  if (!user && (req.method === "GET" || !token)) {
+  const token = String(req.headers.authorization || "").replace(/^Bearer\s+/i, "").trim();
+  let user = null;
+  if (token) {
+    user = auth.userForToken(token);
+    if (!user) {
+      return res.status(401).json({ error: "token_invalid_or_expired" });
+    }
+  } else if (req.method === "GET") {
+    // Only permit read-only exploratory demo GET requests without token
     user = auth.findByEmail("asharma@demo.in");
   }
   if (!user) return res.status(401).json({ error: "auth_required" });
@@ -485,18 +491,21 @@ function alertsFor(user, now) {
   for (const alert of collected) {
     alerts.push(alert);
     if (alert.severity === "danger" && alert.status !== "Resolved") {
+      const isDelivered = (now - alert.createdAt) >= 2000;
       escalations.push({
         id: "ESC-" + alert.id,
         alertId: alert.id,
         patientId: alert.patientId,
         patientName: alert.patientName,
         severity: "danger",
-        channels: ["SMS + Emergency alert"],
+        channels: ["Simulated SMS + Automated Call Ladder"],
         to: alert.ward ? "Nurse station + on-duty nurse" : "Family caregiver",
         dispatchedAt: alert.createdAt + 2000,
-        delivered: true,
+        delivered: isDelivered,
+        status: isDelivered ? "simulated_delivered" : "pending",
+        simulated: true,
         simulationNotice:
-          "Simulated delivery. In production: caregiver SMS/WhatsApp, email, and emergency-services dispatch via live APIs.",
+          "Simulated escalation protocol. In production: caregiver SMS/WhatsApp, email, and emergency-services dispatch via verified telephony APIs.",
       });
       auditEvent("escalation", {
         patientId: alert.patientId,
@@ -543,22 +552,22 @@ function callForAlert(alert, now) {
     if (el >= t) log.push({ t: alert.createdAt + t, msg });
   };
   const log = [];
-  push(0, `Danger alert ${alert.id} — automatic call chain started immediately`);
-  push(0, `Calling family → ${c.family} (voice)`);
+  push(0, `[SIMULATED PROTOCOL] Danger alert ${alert.id} — automatic emergency call chain initiated`);
+  push(0, `[SIMULATED PROTOCOL] Calling family → ${c.family} (simulated voice)`);
   if (fam === "answered") {
-    push(4200, `family answered on ${c.family} — vitals + alert shared live`);
+    push(4200, `[SIMULATED PROTOCOL] Family answered on ${c.family} — live vitals & alert summary delivered`);
   } else if (el >= 4200) {
-    push(4200, `family did not answer after 2 attempts — escalating to next contact NOW`);
-    push(5500, `Calling backup → ${c.backup} (voice)`);
+    push(4200, `[SIMULATED PROTOCOL] Family did not answer after 2 attempts — escalating to backup contact`);
+    push(5500, `[SIMULATED PROTOCOL] Calling backup → ${c.backup} (simulated voice)`);
     if (bak === "answered") {
-      push(9800, `backup answered on ${c.backup} — vitals + alert shared live`);
+      push(9800, `[SIMULATED PROTOCOL] Backup answered on ${c.backup} — live vitals & alert summary delivered`);
     } else if (el >= 9800) {
-      push(9800, `backup did not answer after 2 attempts — escalating to emergency services NOW`);
-      push(11000, `Calling emergency services → 108 / 112 (voice-dispatch)`);
+      push(9800, `[SIMULATED PROTOCOL] Backup did not answer — escalating to emergency dispatch`);
+      push(11000, `[SIMULATED PROTOCOL] Calling emergency dispatch → 108 / 112 (simulated dispatch)`);
       if (em === "answered") {
-        push(13200, `Emergency services reached on 108 / 112 — ambulance dispatched, GPS + vitals sent`);
+        push(13200, `[SIMULATED PROTOCOL] Emergency dispatch confirmed on 108 / 112 (Simulated) — ambulance dispatched, GPS & vitals sent`);
       } else if (el >= 15000) {
-        push(15000, `Emergency line busy — on-duty staff + hospital alerted directly`);
+        push(15000, `[SIMULATED PROTOCOL] Dispatch line busy — hospital on-duty clinical team alerted directly`);
       }
     }
   }
@@ -570,10 +579,12 @@ function callForAlert(alert, now) {
     patientName: alert.patientName,
     startedAt: alert.createdAt,
     status,
+    simulated: true,
+    protocolType: "SIMULATED_ESCALATION_LADDER",
     ladder: [
-      { label: "family", to: c.family, mode: "voice", emergency: false, state: fam },
-      { label: "backup", to: c.backup, mode: "voice", emergency: false, state: bak },
-      { label: "emergency", to: "108 / 112", mode: "voice-dispatch", emergency: true, state: em },
+      { label: "family", to: c.family, mode: "voice", emergency: false, state: fam, simulated: true },
+      { label: "backup", to: c.backup, mode: "voice", emergency: false, state: bak, simulated: true },
+      { label: "emergency", to: "108 / 112 (Simulated)", mode: "voice-dispatch", emergency: true, state: em, simulated: true },
     ],
     log: log.sort((a, b) => a.t - b.t),
   };
@@ -655,6 +666,11 @@ app.get("/api/alerts", requireAuth, (req, res) => {
 // Clinician Alert Review, Acknowledgement, Follow-up & Resolution Workflow
 app.post("/api/alerts/:id/acknowledge", requireAuth, (req, res) => {
   try {
+    const alert = (simulationService.state.alerts || []).find((a) => a.id === req.params.id);
+    if (!alert) return res.status(404).json({ ok: false, error: "alert_not_found" });
+    if (!ownPatientIds(req.user).has(alert.patientId)) {
+      return res.status(403).json({ ok: false, error: "forbidden" });
+    }
     const clinicianName = (req.body && req.body.clinicianName) || (req.user ? req.user.name : "On-Duty Clinician");
     const result = simulationService.acknowledgeAlert(req.params.id, clinicianName);
     res.json(result);
@@ -665,6 +681,11 @@ app.post("/api/alerts/:id/acknowledge", requireAuth, (req, res) => {
 
 app.post("/api/alerts/:id/followup", requireAuth, (req, res) => {
   try {
+    const alert = (simulationService.state.alerts || []).find((a) => a.id === req.params.id);
+    if (!alert) return res.status(404).json({ ok: false, error: "alert_not_found" });
+    if (!ownPatientIds(req.user).has(alert.patientId)) {
+      return res.status(403).json({ ok: false, error: "forbidden" });
+    }
     const clinicianName = (req.body && req.body.clinicianName) || (req.user ? req.user.name : "Attending Clinician");
     const actionNote = req.body && req.body.actionNote;
     const result = simulationService.recordFollowup(req.params.id, clinicianName, actionNote);
@@ -676,6 +697,11 @@ app.post("/api/alerts/:id/followup", requireAuth, (req, res) => {
 
 app.post("/api/alerts/:id/resolve", requireAuth, (req, res) => {
   try {
+    const alert = (simulationService.state.alerts || []).find((a) => a.id === req.params.id);
+    if (!alert) return res.status(404).json({ ok: false, error: "alert_not_found" });
+    if (!ownPatientIds(req.user).has(alert.patientId)) {
+      return res.status(403).json({ ok: false, error: "forbidden" });
+    }
     const clinicianName = (req.body && req.body.clinicianName) || (req.user ? req.user.name : "Attending Clinician");
     const resolutionNote = (req.body && req.body.resolutionNote) || "Vitals restabilized within normal threshold";
     const result = simulationService.resolveAlert(req.params.id, clinicianName, resolutionNote);

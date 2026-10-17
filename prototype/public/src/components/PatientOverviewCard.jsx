@@ -41,11 +41,29 @@ const PatientOverviewCard = ({
                   🛏️ {patient.bedNumber}
                 </span>
               )}
-              {/* Monitoring Status Badge with Live Pulse */}
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-200/80">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span>{patient.status || "Monitoring"}</span>
-              </span>
+              {/* Monitoring Status Badge with Live Pulse & WCAG Non-Color Cues */}
+              {(() => {
+                const s = String(patient.status || "Monitoring");
+                const isCrit = /critical|danger/i.test(s);
+                const isCaut = /caution|warning/i.test(s);
+                const badgeClass = isCrit
+                  ? "bg-rose-50 text-rose-800 border-rose-300 font-semibold"
+                  : isCaut
+                  ? "bg-amber-50 text-amber-800 border-amber-300 font-semibold"
+                  : "bg-emerald-50 text-emerald-800 border-emerald-200/80 font-medium";
+                const dotClass = isCrit
+                  ? "bg-rose-500 animate-ping"
+                  : isCaut
+                  ? "bg-amber-500 animate-pulse"
+                  : "bg-emerald-500 animate-pulse";
+                const cue = isCrit ? "● Critical: " : isCaut ? "▲ Caution: " : "✓ ";
+                return (
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs border ${badgeClass}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotClass}`} />
+                    <span>{cue}{s}</span>
+                  </span>
+                );
+              })()}
               <span className="text-xs text-slate-400 font-mono">
                 ID: {patient.patientId || patient.id || "ARO-8042"}
               </span>

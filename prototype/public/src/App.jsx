@@ -1167,6 +1167,7 @@ const App = () => {
   // Authoritative Backend Polling for Separate-Window Real-Time Sync (HSC 2027)
   React.useEffect(() => {
     let isMounted = true;
+    let consecutiveFailures = 0;
 
     const syncWithBackend = async () => {
       try {
@@ -1176,6 +1177,7 @@ const App = () => {
         // Fetch vitals from authoritative shared server
         const vitalsRes = await fetch("/api/vitals", { headers: authHeader });
         if (vitalsRes.ok) {
+          consecutiveFailures = 0;
           const vData = await vitalsRes.json();
           if (isMounted) {
             if (vData.connectivity) {
@@ -1251,6 +1253,14 @@ const App = () => {
               }
             }
           }
+        } else {
+          if (vitalsRes.status === 401) {
+            localStorage.removeItem("arohasetu_token");
+          }
+          consecutiveFailures++;
+          if (consecutiveFailures >= 2 && isMounted) {
+            setServerConnectivity("interrupted");
+          }
         }
 
         // Fetch authoritative alerts from server
@@ -1262,7 +1272,10 @@ const App = () => {
           }
         }
       } catch (e) {
-        // Transient network or serverless restart
+        consecutiveFailures++;
+        if (consecutiveFailures >= 2 && isMounted) {
+          setServerConnectivity("interrupted");
+        }
       }
     };
 
@@ -1989,26 +2002,42 @@ const App = () => {
                         Continuous Bio-Telemetry Stream
                       </span>
                       <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-semibold transition-colors ${
-                        serverConnectivity === 'interrupted'
+                        serverConnectivity === 'interrupted' || secondsAgo > 15
                           ? "bg-rose-100 text-rose-800 border border-rose-200 font-bold"
                           : lastPacketFlash ? "bg-emerald-200 text-emerald-900 font-bold" : "bg-slate-100 text-slate-600"
                       }`}>
-                        {serverConnectivity === 'interrupted' ? "GATEWAY INTERRUPTED (STALE)" : `Packet #${packetCount} · LIVE SYNC`}
+                        {serverConnectivity === 'interrupted'
+                          ? "GATEWAY INTERRUPTED (STALE)"
+                          : secondsAgo > 15
+                          ? `TELEMETRY STALE (${secondsAgo}s AGED)`
+                          : bluetoothHrRef.current != null
+                          ? `Packet #${packetCount} · LIVE BLE HARDWARE`
+                          : `Packet #${packetCount} · LIVE SYNC (Simulated)`}
                       </span>
                     </div>
                     <p className="text-[11px] text-slate-500">
                       {serverConnectivity === 'interrupted' ? (
                         <span className="text-rose-700 font-semibold">⚠️ Offline Safeguard Active: Remote gateway packet interrupted. Retaining last validated reading.</span>
+                      ) : secondsAgo > 15 ? (
+                        <span className="text-amber-700 font-semibold">⚠️ Telemetry Stale: Last validated update received {secondsAgo}s ago. Readings unconfirmed until reconnection.</span>
                       ) : (
-                        <span>Last packet received: <span className="font-mono font-medium text-slate-700">{secondsAgo === 0 ? "Just now" : `${secondsAgo}s ago`}</span> · Gateway: Authoritative Server Sync · Sampling: 1.0 Hz</span>
+                        <span>Last packet received: <span className="font-mono font-medium text-slate-700">{secondsAgo === 0 ? "Just now" : `${secondsAgo}s ago`}</span> · Gateway: Authoritative Server Sync · Sampling: 1.0 Hz · {bluetoothHrRef.current != null ? "Hardware: Live BLE Sensor" : "Hardware: Simulated Sensor Engine"}</span>
                       )}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2">
+                  {serverConnectivity === 'interrupted' && (
+                    <button
+                      onClick={() => window.location.reload()}
+                      className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-2xs transition-colors cursor-pointer"
+                    >
+                      Reconnect Telemetry
+                    </button>
+                  )}
                   <span className="text-[11px] text-slate-500 font-medium bg-slate-50 border border-slate-200/80 px-2.5 py-1 rounded-md">
-                    Judge Demo · Admin-synced synthetic telemetry
+                    {bluetoothHrRef.current != null ? "Hardware Sensor Linked" : "Judge Demo · Admin-synced synthetic telemetry"}
                   </span>
                 </div>
               </div>

@@ -247,105 +247,276 @@ const VirtualWardView = ({
 
   // Calculate NEWS2 score
   const computeNEWS2 = (bed) => {
-    if (!bed) return null;
+    if (!bed || !bed.vitals) return null;
     let score = 0;
     const breakdown = [];
+    let hasMissingData = false;
 
-    // 1. Oxygen Saturation (SpO2)
-    const spo2 = Number(bed.vitals.spo2);
+    // Helper to safely parse numeric vital or return null if missing/disconnected
+    const parseVital = (val) => {
+      if (val === null || val === undefined || val === "" || isNaN(Number(val))) return null;
+      return Number(val);
+    };
+
+    // 1. Respiration Rate (RR) - breaths/min (RCP UK NEWS2 standard)
+    // <=8: 3, 9-11: 1, 12-20: 0, 21-24: 2, >=25: 3
+    const rr = parseVital(bed.vitals.rr ?? (bed.vitals.respirationRate ?? null));
+    let rrPts = 0;
+    let rrStatus = "Nominal (12-20 bpm)";
+    let rrColor = "text-emerald-700";
+    if (rr === null) {
+      hasMissingData = true;
+      rrStatus = "Unrecorded (Assumed 16 bpm baseline)";
+      rrColor = "text-slate-500";
+    } else if (rr <= 8) {
+      rrPts = 3;
+      rrStatus = "Severe Bradypnea (≤ 8 bpm)";
+      rrColor = "text-rose-700 font-bold";
+    } else if (rr <= 11) {
+      rrPts = 1;
+      rrStatus = "Bradypnea (9–11 bpm)";
+      rrColor = "text-amber-700";
+    } else if (rr <= 20) {
+      rrPts = 0;
+      rrStatus = "Normal (12–20 bpm)";
+      rrColor = "text-emerald-700";
+    } else if (rr <= 24) {
+      rrPts = 2;
+      rrStatus = "Tachypnea (21–24 bpm)";
+      rrColor = "text-amber-700 font-bold";
+    } else {
+      rrPts = 3;
+      rrStatus = "Severe Tachypnea (≥ 25 bpm)";
+      rrColor = "text-rose-700 font-bold";
+    }
+    score += rrPts;
+    breakdown.push({
+      param: "Respiration Rate (RR)",
+      value: rr !== null ? `${rr} bpm` : "16 bpm (Est.)",
+      normal: "12 – 20 bpm",
+      pts: rrPts,
+      status: rrStatus,
+      color: rrColor,
+    });
+
+    // 2. Oxygen Saturation (SpO2 Scale 1)
+    // <=91: 3, 92-93: 2, 94-95: 1, >=96: 0
+    const spo2 = parseVital(bed.vitals.spo2);
     let spo2Pts = 0;
-    if (spo2 <= 91) spo2Pts = 3;
-    else if (spo2 <= 93) spo2Pts = 2;
-    else if (spo2 <= 95) spo2Pts = 1;
-    else spo2Pts = 0;
+    let spo2Status = "Nominal";
+    let spo2Color = "text-emerald-700";
+    if (spo2 === null) {
+      hasMissingData = true;
+      spo2Status = "Sensor Disconnected / Offline";
+      spo2Color = "text-slate-500 italic";
+    } else if (spo2 <= 91) {
+      spo2Pts = 3;
+      spo2Status = "Critical Hypoxemia (≤ 91%)";
+      spo2Color = "text-rose-700 font-bold";
+    } else if (spo2 <= 93) {
+      spo2Pts = 2;
+      spo2Status = "Moderate Hypoxia (92–93%)";
+      spo2Color = "text-amber-700 font-bold";
+    } else if (spo2 <= 95) {
+      spo2Pts = 1;
+      spo2Status = "Mild Hypoxia (94–95%)";
+      spo2Color = "text-amber-700";
+    } else {
+      spo2Pts = 0;
+      spo2Status = "Normal (≥ 96%)";
+      spo2Color = "text-emerald-700";
+    }
     score += spo2Pts;
     breakdown.push({
       param: "Oxygen Saturation (SpO2)",
-      value: `${spo2}%`,
+      value: spo2 !== null ? `${spo2}%` : "Offline",
       normal: "≥ 96%",
       pts: spo2Pts,
-      status: spo2Pts === 0 ? "Nominal" : spo2Pts === 1 ? "Mild Hypoxia" : "Critical Hypoxemia",
-      color: spo2Pts === 0 ? "text-emerald-700" : spo2Pts === 1 ? "text-amber-700" : "text-rose-700 font-bold",
+      status: spo2Status,
+      color: spo2Color,
     });
 
-    // 2. Systolic Blood Pressure
-    const bpSys = Number(bed.vitals.bpSys);
+    // 3. Supplemental Oxygen (Air or Oxygen)
+    const onOxygen = Boolean(bed.vitals.supplementalOxygen || bed.vitals.onOxygen);
+    const oxygenPts = onOxygen ? 2 : 0;
+    score += oxygenPts;
+    breakdown.push({
+      param: "Air or Oxygen",
+      value: onOxygen ? "Oxygen Supplied" : "Room Air",
+      normal: "Room Air",
+      pts: oxygenPts,
+      status: onOxygen ? "Supplemental O2 Prescribed" : "Room Air (Ambient)",
+      color: onOxygen ? "text-amber-700" : "text-emerald-700",
+    });
+
+    // 4. Systolic Blood Pressure (mmHg)
+    // <=90: 3, 91-100: 2, 101-110: 1, 111-219: 0, >=220: 3
+    const bpSys = parseVital(bed.vitals.bpSys);
     let bpPts = 0;
-    if (bpSys <= 90 || bpSys >= 220) bpPts = 3;
-    else if (bpSys <= 100 || bpSys >= 170) bpPts = 2;
-    else if (bpSys <= 110 || bpSys >= 140) bpPts = 1;
-    else bpPts = 0;
+    let bpStatus = "Normotensive";
+    let bpColor = "text-emerald-700";
+    if (bpSys === null) {
+      hasMissingData = true;
+      bpStatus = "Sensor Disconnected / Offline";
+      bpColor = "text-slate-500 italic";
+    } else if (bpSys <= 90) {
+      bpPts = 3;
+      bpStatus = "Severe Hypotension / Shock (≤ 90 mmHg)";
+      bpColor = "text-rose-700 font-bold";
+    } else if (bpSys <= 100) {
+      bpPts = 2;
+      bpStatus = "Hypotension (91–100 mmHg)";
+      bpColor = "text-amber-700 font-bold";
+    } else if (bpSys <= 110) {
+      bpPts = 1;
+      bpStatus = "Borderline Low BP (101–110 mmHg)";
+      bpColor = "text-amber-700";
+    } else if (bpSys >= 220) {
+      bpPts = 3;
+      bpStatus = "Hypertensive Emergency (≥ 220 mmHg)";
+      bpColor = "text-rose-700 font-bold";
+    } else {
+      bpPts = 0;
+      bpStatus = "Normotensive (111–219 mmHg)";
+      bpColor = "text-emerald-700";
+    }
     score += bpPts;
     breakdown.push({
       param: "Systolic Blood Pressure",
-      value: `${bpSys} mmHg`,
-      normal: "111 – 139 mmHg",
+      value: bpSys !== null ? `${bpSys} mmHg` : "Offline",
+      normal: "111 – 219 mmHg",
       pts: bpPts,
-      status: bpPts === 0 ? "Normotensive" : bpPts === 1 ? "Elevated (Stage 2)" : "Hypertensive Crisis",
-      color: bpPts === 0 ? "text-emerald-700" : bpPts === 1 ? "text-amber-700" : "text-rose-700 font-bold",
+      status: bpStatus,
+      color: bpColor,
     });
 
-    // 3. Heart Rate / Pulse
-    const hr = Number(bed.vitals.hr);
+    // 5. Pulse / Heart Rate (bpm)
+    // <=40: 3, 41-50: 1, 51-90: 0, 91-110: 1, 111-130: 2, >=131: 3
+    const hr = parseVital(bed.vitals.hr);
     let hrPts = 0;
-    if (hr <= 40 || hr >= 131) hrPts = 3;
-    else if (hr >= 111) hrPts = 2;
-    else if (hr <= 50 || hr >= 91) hrPts = 1;
-    else hrPts = 0;
+    let hrStatus = "Normal Sinus";
+    let hrColor = "text-emerald-700";
+    if (hr === null) {
+      hasMissingData = true;
+      hrStatus = "Sensor Disconnected / Offline";
+      hrColor = "text-slate-500 italic";
+    } else if (hr <= 40) {
+      hrPts = 3;
+      hrStatus = "Severe Bradycardia (≤ 40 bpm)";
+      hrColor = "text-rose-700 font-bold";
+    } else if (hr >= 131) {
+      hrPts = 3;
+      hrStatus = "Severe Tachycardia (≥ 131 bpm)";
+      hrColor = "text-rose-700 font-bold";
+    } else if (hr >= 111) {
+      hrPts = 2;
+      hrStatus = "Tachycardia (111–130 bpm)";
+      hrColor = "text-amber-700 font-bold";
+    } else if (hr <= 50) {
+      hrPts = 1;
+      hrStatus = "Bradycardia (41–50 bpm)";
+      hrColor = "text-amber-700";
+    } else if (hr >= 91) {
+      hrPts = 1;
+      hrStatus = "Mild Tachycardia (91–110 bpm)";
+      hrColor = "text-amber-700";
+    } else {
+      hrPts = 0;
+      hrStatus = "Normal Sinus (51–90 bpm)";
+      hrColor = "text-emerald-700";
+    }
     score += hrPts;
     breakdown.push({
       param: "Pulse / Heart Rate",
-      value: `${hr} bpm`,
+      value: hr !== null ? `${hr} bpm` : "Offline",
       normal: "51 – 90 bpm",
       pts: hrPts,
-      status: hrPts === 0 ? "Normal Sinus" : hrPts === 1 ? "Borderline Tachy/Brady" : "Severe Arrhythmia",
-      color: hrPts === 0 ? "text-emerald-700" : hrPts === 1 ? "text-amber-700" : "text-rose-700 font-bold",
+      status: hrStatus,
+      color: hrColor,
     });
 
-    // 4. Body Temperature
-    const temp = Number(bed.vitals.temp);
+    // 6. Consciousness (ACVPU Scale)
+    // Alert: 0, Confusion/Voice/Pain/Unresponsive: 3
+    const consciousness = bed.vitals.consciousness || "A";
+    const isAlert = consciousness === "A" || consciousness === "Alert";
+    const avpuPts = isAlert ? 0 : 3;
+    score += avpuPts;
+    breakdown.push({
+      param: "Consciousness Level (ACVPU)",
+      value: isAlert ? "Alert (A)" : `${consciousness}`,
+      normal: "Alert (A)",
+      pts: avpuPts,
+      status: isAlert ? "Fully Alert" : "Altered Mental State (C/V/P/U)",
+      color: isAlert ? "text-emerald-700" : "text-rose-700 font-bold",
+    });
+
+    // 7. Body Temperature (°C)
+    // <=35.0: 3, 35.1-36.0: 1, 36.1-38.0: 0, 38.1-39.0: 1, >=39.1: 2
+    const temp = parseVital(bed.vitals.temp);
     let tempPts = 0;
-    if (temp <= 35.0) tempPts = 3;
-    else if (temp >= 39.1) tempPts = 2;
-    else if (temp <= 36.0 || temp >= 38.1) tempPts = 1;
-    else tempPts = 0;
+    let tempStatus = "Apyrexial";
+    let tempColor = "text-emerald-700";
+    if (temp === null) {
+      hasMissingData = true;
+      tempStatus = "Sensor Disconnected / Offline";
+      tempColor = "text-slate-500 italic";
+    } else if (temp <= 35.0) {
+      tempPts = 3;
+      tempStatus = "Hypothermia (≤ 35.0°C)";
+      tempColor = "text-rose-700 font-bold";
+    } else if (temp >= 39.1) {
+      tempPts = 2;
+      tempStatus = "High Pyrexia (≥ 39.1°C)";
+      tempColor = "text-rose-700 font-bold";
+    } else if (temp <= 36.0) {
+      tempPts = 1;
+      tempStatus = "Mild Hypothermia (35.1–36.0°C)";
+      tempColor = "text-amber-700";
+    } else if (temp >= 38.1) {
+      tempPts = 1;
+      tempStatus = "Low-Grade Pyrexia (38.1–39.0°C)";
+      tempColor = "text-amber-700";
+    } else {
+      tempPts = 0;
+      tempStatus = "Apyrexial (36.1–38.0°C)";
+      tempColor = "text-emerald-700";
+    }
     score += tempPts;
     breakdown.push({
       param: "Body Temperature",
-      value: `${temp.toFixed(1)}°C`,
+      value: temp !== null ? `${temp.toFixed(1)}°C` : "Offline",
       normal: "36.1 – 38.0°C",
       pts: tempPts,
-      status: tempPts === 0 ? "Apyrexial" : tempPts === 1 ? "Low-Grade Pyrexia" : "High Pyrexia / Hypothermia",
-      color: tempPts === 0 ? "text-emerald-700" : tempPts === 1 ? "text-amber-700" : "text-rose-700 font-bold",
+      status: tempStatus,
+      color: tempColor,
     });
 
-    // 5. Neurological (AVPU Scale)
-    const avpuPts = 0;
-    score += avpuPts;
-    breakdown.push({
-      param: "Consciousness Level (AVPU)",
-      value: "Alert (A)",
-      normal: "Alert (A)",
-      pts: avpuPts,
-      status: "Fully Alert",
-      color: "text-emerald-700",
-    });
-
+    // Authoritative RCP UK NEWS2 Clinical Risk Classification
     let riskTier = "Low Clinical Risk (Ward Routine)";
     let badgeStyle = "bg-emerald-50 text-emerald-800 border-emerald-200";
     let actionGuide = "Standard ward telemetry observations (4–6 hour intervals). Continue continuous BLE monitoring.";
 
-    if (score >= 7 || spo2Pts === 3 || bpPts === 3 || hrPts === 3) {
-      riskTier = "High / Emergency Clinical Risk";
-      badgeStyle = "bg-rose-50 text-rose-800 border-rose-200";
-      actionGuide = "Immediate emergency doctor notification, Medical Emergency Team (MET) mobilization, continuous ECG & SpO2.";
-    } else if (score >= 5 || spo2Pts >= 2 || bpPts >= 2 || hrPts >= 2) {
-      riskTier = "Medium Clinical Risk (Urgent Review)";
-      badgeStyle = "bg-amber-50 text-amber-800 border-amber-200";
-      actionGuide = "Urgent bedside review by registered nurse; alert attending physician within 30 minutes. Step up observation frequency.";
+    const hasRedScore = rrPts === 3 || spo2Pts === 3 || bpPts === 3 || hrPts === 3 || avpuPts === 3 || tempPts === 3;
+
+    if (score >= 7) {
+      riskTier = "High / Emergency Clinical Risk (Score ≥ 7)";
+      badgeStyle = "bg-rose-100 text-rose-900 border-rose-300 font-bold";
+      actionGuide = "Emergency assessment by critical care / Medical Emergency Team (MET); continuous ECG & SpO2; consider ICU transfer.";
+    } else if (score >= 5) {
+      riskTier = "Medium Clinical Risk (Score 5–6)";
+      badgeStyle = "bg-amber-100 text-amber-900 border-amber-300 font-bold";
+      actionGuide = "Urgent clinical review by clinician competent in acute illness within 30 minutes; step up monitoring to at least hourly.";
+    } else if (hasRedScore) {
+      riskTier = "Low-Medium Clinical Risk (Single Red Score = 3)";
+      badgeStyle = "bg-amber-50 text-amber-800 border-amber-300 font-medium";
+      actionGuide = "Urgent bedside review by registered nurse; determine if escalation or medical review is warranted.";
+    } else if (hasMissingData) {
+      riskTier = "Incomplete Telemetry (Sensor Offline)";
+      badgeStyle = "bg-slate-100 text-slate-800 border-slate-300";
+      actionGuide = "One or more telemetry sensors disconnected. Score represents partial parameters only.";
     }
 
-    return { score, breakdown, riskTier, badgeStyle, actionGuide };
+    return { score, breakdown, riskTier, badgeStyle, actionGuide, hasMissingData };
   };
 
   const currentNews2 = computeNEWS2(activeModalBed);
@@ -460,9 +631,9 @@ const VirtualWardView = ({
               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200/60 font-mono">
                 GB Pant Hospital
               </span>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60" title="Simulated Ward Telemetry Hub (Demo Mode)">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                Live BLE Gateway
+                Simulated Ward Gateway
               </span>
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
@@ -1190,7 +1361,7 @@ const VirtualWardView = ({
                         <tbody className="divide-y divide-slate-100 font-mono">
                           <tr>
                             <td className="py-2 text-slate-700 font-sans font-medium text-emerald-700">
-                              ● Live BLE Stream
+                              ● Simulated Ward Stream
                             </td>
                             <td className="py-2 text-slate-900 font-bold">{activeModalBed.vitals.hr} bpm</td>
                             <td className="py-2 text-slate-900">{activeModalBed.vitals.spo2}%</td>
