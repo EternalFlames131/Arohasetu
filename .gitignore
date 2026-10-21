@@ -30,3 +30,8 @@ prototype/skills-lock.json
 
 # Temporary scratch and review files
 tmp/
+
+# Presentation and Document Binaries (Local files only — never upload to Git)
+*.pdf
+*.pptx
+*.ppt
