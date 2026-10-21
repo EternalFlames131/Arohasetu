@@ -27,3 +27,6 @@ prototype/skills-lock.json
 *.apk
 !prototype/public/downloads/Arohasetu-Demo.apk
 
+
+# Temporary scratch and review files
+tmp/

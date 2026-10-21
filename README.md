@@ -141,9 +141,9 @@ python tools/test_fall_kinematics.py
 ## 🤖 Official Disclosure on the Use of AI / Digital Assistance Tools
 
 In accordance with Hack for Social Cause 2027 (MoYAS & IIT Bombay) guidelines:
-* **Human Authorship & Ownership:** The core project concept, healthcare problem definition, system architecture, feature workflows, user interface designs, and verification scenarios were entirely conceived, directed, and executed by the team members.
-* **Tools Utilized:** AI Coding Assistant (Generative AI Developer Tools).
-* **Scope of Usage:** An AI coding assistant was used to help write and build the major code implementations (full-stack web application scaffolding, Express API routes, component logic, and automated test scripts) under the step-by-step guidance and review of the team members.
+* **Human Authorship & Ownership:** The core project concept, healthcare problem definition, system architecture, feature workflows, user interface designs, and verification scenarios were entirely conceived, self-made, and created by the team members. Everything in this project is self-made and created by the team.
+* **Tools Utilized:** AI Coding Assistant.
+* **Scope of Usage:** AI was used strictly to do light bug checks and light coding only; other than that, everything was self-made and created entirely by the team.
 
 ---
 

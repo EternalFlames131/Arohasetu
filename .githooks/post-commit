@@ -80,7 +80,7 @@ if ! (command -v vercel >/dev/null 2>&1 && { [ -n "$VERCEL_TOKEN" ] || vercel wh
   exit 0
 fi
 
-DEPLOYED=$(cd "$ROOT/prototype" && vercel deploy --prod --yes ${VERCEL_TOKEN:+--token "$VERCEL_TOKEN"} 2>&1)
+DEPLOYED=$(cd "$ROOT" && vercel deploy --prod --yes ${VERCEL_TOKEN:+--token "$VERCEL_TOKEN"} 2>&1)
 if echo "$DEPLOYED" | grep -q "https://"; then
   URL=$(echo "$DEPLOYED" | grep -o 'https://[^ ]*' | tail -1)
   printf '\033[32m[Arohasetu] auto-deployed (production) -> %s\033[0m\n' "$URL"

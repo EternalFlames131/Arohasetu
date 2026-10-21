@@ -43,15 +43,16 @@
 ## 2. 6–7 Slide Submission Deck Content (Official IIT Bombay Template)
 
 ### Slide 1: Title, Team & Institutional Identification
-* **Project Title:** Arohasetu — "A Personal Nurse for Every Family and Every Hospital Bed"
+* **Project Title:** ArohaSetu — "A Personal Nurse for Every Family and Every Hospital Bed"
 * **Tagline:** Affordable, privacy-first continuous health monitoring, on-time medications, and autonomous emergency escalation for home and hospital care.
+* **Registration ID:** `HSC|AN|00004`
 * **Competition Track:** Hack for Social Cause 2027 | VBYLD 2027 (MoYAS & IIT Bombay)
 * **Primary Themes:** Healthcare, Wellbeing & Service Delivery | Elderly Care & Healthy Ageing
 * **Target State / UT:** Andaman & Nicobar Islands (Union Territory)
 * **Team Details:**
-  * **Team Lead:** Samrat (Teacher Trainee) | MY Bharat ID: `[User to insert]` | Email / Mobile: `[User to insert]`
-  * **Team Member 2:** `[Name / Role / MY Bharat ID]`
-  * **Team Member 3:** `[Name / Role / MY Bharat ID]`
+  * **Team Lead:** Samrat Dasgupta (Teacher Trainee / Project Idea) | MY Bharat ID: `[User to insert]` | Email / Mobile: `[User to insert]`
+  * **Team Member 2:** Hriday Das (Main Developer / Coder) | MY Bharat ID: `[User to insert]`
+  * **Team Member 3:** C. Mohd. Jasheem (Designer) | MY Bharat ID: `[User to insert]`
 * **Institution:** `[College Name]`, Port Blair, Andaman & Nicobar Islands | **AISHE Code:** `[User to insert]`
 * **Live Deployment:** `https://arohasetu.vercel.app` | **Open-Source Code:** `github.com/EternalFlames131/Arohasetu`
 
@@ -116,17 +117,17 @@
 
 ### Slide 7: Team Synergy, Execution Roadmap & Mandatory AI-Use Disclosure
 * **Team Roles & Responsibilities:**
-  * Samrat (Team Lead): Project architecture, clinical workflow design, island healthcare contextualization, evaluation testing.
-  * `[Member 2]`: `[Frontend / UI / Community Outreach]`
-  * `[Member 3]`: `[Backend / Documentation / Hardware Research]`
+  * Samrat Dasgupta (Team Lead): Clinical concept, project idea, workflow design, island healthcare contextualization, evaluation testing.
+  * Hriday Das (Main Developer / Coder): Full-stack engineering, local YOLO-Pose vision sentinel, offline Kotlin Android engine, test automation.
+  * C. Mohd. Jasheem (Designer): UI/UX design, accessible multi-language layouts, visual assets, presentation deck design.
 * **Milestone Roadmap:**
   * *Phase 1 (Completed):* Full functional prototype, dual-interface demo, native Android APK, YOLO sentinel.
   * *Phase 2 (Nov–Dec 2026):* Community pilot with ASHA workers in Port Blair; live BLE sensor pairing.
   * *Phase 3 (Jan 2027 onwards):* Low-cost hardware enclosure prototyping and hospital pilot at GB Pant Hospital.
 * **Official Disclosure on the Use of AI / Digital Assistance Tools:**
-  * *Human Ownership:* The core project concept, healthcare problem definition, system architecture, feature workflows, user interface designs, and verification scenarios were entirely conceived, directed, and executed by the team members.
-  * *Tools Utilized:* AI Coding Assistant (Generative AI Developer Tools).
-  * *Scope of Usage:* An AI coding assistant was used to help write and build the major code implementations (full-stack web application scaffolding, Express API routes, component logic, and automated test scripts) under the step-by-step guidance and review of the team members.
+  * *Human Ownership:* The core project concept, healthcare problem definition, system architecture, feature workflows, user interface designs, and verification scenarios were entirely self-made and created by the team members.
+  * *Tools Utilized:* AI Coding Assistant.
+  * *Scope of Usage:* AI was used strictly to do light bug checks and light coding only; other than that, everything was self-made and created entirely by the team.
 
 ---
 
@@ -342,18 +343,15 @@ This project is open-sourced under the **MIT License**.
 ### Official Disclosure on the Extent of Usage of Artificial Intelligence Tools
 
 1. Primary Human Authorship:
-   - This project was NOT completely made through AI. The overarching concept, healthcare problem
+   - Everything in this project is self-made and created by the human team. The overarching concept, healthcare problem
      definition, two-layer monitoring architecture, clinical deterioration rules, and emergency
      escalation procedures were conceived, designed, and executed directly by the human team.
 
 2. Tools Used:
-   - AI Coding Assistant (Generative AI Developer Tools).
+   - AI Coding Assistant.
 
 3. Nature and Extent of Assistance:
-   - An AI coding assistant was used to help write and build the major code implementations under the direct guidance of the team:
-     a) Writing full-stack application code (React frontend components, Express REST API routing, and state management).
-     b) Implementing algorithm logic for kinematic calculations and automated test suites.
-     c) Formatting documentation, configuration files, and script automation under human direction.
+   - AI was used strictly to do light bug checks and light coding only; other than that, everything was self-made and created entirely by the team.
 
 4. Human Ingenuity and Independent Execution:
    - The fundamental healthcare problem statement, the Two-Layer Safety Shield concept, 

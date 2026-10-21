@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "deploy": "vercel deploy --prod --yes"
+    "deploy": "cd .. && vercel deploy --prod --yes"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.1",

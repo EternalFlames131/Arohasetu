@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ArohaSetu — HSC v7.0 Presentation Deck</title>
+<style>
+  @page {
+    size: 297mm 210mm;
+    margin: 0;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #0f172a;
+    background: #e2e8f0;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .slide {
+    width: 297mm;
+    height: 210mm;
+    page-break-after: always;
+    background: #ffffff;
+    padding: 16mm 20mm;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+  }
+  .slide-header {
+    border-bottom: 2.5px solid #08A6A6;
+    padding-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .slide-num {
+    font-size: 9.5pt;
+    font-weight: 800;
+    color: #08A6A6;
+    background: #ccfbf1;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .slide-title {
+    font-size: 20pt;
+    font-weight: 800;
+    color: #103663;
+    margin: 0;
+    line-height: 1.1;
+  }
+  .slide-subtitle {
+    font-size: 10pt;
+    font-weight: 700;
+    color: #08A6A6;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 2px 0;
+  }
+  .slide-meta-right {
+    text-align: right;
+  }
+  .slide-meta-right .reg-badge {
+    display: inline-block;
+    background: #ffe4e6;
+    color: #be123c;
+    font-size: 9.5pt;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-bottom: 2px;
+  }
+  .slide-meta-right .team-name {
+    font-size: 8.5pt;
+    color: #64748b;
+  }
+  .slide-body {
+    flex: 1;
+    padding: 12px 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .slide-footer {
+    border-top: 1px solid #cbd5e1;
+    padding-top: 5px;
+    font-size: 8.5pt;
+    color: #64748b;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+  }
+  .grid-4 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 12px;
+  }
+
+  .card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 12px 14px;
+  }
+  .card-teal { background: #f0fdfa; border: 1.5px solid #99f6e4; }
+  .card-navy { background: #f1f5f9; border: 1.5px solid #cbd5e1; }
+  .card-alert { background: #fff1f2; border: 1.5px solid #fecdd3; }
+
+  h3 {
+    font-size: 11pt;
+    color: #103663;
+    margin: 0 0 6px 0;
+    font-weight: 700;
+  }
+  p {
+    font-size: 9pt;
+    line-height: 1.45;
+    margin: 0 0 6px 0;
+  }
+  .badge {
+    display: inline-block;
+    padding: 2px 7px;
+    font-size: 7.8pt;
+    font-weight: 700;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .badge-teal { background: #ccfbf1; color: #0f766e; }
+  .badge-rose { background: #ffe4e6; color: #be123c; }
+  .badge-navy { background: #e0e7ff; color: #1e1b4b; }
+</style>
+</head>
+<body>
+
+<!-- SLIDE 1: COVER -->
+<div class="slide">
+  <div style="border-left: 6px solid #103663; padding-left: 18px; margin-top: 10px;">
+    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+      <span class="badge badge-teal">HACK FOR SOCIAL CAUSE 2027 • VBYLD (IIT BOMBAY)</span>
+      <span class="badge badge-rose">REG ID: HSC|AN|00004</span>
+    </div>
+    <div style="font-size: 38pt; font-weight: 900; color: #103663; line-height: 1.05;">ArohaSetu</div>
+    <div style="font-size: 15pt; font-weight: 700; color: #08A6A6; margin-top: 6px;">Notice Sooner, Care Better.</div>
+    <div style="font-size: 10.5pt; color: #475569; margin-top: 4px;">Healthcare, Wellbeing and Elderly Care • Andaman & Nicobar Islands (UT)</div>
+  </div>
+
+  <div class="slide-body" style="justify-content: flex-start; padding-top: 20px;">
+    <div class="grid-2">
+      <div class="card card-teal">
+        <h3 style="color: #0f766e;">Problem Statement & Project Identity</h3>
+        <p><strong>Concept Title:</strong> Privacy-Conscious Patient Monitoring and Emergency Response</p>
+        <p><strong>Primary Theme:</strong> Healthcare, Wellbeing & Service Delivery / Elderly Care</p>
+        <p><strong>Official Team ID:</strong> <strong style="color: #be123c;">HSC|AN|00004</strong></p>
+        <p><strong>Team Name:</strong> ArohaSetu</p>
+        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #99f6e4;">
+          <strong>Open-Source Code:</strong> <a href="https://github.com/EternalFlames131/Arohasetu" style="color: #0284c7; text-decoration: none;">github.com/EternalFlames131/Arohasetu</a><br>
+          <strong>Live Web Prototype:</strong> <a href="https://arohasetu.vercel.app" style="color: #0284c7; text-decoration: none;">https://arohasetu.vercel.app</a>
+        </div>
+      </div>
+
+      <div class="card card-navy">
+        <h3>Team Roster & Key Responsibilities</h3>
+        <p style="margin-bottom: 8px;">
+          <strong>Samrat Dasgupta (Team Leader)</strong><br>
+          <span style="font-size: 8.5pt; color: #64748b;">Teacher Trainee • Clinical idea, workflow design, system architecture & regional validation</span>
+        </p>
+        <p style="margin-bottom: 8px;">
+          <strong>Hriday Das (Main Developer / Coder)</strong><br>
+          <span style="font-size: 8.5pt; color: #64748b;">Coder • Full-stack engineering, local YOLO vision sentinel & test automation</span>
+        </p>
+        <p style="margin-bottom: 0;">
+          <strong>C. Mohd. Jasheem (Designer)</strong><br>
+          <span style="font-size: 8.5pt; color: #64748b;">Designer • UI/UX design, visual experience, presentation & design assets</span>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-footer">
+    <div>ArohaSetu — Hack for Social Cause 2027 Submission Deck</div>
+    <div>Slide 1 of 7</div>
+    <div>Knowledge Partner: IIT Bombay</div>
+  </div>
+</div>
+
+<!-- SLIDE 2: PROBLEM & PROPOSED SOLUTION -->
+<div class="slide">
+  <div class="slide-header">
+    <div>
+      <div class="slide-subtitle">PROBLEM – PROPOSED SOLUTION</div>
+      <div class="slide-title">From Delayed Awareness to Structured Escalation</div>
+    </div>
+    <div class="slide-meta-right">
+      <span class="reg-badge">HSC|AN|00004</span>
+      <div class="team-name">Team: ArohaSetu</div>
+    </div>
+  </div>
+
+  <div class="slide-body">
+    <div style="font-size: 8.5pt; font-weight: 700; color: #08A6A6; margin-bottom: 8px;">
+      Status Key: IMPLEMENTED in prototype • SIMULATED in test harness • PLANNED for production hardware
+    </div>
+    <div class="grid-4" style="margin-bottom: 12px;">
+      <div class="card">
+        <span class="badge badge-rose" style="margin-bottom: 4px;">PROBLEM 01</span>
+        <h3 style="font-size: 10pt;">Unobserved Fall or Decline</h3>
+        <p style="font-size: 8pt; color: #64748b;">Older adults living alone risk acute injury or sudden deterioration without immediate help.</p>
+        <div style="border-top: 1px solid #e2e8f0; padding-top: 6px; margin-top: 6px;">
+          <span class="badge badge-teal" style="margin-bottom: 4px;">IMPLEMENTED</span>
+          <p style="font-size: 8pt; margin: 0;"><strong>Camera Pose Analysis:</strong> OpenCV + Ultralytics YOLO-Pose detects fall and immobility states locally without recording video.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <span class="badge badge-rose" style="margin-bottom: 4px;">PROBLEM 02</span>
+        <h3 style="font-size: 10pt;">Remote Family Uncertainty</h3>
+        <p style="font-size: 8pt; color: #64748b;">Families living far away lack real-time visibility into an elder's immediate condition.</p>
+        <div style="border-top: 1px solid #e2e8f0; padding-top: 6px; margin-top: 6px;">
+          <span class="badge badge-teal" style="margin-bottom: 4px;">IMPLEMENTED</span>
+          <p style="font-size: 8pt; margin: 0;"><strong>Caregiver Notification:</strong> Dedicated web dashboard with configured alerts, medication MAR, and live status feeds.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <span class="badge badge-rose" style="margin-bottom: 4px;">PROBLEM 03</span>
+        <h3 style="font-size: 10pt;">Ward Monitoring Bottlenecks</h3>
+        <p style="font-size: 8pt; color: #64748b;">Clinical teams struggle to watch multiple dispersed patients across island wards continuously.</p>
+        <div style="border-top: 1px solid #e2e8f0; padding-top: 6px; margin-top: 6px;">
+          <span class="badge badge-teal" style="margin-bottom: 4px;">IMPLEMENTED</span>
+          <p style="font-size: 8pt; margin: 0;"><strong>Virtual-Ward Triage:</strong> Nurse workflow engine running deterministic NEWS2 clinical risk scores.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <span class="badge badge-rose" style="margin-bottom: 4px;">PROBLEM 04</span>
+        <h3 style="font-size: 10pt;">Geographic Care Latency</h3>
+        <p style="font-size: 8pt; color: #64748b;">Island and rural communities encounter transport and communication delays reaching care.</p>
+        <div style="border-top: 1px solid #e2e8f0; padding-top: 6px; margin-top: 6px;">
+          <span class="badge badge-navy" style="margin-bottom: 4px;">SIMULATED / PLANNED</span>
+          <p style="font-size: 8pt; margin: 0;"><strong>Dual-Mode Triage:</strong> Home mode paired with hardware sensor telemetry (Planned) and offline app (Implemented).</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card card-teal" style="padding: 8px 12px;">
+      <p style="font-size: 8.5pt; font-weight: 700; color: #103663; margin: 0;">
+        Core Innovation: Combines physiological telemetry with privacy-conscious on-device pose estimation and deterministic clinical scoring under home and virtual-ward modes. Fully transparent: no claim of unassisted medical diagnosis.
+      </p>
+    </div>
+  </div>
+
+  <div class="slide-footer">
+    <div>ArohaSetu — Hack for Social Cause 2027 Submission Deck</div>
+    <div>Slide 2 of 7</div>
+    <div>Knowledge Partner: IIT Bombay</div>
+  </div>
+</div>
+
+<!-- SLIDE 3: TECHNICAL APPROACH -->
+<div class="slide">
+  <div class="slide-header">
+    <div>
+      <div class="slide-subtitle">TECHNICAL APPROACH</div>
+      <div class="slide-title">Modular End-to-End Pipeline & Implementation Stack</div>
+    </div>
+    <div class="slide-meta-right">
+      <span class="reg-badge">HSC|AN|00004</span>
+      <div class="team-name">Team: ArohaSetu</div>
+    </div>
+  </div>
+
+  <div class="slide-body">
+    <div class="grid-4" style="margin-bottom: 12px;">
+      <div class="card">
+        <span class="badge badge-teal" style="margin-bottom: 4px;">01 • DATA INPUTS</span>
+        <h3 style="font-size: 9.5pt;">Physiological & Vision Stream</h3>
+        <p style="font-size: 8pt;"><strong>Sensor Vitals:</strong> Heart rate, SpO2, blood pressure (SIMULATED in demo; hardware BLE sensors PLANNED).</p>
+        <p style="font-size: 8pt; margin: 0;"><strong>Vision Stream:</strong> Local camera feed for frame-by-frame pose analysis (IMPLEMENTED).</p>
+      </div>
+
+      <div class="card">
+        <span class="badge badge-teal" style="margin-bottom: 4px;">02 • PROCESSING</span>
+        <h3 style="font-size: 9.5pt;">Edge Vision & Signal Guard</h3>
+        <p style="font-size: 8pt;"><strong>Vision Sentinel:</strong> Python, OpenCV, YOLO-Pose extracting skeletal keypoints locally without video export.</p>
+        <p style="font-size: 8pt; margin: 0;"><strong>Signal Validation:</strong> Boundary checking and noise filtering on ingested vitals.</p>
+      </div>
+
+      <div class="card">
+        <span class="badge badge-teal" style="margin-bottom: 4px;">03 • RISK EVALUATION</span>
+        <h3 style="font-size: 9.5pt;">NEWS2 & Kinematic Sentinel</h3>
+        <p style="font-size: 8pt;"><strong>NEWS2 Engine:</strong> Deterministic scoring against Royal College of Physicians clinical thresholds.</p>
+        <p style="font-size: 8pt; margin: 0;"><strong>Fall State Engine:</strong> Sudden elevation drop and post-fall immobility verification windows.</p>
+      </div>
+
+      <div class="card">
+        <span class="badge badge-teal" style="margin-bottom: 4px;">04 • INTERFACES</span>
+        <h3 style="font-size: 9.5pt;">Web & Native Offline App</h3>
+        <p style="font-size: 8pt;"><strong>Web Dashboard:</strong> React + Tailwind CSS with Node.js/Express REST backend.</p>
+        <p style="font-size: 8pt; margin: 0;"><strong>Mobile Client:</strong> Kotlin + Jetpack Compose app supporting local offline alert caching.</p>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card card-navy">
+        <h3>Repository & Live Demo</h3>
+        <p style="font-size: 8.5pt;">
+          <strong>GitHub:</strong> <a href="https://github.com/EternalFlames131/Arohasetu" style="color:#0284c7; text-decoration:none;">github.com/EternalFlames131/Arohasetu</a> (MIT License)<br>
+          <strong>Live Web Demo:</strong> <a href="https://arohasetu.vercel.app" style="color:#0284c7; text-decoration:none;">https://arohasetu.vercel.app</a><br>
+          <strong>Native Android Package:</strong> 26.4 MB offline APK (com.arohasetu.app)
+        </p>
+      </div>
+
+      <div class="card card-teal">
+        <h3 style="color:#0f766e;">Mandatory AI Usage Disclosure</h3>
+        <p style="font-size: 8.5pt; color: #103663; margin: 0;">
+          <strong>Official Statement:</strong> AI was used strictly to do light bug checks and light coding only; other than that, everything was self-made and created entirely by the team (healthcare concept, clinical workflows, two-layer architecture, UI/UX designs, and test suites).
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-footer">
+    <div>ArohaSetu — Hack for Social Cause 2027 Submission Deck</div>
+    <div>Slide 3 of 7</div>
+    <div>Knowledge Partner: IIT Bombay</div>
+  </div>
+</div>
+
+<!-- SLIDE 4: IMPACT POTENTIAL -->
+<div class="slide">
+  <div class="slide-header">
+    <div>
+      <div class="slide-subtitle">IMPACT POTENTIAL</div>
+      <div class="slide-title">Ecosystem Connectivity & Intended Benefits</div>
+    </div>
+    <div class="slide-meta-right">
+      <span class="reg-badge">HSC|AN|00004</span>
+      <div class="team-name">Team: ArohaSetu</div>
+    </div>
+  </div>
+
+  <div class="slide-body">
+    <div class="grid-3" style="margin-bottom: 12px;">
+      <div class="card">
+        <span class="badge badge-teal" style="margin-bottom: 4px;">TARGET GROUPS</span>
+        <h3>People & Care Teams</h3>
+        <p style="font-size: 8.5pt;">• Older adults living alone with mobility or chronic cardiac/respiratory conditions.</p>
+        <p style="font-size: 8.5pt;">• Family caregivers needing remote peace of mind without intrusive surveillance.</p>
+        <p style="font-size: 8.5pt;">• Nurses and hospital clinical teams managing crowded hospital floors.</p>
+        <p style="font-size: 8.5pt; margin: 0;">• Primary healthcare and ASHA workers across island panchayats.</p>
+      </div>
+
+      <div class="card card-teal">
+        <span class="badge badge-teal" style="margin-bottom: 4px;">CLINICAL IMPACT</span>
+        <h3 style="color: #0f766e;">Intended Clinical Benefits</h3>
+        <p style="font-size: 8.5pt;">• Earlier awareness of concerning vital-sign changes prior to acute decompensation.</p>
+        <p style="font-size: 8.5pt;">• Faster caregiver notification on configured alerts (within 3 seconds of fall contact).</p>
+        <p style="font-size: 8.5pt;">• Better visibility of monitoring, medication tracking, and nurse triage follow-up.</p>
+        <p style="font-size: 8.5pt; margin: 0;">• Scalable expansion of hospital bed capacity via Virtual Ward protocols.</p>
+      </div>
+
+      <div class="card">
+        <span class="badge badge-rose" style="margin-bottom: 4px;">KEY STAKEHOLDERS</span>
+        <h3>Ecosystem Stakeholders</h3>
+        <p style="font-size: 8.5pt;">• <strong>Patients & Elders:</strong> Retain dignity, privacy, and personal autonomy.</p>
+        <p style="font-size: 8.5pt;">• <strong>Hospitals:</strong> GB Pant Hospital (Port Blair) virtual bed expansion.</p>
+        <p style="font-size: 8.5pt;">• <strong>Emergency Services:</strong> Structured verification prevents false 108 dispatches.</p>
+        <p style="font-size: 8.5pt; margin: 0;">• <strong>Public Health:</strong> Tele-MANAS, ABHA, and climate/heatwave health support.</p>
+      </div>
+    </div>
+
+    <div class="card card-navy" style="padding: 8px 12px;">
+      <p style="font-size: 8.5pt; font-weight: 700; color: #103663; margin: 0;">
+        Connected Healthcare Ecosystem: Patients & Elders ➔ Family Caregivers ➔ Nurses & Hospital Wards ➔ Community ASHA Workers ➔ Emergency Response (108/112)
+      </p>
+    </div>
+  </div>
+
+  <div class="slide-footer">
+    <div>ArohaSetu — Hack for Social Cause 2027 Submission Deck</div>
+    <div>Slide 4 of 7</div>
+    <div>Knowledge Partner: IIT Bombay</div>
+  </div>
+</div>
+
+<!-- SLIDE 5: FEASIBILITY AND RISK ANALYSIS -->
+<div class="slide">
+  <div class="slide-header">
+    <div>
+      <div class="slide-subtitle">FEASIBILITY AND RISK ANALYSIS</div>
+      <div class="slide-title">Prototyped Feasibility & Six Managed Risk Factors</div>
+    </div>
+    <div class="slide-meta-right">
+      <span class="reg-badge">HSC|AN|00004</span>
+      <div class="team-name">Team: ArohaSetu</div>
+    </div>
+  </div>
+
+  <div class="slide-body">
+    <div class="grid-3" style="gap: 10px; margin-bottom: 12px;">
+      <div class="card">
+        <h3 style="font-size: 9.5pt; color: #be123c;">01 Clinical Accuracy</h3>
+        <p style="font-size: 7.8pt; color: #be123c; margin-bottom: 2px;"><strong>Risk:</strong> Algorithmic misinterpretation of physiological instability.</p>
+        <p style="font-size: 7.8pt; margin: 0;"><strong>Mitigation:</strong> Use standardized NEWS2 clinical guidance; mandate clinician-in-the-loop oversight.</p>
+      </div>
+
+      <div class="card">
+        <h3 style="font-size: 9.5pt; color: #be123c;">02 Island Network Connectivity</h3>
+        <p style="font-size: 7.8pt; color: #be123c; margin-bottom: 2px;"><strong>Risk:</strong> Intermittent remote Internet connection in island geography.</p>
+        <p style="font-size: 7.8pt; margin: 0;"><strong>Mitigation:</strong> Local edge alert caching on Kotlin Android client; explicit indicators when cloud sync is offline.</p>
+      </div>
+
+      <div class="card">
+        <h3 style="font-size: 9.5pt; color: #be123c;">03 False Fall Alarms</h3>
+        <p style="font-size: 7.8pt; color: #be123c; margin-bottom: 2px;"><strong>Risk:</strong> Alert fatigue caused by sitting, bending, or dropping devices.</p>
+        <p style="font-size: 7.8pt; margin: 0;"><strong>Mitigation:</strong> Multi-frame temporal windows (>3s floor immobility); 23/23 false-positive scenarios verified with 100% precision.</p>
+      </div>
+
+      <div class="card">
+        <h3 style="font-size: 9.5pt; color: #be123c;">04 Escalation Integrity</h3>
+        <p style="font-size: 7.8pt; color: #be123c; margin-bottom: 2px;"><strong>Risk:</strong> External ambulance dispatch services receiving false alerts.</p>
+        <p style="font-size: 7.8pt; margin: 0;"><strong>Mitigation:</strong> Explicit simulation labeling; multi-tier ladder (Family → Backup → 108/112) with verification step.</p>
+      </div>
+
+      <div class="card">
+        <h3 style="font-size: 9.5pt; color: #be123c;">05 Patient Privacy</h3>
+        <p style="font-size: 7.8pt; color: #be123c; margin-bottom: 2px;"><strong>Risk:</strong> Reluctance to place optical sensors in domestic private spaces.</p>
+        <p style="font-size: 7.8pt; margin: 0;"><strong>Mitigation:</strong> Strictly on-device keypoint inference; no raw video retention or transmission; DPDP Act compliant.</p>
+      </div>
+
+      <div class="card">
+        <h3 style="font-size: 9.5pt; color: #be123c;">06 Clinical & Regulatory Readiness</h3>
+        <p style="font-size: 7.8pt; color: #be123c; margin-bottom: 2px;"><strong>Risk:</strong> Premature deployment without biomedical certification.</p>
+        <p style="font-size: 7.8pt; margin: 0;"><strong>Mitigation:</strong> Positioned as assistive decision-support; dedicated clinical governance before formal trials.</p>
+      </div>
+    </div>
+
+    <div class="card card-teal" style="padding: 8px 12px;">
+      <p style="font-size: 8.5pt; font-weight: 700; color: #103663; margin: 0;">
+        Feasibility Status: Web simulator, local Python pose detector, and offline-capable Android APK functional for demonstration; live physical telemetry requires field development.
+      </p>
+    </div>
+  </div>
+
+  <div class="slide-footer">
+    <div>ArohaSetu — Hack for Social Cause 2027 Submission Deck</div>
+    <div>Slide 5 of 7</div>
+    <div>Knowledge Partner: IIT Bombay</div>
+  </div>
+</div>
+
+<!-- SLIDE 6: TEAM & DEVELOPMENT JOURNEY -->
+<div class="slide">
+  <div class="slide-header">
+    <div>
+      <div class="slide-subtitle">TEAM</div>
+      <div class="slide-title">Team Composition & Development Journey</div>
+    </div>
+    <div class="slide-meta-right">
+      <span class="reg-badge">HSC|AN|00004</span>
+      <div class="team-name">Team: ArohaSetu</div>
+    </div>
+  </div>
+
+  <div class="slide-body">
+    <div class="grid-2" style="margin-bottom: 12px;">
+      <div class="card card-navy">
+        <h3>Team Structure & Responsibilities</h3>
+        <div style="margin-bottom: 8px;">
+          <strong style="color: #103663;">Samrat Dasgupta (Team Leader)</strong><br>
+          <span style="font-size: 8pt; color: #64748b;">Teacher Trainee • Port Blair, Andaman & Nicobar Islands</span><br>
+          <span style="font-size: 8.2pt;">Responsibilities: Clinical idea, concept definition, two-layer architecture, regional ground-truth validation & institutional coordination.</span>
+        </div>
+        <div style="margin-bottom: 8px;">
+          <strong style="color: #103663;">Hriday Das (Main Developer / Coder)</strong><br>
+          <span style="font-size: 8pt; color: #64748b;">Software Engineering Student</span><br>
+          <span style="font-size: 8.2pt;">Responsibilities: Full-stack implementation, Node.js backend, React dashboards, local YOLO-Pose vision engine & test automation.</span>
+        </div>
+        <div>
+          <strong style="color: #103663;">C. Mohd. Jasheem (Designer)</strong><br>
+          <span style="font-size: 8pt; color: #64748b;">UI/UX & Product Design Student</span><br>
+          <span style="font-size: 8.2pt;">Responsibilities: Human-centered design, multi-language layout design, presentation assets & accessible caregiver interaction patterns.</span>
+        </div>
+      </div>
+
+      <div class="card card-teal">
+        <h3 style="color: #0f766e;">Challenges, Motivation & Journey</h3>
+        <p style="font-size: 8.5pt; margin-bottom: 8px;">
+          <strong>Why We Built ArohaSetu:</strong><br>
+          Living across the Andaman & Nicobar archipelago, medical facilities are separated by deep water and limited ferry routes. When an elder falls or deteriorates alone, delayed awareness is fatal. We built ArohaSetu to provide a watchful, personal digital nurse for every family and overburdened hospital bed.
+        </p>
+        <p style="font-size: 8.5pt; margin: 0;">
+          <strong>Key Engineering Hurdle:</strong><br>
+          Achieving dependable fall detection on low-cost hardware without streaming video to external servers. We engineered a local YOLO-Pose kinematic sentinel with temporal posture tracking (>50° tilt, downward velocity drop, >3s immobility) that achieved 100% precision across 23 false-positive test scenarios.
+        </p>
+      </div>
+    </div>
+
+    <div class="card" style="padding: 6px 12px; background: #f1f5f9; text-align: center;">
+      <strong style="font-size: 9pt; color: #103663;">
+        Official Portal Registration: Team Name: ArohaSetu • Team ID: HSC|AN|00004 • Target Region: Andaman & Nicobar Islands
+      </strong>
+    </div>
+  </div>
+
+  <div class="slide-footer">
+    <div>ArohaSetu — Hack for Social Cause 2027 Submission Deck</div>
+    <div>Slide 6 of 7</div>
+    <div>Knowledge Partner: IIT Bombay</div>
+  </div>
+</div>
+
+<!-- SLIDE 7: REFERENCES & ARTIFACTS -->
+<div class="slide">
+  <div class="slide-header">
+    <div>
+      <div class="slide-subtitle">REFERENCES</div>
+      <div class="slide-title">Clinical Foundations & Project Artefacts</div>
+    </div>
+    <div class="slide-meta-right">
+      <span class="reg-badge">HSC|AN|00004</span>
+      <div class="team-name">Team: ArohaSetu</div>
+    </div>
+  </div>
+
+  <div class="slide-body">
+    <div class="grid-2" style="margin-bottom: 12px;">
+      <div class="card">
+        <h3>Clinical & Competition Standards</h3>
+        <p style="font-size: 8.5pt; margin-bottom: 8px;">
+          <strong>1. Clinical Standard (NEWS2):</strong><br>
+          Royal College of Physicians. National Early Warning Score (NEWS) 2: Standardising the assessment of acute-illness severity in the NHS. London: RCP, 2017.
+        </p>
+        <p style="font-size: 8.5pt; margin-bottom: 8px;">
+          <strong>2. Competition Framework:</strong><br>
+          Hack for Social Cause 2027 (VBYLD), Knowledge Partner IIT Bombay, MoYAS, Govt. of India. Template v7.0 compliance.
+        </p>
+        <p style="font-size: 8.5pt; margin: 0;">
+          <strong>3. Digital Data Protection (DPDP Act):</strong><br>
+          Zero raw video transmission; edge pose estimation with ephemeral keypoints aligns with Indian privacy regulations.
+        </p>
+      </div>
+
+      <div class="card card-navy">
+        <h3>Codebase & Evidence Integrity</h3>
+        <p style="font-size: 8.5pt; margin-bottom: 8px;">
+          <strong>Source Code Repository:</strong><br>
+          <a href="https://github.com/EternalFlames131/Arohasetu" style="color: #0284c7; text-decoration: none;">github.com/EternalFlames131/Arohasetu</a> (Open-source MIT License)
+        </p>
+        <p style="font-size: 8.5pt; margin-bottom: 8px;">
+          <strong>Interactive Web Simulator:</strong><br>
+          <a href="https://arohasetu.vercel.app" style="color: #0284c7; text-decoration: none;">https://arohasetu.vercel.app</a> (Production deployment)
+        </p>
+        <p style="font-size: 8.5pt; color: #103663; margin: 0;">
+          <strong>Mandatory AI Disclosure:</strong><br>
+          AI was used strictly to do light bug checks and light coding only; other than that, everything was self-made and created entirely by the team.
+        </p>
+      </div>
+    </div>
+
+    <div class="card card-teal" style="padding: 8px 12px; text-align: center;">
+      <strong style="color: #0f766e; font-size: 9pt;">
+        ArohaSetu Submission • Healthcare, Wellbeing and Elderly Care • Andaman & Nicobar Islands • Team ID: HSC|AN|00004
+      </strong>
+    </div>
+  </div>
+
+  <div class="slide-footer">
+    <div>ArohaSetu — Hack for Social Cause 2027 Submission Deck</div>
+    <div>Slide 7 of 7</div>
+    <div>Knowledge Partner: IIT Bombay</div>
+  </div>
+</div>
+
+</body>
+</html>

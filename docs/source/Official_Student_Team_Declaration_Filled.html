@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Student Team Details, Self-Certification & Declaration Form</title>
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 20mm 18mm 20mm 18mm;
+  }
+  * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  body {
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 10pt;
+    line-height: 1.45;
+    color: #111827;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .page {
+    page-break-after: always;
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+  }
+  .page:last-child {
+    page-break-after: avoid;
+  }
+
+  .form-title {
+    text-align: center;
+    font-size: 13.5pt;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: #0f172a;
+    letter-spacing: -0.2px;
+  }
+  .form-subtitle {
+    text-align: center;
+    font-size: 8.5pt;
+    color: #475569;
+    margin-bottom: 20px;
+    line-height: 1.35;
+    padding: 0 10px;
+  }
+
+  .section-heading {
+    font-size: 11pt;
+    font-weight: 700;
+    color: #0f172a;
+    margin-top: 14px;
+    margin-bottom: 8px;
+    border-bottom: 1.5px solid #cbd5e1;
+    padding-bottom: 3px;
+  }
+
+  .info-group {
+    margin-bottom: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .info-row {
+    display: flex;
+    font-size: 9.5pt;
+    align-items: baseline;
+  }
+  .info-label {
+    font-weight: 700;
+    width: 220px;
+    color: #1e293b;
+    flex-shrink: 0;
+  }
+  .info-value {
+    flex: 1;
+    border-bottom: 1px dotted #64748b;
+    padding-bottom: 2px;
+    color: #0f172a;
+    font-weight: 600;
+  }
+
+  table.member-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+    margin-bottom: 6px;
+    font-size: 8pt;
+  }
+  table.member-table th, table.member-table td {
+    border: 1px solid #475569;
+    padding: 6px 5px;
+    vertical-align: top;
+    text-align: left;
+  }
+  table.member-table th {
+    background-color: #f1f5f9;
+    font-weight: 700;
+    color: #0f172a;
+    text-align: center;
+  }
+
+  .attach-note {
+    font-size: 8pt;
+    font-style: italic;
+    font-weight: 600;
+    color: #475569;
+    margin-top: 4px;
+    margin-bottom: 14px;
+    background-color: #f8fafc;
+    padding: 4px 8px;
+    border-left: 3px solid #3b82f6;
+  }
+
+  .declaration-intro {
+    font-size: 9pt;
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+  ol.declaration-list {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 8.8pt;
+    color: #1e293b;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+  ol.declaration-list li {
+    line-height: 1.4;
+    text-align: justify;
+  }
+
+  .sig-block {
+    margin-top: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .sig-row {
+    display: flex;
+    align-items: baseline;
+    font-size: 9pt;
+    gap: 8px;
+  }
+  .sig-num {
+    font-weight: 700;
+    width: 20px;
+  }
+  .sig-name-label {
+    font-weight: 600;
+    width: 45px;
+  }
+  .sig-name-val {
+    width: 180px;
+    border-bottom: 1px dotted #475569;
+    font-weight: 600;
+    padding-bottom: 1px;
+  }
+  .sig-label {
+    font-weight: 600;
+    width: 70px;
+    margin-left: 10px;
+  }
+  .sig-line {
+    width: 170px;
+    border-bottom: 1px solid #1e293b;
+    height: 18px;
+  }
+  .sig-date-label {
+    font-weight: 600;
+    width: 40px;
+    margin-left: 10px;
+  }
+  .sig-date-val {
+    width: 90px;
+    border-bottom: 1px dotted #475569;
+    font-weight: 600;
+    padding-bottom: 1px;
+  }
+
+  .lead-cert-block {
+    margin-top: 16px;
+    font-size: 9pt;
+    line-height: 1.5;
+  }
+  .lead-cert-text {
+    margin-bottom: 16px;
+    text-align: justify;
+  }
+  .lead-name-fill {
+    font-weight: 700;
+    border-bottom: 1px dotted #1e293b;
+    padding: 0 8px;
+  }
+
+  .lead-bottom-row {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 24px;
+    font-size: 9pt;
+  }
+  .lead-sig-box {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .lead-meta-box {
+    display: flex;
+    gap: 24px;
+  }
+</style>
+</head>
+<body>
+
+<!-- PAGE 1 -->
+<div class="page">
+  <div class="form-title">Student Team Details, Self-Certification & Declaration Form</div>
+  <div class="form-subtitle">
+    (To be completed by all team members and uploaded by the Team Lead on the MY Bharat Portal - as part of the Hack for Social Cause Submission, together with a self-attested copy of each member's Student ID Card and details of government-issued photo ID - Aadhaar / Voter ID / Passport / Driving License.)
+  </div>
+
+  <div class="section-heading">A. Team Information</div>
+  <div class="info-group">
+    <div class="info-row">
+      <div class="info-label">Team ID:</div>
+      <div class="info-value">HSC|AN|00004</div>
+    </div>
+    <div class="info-row">
+      <div class="info-label">Team Name:</div>
+      <div class="info-value">ArohaSetu</div>
+    </div>
+    <div class="info-row">
+      <div class="info-label">State/UT:</div>
+      <div class="info-value">Andaman & Nicobar Islands (UT)</div>
+    </div>
+    <div class="info-row">
+      <div class="info-label">Thematic Area / Problem Statement:</div>
+      <div class="info-value">Healthcare, Wellbeing & Service Delivery / Elderly Care & Healthy Ageing</div>
+    </div>
+  </div>
+
+  <div class="section-heading">B. Team Member Details</div>
+  <table class="member-table">
+    <thead>
+      <tr>
+        <th style="width: 4%;">S.No</th>
+        <th style="width: 14%;">Full Name</th>
+        <th style="width: 22%;">Institution Details:<br>(Name, Affiliation & AISHE Code)</th>
+        <th style="width: 13%;">Course/Program & Year</th>
+        <th style="width: 11%;">Student ID No.</th>
+        <th style="width: 11%;">Date of Birth/Age<br>(as of 24th August, 2026)</th>
+        <th style="width: 12%;">Email ID</th>
+        <th style="width: 13%;">Government ID:<br>Type & No</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="text-align: center; font-weight: 700;">1</td>
+        <td><strong>Samrat Dasgupta</strong><br><span style="font-size: 7.2pt; color: #475569;">(Team Lead)</span></td>
+        <td>Tagore Government College of Education (TGCE), Port Blair<br><span style="font-size: 7pt; color: #475569;">Pondicherry Univ | AISHE: C-6574</span></td>
+        <td>B.Ed (Teacher Trainee)<br>2nd Year</td>
+        <td>__________________</td>
+        <td>_____ / _____ yrs<br><span style="font-size: 6.8pt; color: #64748b;">(Eligible: 18–29 yrs)</span></td>
+        <td>__________________</td>
+        <td>Aadhaar No:<br>__________________</td>
+      </tr>
+      <tr>
+        <td style="text-align: center; font-weight: 700;">2</td>
+        <td><strong>Hriday Das</strong><br><span style="font-size: 7.2pt; color: #475569;">(Main Coder)</span></td>
+        <td>________________________<br><span style="font-size: 7pt; color: #475569;">AISHE Code: ____________</span></td>
+        <td>__________________</td>
+        <td>__________________</td>
+        <td>_____ / _____ yrs<br><span style="font-size: 6.8pt; color: #64748b;">(Eligible: 18–29 yrs)</span></td>
+        <td>__________________</td>
+        <td>Aadhaar No:<br>__________________</td>
+      </tr>
+      <tr>
+        <td style="text-align: center; font-weight: 700;">3</td>
+        <td><strong>C. Mohd. Jasheem</strong><br><span style="font-size: 7.2pt; color: #475569;">(Designer)</span></td>
+        <td>________________________<br><span style="font-size: 7pt; color: #475569;">AISHE Code: ____________</span></td>
+        <td>__________________</td>
+        <td>__________________</td>
+        <td>_____ / _____ yrs<br><span style="font-size: 6.8pt; color: #64748b;">(Eligible: 18–29 yrs)</span></td>
+        <td>__________________</td>
+        <td>Aadhaar No:<br>__________________</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="attach-note">
+    Attach: Self-attested copy of Student ID Card for each member listed above.
+  </div>
+
+  <div class="section-heading">C. Self-Certification</div>
+  <div class="declaration-intro">We, the undersigned team members, hereby declare that:</div>
+  <ol class="declaration-list" start="1">
+    <li>The solution submitted is an original work created by us and does not infringe upon any third-party intellectual property rights.</li>
+    <li>The submission is free from plagiarism and has not been copied from any other source without due credit.</li>
+  </ol>
+</div>
+
+<!-- PAGE 2 -->
+<div class="page">
+  <ol class="declaration-list" start="3" style="margin-top: 10px;">
+    <li>All information provided in this form, including our identity, contact, and institutional details, is true and accurate to the best of our knowledge.</li>
+    <li>We accept full responsibility for participating in the State-level and subsequent stages of the Hack for Social Cause competition under VBYLD 2027, if our team is selected, and for complying with all applicable guidelines, rules, and instructions, as well as cooperating with any post-award verification.</li>
+    <li>We consent to our names, project details, and submitted materials being used by MoYAS and IIT Bombay for educational, promotional, and public-service purposes, as outlined in these Guidelines.</li>
+    <li>We understand that any false declaration, misrepresentation, or submission of invalid ID proof may lead to disqualification at any stage, including after an award has been announced.</li>
+  </ol>
+
+  <div style="font-weight: 700; margin-top: 25px; margin-bottom: 10px; font-size: 9.5pt; color: #0f172a;">
+    Signatures of Team Members:
+  </div>
+
+  <div class="sig-block">
+    <div class="sig-row">
+      <div class="sig-num">1.</div>
+      <div class="sig-name-label">Name:</div>
+      <div class="sig-name-val">Samrat Dasgupta</div>
+      <div class="sig-label">Signature:</div>
+      <div class="sig-line"></div>
+      <div class="sig-date-label">Date:</div>
+      <div class="sig-date-val">21 / 10 / 2026</div>
+    </div>
+
+    <div class="sig-row">
+      <div class="sig-num">2.</div>
+      <div class="sig-name-label">Name:</div>
+      <div class="sig-name-val">Hriday Das</div>
+      <div class="sig-label">Signature:</div>
+      <div class="sig-line"></div>
+      <div class="sig-date-label">Date:</div>
+      <div class="sig-date-val">21 / 10 / 2026</div>
+    </div>
+
+    <div class="sig-row">
+      <div class="sig-num">3.</div>
+      <div class="sig-name-label">Name:</div>
+      <div class="sig-name-val">C. Mohd. Jasheem</div>
+      <div class="sig-label">Signature:</div>
+      <div class="sig-line"></div>
+      <div class="sig-date-label">Date:</div>
+      <div class="sig-date-val">21 / 10 / 2026</div>
+    </div>
+  </div>
+
+  <div class="section-heading" style="margin-top: 35px;">D. Team Lead Certification</div>
+  <div class="lead-cert-block">
+    <div class="lead-cert-text">
+      I, <span class="lead-name-fill">Samrat Dasgupta</span> (Name of Team Lead), hereby certify, on behalf of the team, that the above information is complete and accurate, and accept responsibility for the submission of this entry.
+    </div>
+
+    <div style="margin-top: 30px;">
+      <div style="font-weight: 600;">Signature of Team Lead: __________________________________________________</div>
+    </div>
+
+    <div class="lead-bottom-row">
+      <div><strong>Place:</strong> Port Blair, Andaman & Nicobar Islands</div>
+      <div><strong>Date:</strong> 21 / 10 / 2026</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

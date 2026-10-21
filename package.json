@@ -9,7 +9,8 @@
     "stop": "cmd /c tools\\stop_all.bat",
     "stop:yolo": "cmd /c tools\\stop_yolo.bat",
     "build:web": "node tools/build_web.js",
-    "build:pdf": "powershell -ExecutionPolicy Bypass -File tools/build_pdf.ps1"
+    "build:pdf": "powershell -ExecutionPolicy Bypass -File tools/build_pdf.ps1",
+    "deploy": "vercel deploy --prod --yes"
   },
   "keywords": [
     "healthcare",
