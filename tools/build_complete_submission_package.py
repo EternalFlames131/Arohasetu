@@ -334,12 +334,12 @@ html_content = f'''<!DOCTYPE html>
     <thead>
       <tr>
         <th style="width: 4%;">S.No</th>
-        <th style="width: 14%;">Full Name</th>
-        <th style="width: 22%;">Institution Details:<br>(Name, Affiliation & AISHE Code)</th>
+        <th style="width: 13%;">Full Name</th>
+        <th style="width: 20%;">Institution Details:<br>(Name, Affiliation & AISHE Code)</th>
         <th style="width: 13%;">Course/Program & Year</th>
-        <th style="width: 10%;">Student ID No.</th>
+        <th style="width: 9%;">Student ID No.</th>
         <th style="width: 11%;">Date of Birth/Age<br>(as of 24th Aug 2026)</th>
-        <th style="width: 12%;">Email ID</th>
+        <th style="width: 16%;">Email ID</th>
         <th style="width: 14%;">Government ID:<br>Type & No</th>
       </tr>
     </thead>
@@ -352,7 +352,7 @@ html_content = f'''<!DOCTYPE html>
         <td>B.Sc.B.Ed. (Mathematics)<br>Session 2023–27</td>
         <td>Roll: 2382<br><span style="font-size: 6.8pt; color: #64748b;">(Adm: 3603)</span></td>
         <td>13/01/2004 (22 yrs)<br><span style="font-size: 6.8pt; color: #16a34a; font-weight: 600;">✓ Eligible (18–29)</span></td>
-        <td>[Samrat's Email]</td>
+        <td style="font-size: 6.5pt; white-space: nowrap;">samrat1312004@gmail.com</td>
         <td>Aadhaar No:<br><strong>7466 3849 9873</strong></td>
       </tr>
       <!-- HRIDAY -->
@@ -363,7 +363,7 @@ html_content = f'''<!DOCTYPE html>
         <td>B.Sc B.Ed (Computer Science)<br>Session 2023–27</td>
         <td>Roll: 2206<br><span style="font-size: 6.8pt; color: #64748b;">(Adm: 3578)</span></td>
         <td>06/06/2006 (20 yrs)<br><span style="font-size: 6.8pt; color: #16a34a; font-weight: 600;">✓ Eligible (18–29)</span></td>
-        <td>[Hriday's Email]</td>
+        <td style="font-size: 6.5pt; white-space: nowrap;">thehrixx@gmail.com</td>
         <td>Aadhaar No:<br><strong>2767 5330 6157</strong></td>
       </tr>
       <!-- JASHEEM -->
@@ -374,7 +374,7 @@ html_content = f'''<!DOCTYPE html>
         <td>B.Sc.B.Ed (Computer Sci.)<br>Session 2023–27</td>
         <td>Adm No: 3661</td>
         <td>24/01/2005 (21 yrs)<br><span style="font-size: 6.8pt; color: #16a34a; font-weight: 600;">✓ Eligible (18–29)</span></td>
-        <td>[Jasheem's Email]</td>
+        <td style="font-size: 6.5pt; white-space: nowrap;">cmohdjasheem24@gmail.com</td>
         <td>Aadhaar No:<br><strong>6777 7409 5316</strong></td>
       </tr>
     </tbody>
