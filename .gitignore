@@ -35,3 +35,7 @@ tmp/
 *.pdf
 *.pptx
 *.ppt
+
+# Sensitive Personal Team Credentials (Aadhaar cards, student IDs, personal signatures)
+docs/assets/team_credentials/
+.codex-build-final-canva/
