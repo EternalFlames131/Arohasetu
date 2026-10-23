@@ -350,7 +350,7 @@ html_content = f'''<!DOCTYPE html>
         <td><strong>Samrat Das Gupta</strong><br><span style="font-size: 7pt; color: #475569;">(Team Lead / Concept)</span></td>
         <td>Tagore Government College of Education (TGCE), Port Blair<br><span style="font-size: 6.8pt; color: #475569;">Pondicherry Univ | AISHE: C-6574</span></td>
         <td>B.Sc.B.Ed. (Mathematics)<br>Session 2023–27</td>
-        <td>Roll: 2382<br><span style="font-size: 6.8pt; color: #64748b;">(Adm: 3603)</span></td>
+        <td>Adm No: 3603</td>
         <td>13/01/2004 (22 yrs)<br><span style="font-size: 6.8pt; color: #16a34a; font-weight: 600;">✓ Eligible (18–29)</span></td>
         <td style="font-size: 6.5pt; white-space: nowrap;">samrat1312004@gmail.com</td>
         <td>Aadhaar No:<br><strong>7466 3849 9873</strong></td>
@@ -361,7 +361,7 @@ html_content = f'''<!DOCTYPE html>
         <td><strong>Hriday Das</strong><br><span style="font-size: 7pt; color: #475569;">(Main Developer / Coder)</span></td>
         <td>Tagore Government College of Education (TGCE), Port Blair<br><span style="font-size: 6.8pt; color: #475569;">Pondicherry Univ | AISHE: C-6574</span></td>
         <td>B.Sc B.Ed (Computer Science)<br>Session 2023–27</td>
-        <td>Roll: 2206<br><span style="font-size: 6.8pt; color: #64748b;">(Adm: 3578)</span></td>
+        <td>Adm No: 3578</td>
         <td>06/06/2006 (20 yrs)<br><span style="font-size: 6.8pt; color: #16a34a; font-weight: 600;">✓ Eligible (18–29)</span></td>
         <td style="font-size: 6.5pt; white-space: nowrap;">thehrixx@gmail.com</td>
         <td>Aadhaar No:<br><strong>2767 5330 6157</strong></td>
@@ -471,7 +471,7 @@ html_content = f'''<!DOCTYPE html>
 
   <div class="card-container">
     <div class="card-box">
-      <div class="card-label">1. Official Student Identity Card (TGCE Port Blair — Roll: 2382, Adm: 3603)</div>
+      <div class="card-label">1. Official Student Identity Card (TGCE Port Blair — Adm No: 3603)</div>
       <img src="data:image/jpeg;base64,{samrat_id}" class="card-img" style="max-height: 260px;">
     </div>
 
@@ -504,7 +504,7 @@ html_content = f'''<!DOCTYPE html>
 
   <div class="card-container">
     <div class="card-box">
-      <div class="card-label">1. Official Student Identity Card (TGCE Port Blair — Roll: 2206, Adm: 3578)</div>
+      <div class="card-label">1. Official Student Identity Card (TGCE Port Blair — Adm No: 3578)</div>
       <img src="data:image/jpeg;base64,{hriday_id}" class="card-img" style="max-height: 260px;">
     </div>
 
